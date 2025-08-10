@@ -7,7 +7,7 @@ import '../../../shared/widgets/splash_screen.dart';
 import '../../../shared/models/user_model.dart';
 import 'login_page.dart';
 import 'rfid_setup_required_page.dart';
-import '../../dashboard/presentation/main_navigation.dart';
+import '../../dashboard/presentation/role_based_navigation.dart';
 
 /// Provider untuk memeriksa dan membuat data user jika perlu
 final userSetupProvider = FutureProvider.family<UserModel?, String>((
@@ -111,8 +111,8 @@ class AuthWrapper extends ConsumerWidget {
                       );
                     }
 
-                    // User data ready and RFID setup (or is admin), show main navigation
-                    return const MainNavigation();
+                    // User data ready and RFID setup (or is admin), show role-based navigation
+                    return const RoleBasedNavigation();
                   } else {
                     // User data setup failed, logout
                     return MaterialApp(

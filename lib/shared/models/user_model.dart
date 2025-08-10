@@ -3,7 +3,7 @@ class UserModel {
   final String id;
   final String nama;
   final String email;
-  final String role; // 'admin' atau 'santri'
+  final String role; // 'admin', 'santri', atau 'dewan_guru'
   final int poin;
   final String? fotoProfil;
   final bool statusAktif;
@@ -96,6 +96,9 @@ class UserModel {
 
   /// Check apakah user adalah santri
   bool get isSantri => role == 'santri';
+
+  /// Check apakah user adalah dewan guru
+  bool get isDewaGuru => role == 'dewan_guru';
 
   /// Check apakah RFID sudah di-setup
   bool get hasRfidSetup => rfidCardId != null && rfidCardId!.isNotEmpty;

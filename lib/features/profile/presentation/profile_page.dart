@@ -6,14 +6,10 @@ import '../../../shared/services/auth_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/logout_button.dart';
 import '../../../pages/admin_page.dart';
+import '../../admin/presentation/dewa_guru_dashboard_page.dart';
 import 'edit_profile_page.dart';
 import 'security_settings_page.dart';
-import 'personal_stats_page.dart';
-import 'activity_history_page.dart';
-import 'notification_preferences_page.dart';
-import 'personal_data_page.dart';
 
-/// Provider untuk user profile
 final userProfileProvider = FutureProvider<UserModel?>((ref) async {
   final currentUser = AuthService.currentUser;
   if (currentUser == null) return null;
@@ -21,7 +17,6 @@ final userProfileProvider = FutureProvider<UserModel?>((ref) async {
   return await AuthService.getUserData(currentUser.uid);
 });
 
-/// Halaman Profile
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
@@ -30,22 +25,7 @@ class ProfilePage extends ConsumerWidget {
     final userProfile = ref.watch(userProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // TODO: Navigate to edit profile
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fitur edit profil akan segera hadir'),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Profil')),
       body: userProfile.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
@@ -188,11 +168,15 @@ class ProfilePage extends ConsumerWidget {
             decoration: BoxDecoration(
               color: user.isAdmin
                   ? Colors.red.withAlpha(15)
+                  : user.isDewaGuru
+                  ? Colors.purple.withAlpha(15)
                   : AppTheme.primaryColor.withAlpha(15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: user.isAdmin
                     ? Colors.red.withAlpha(50)
+                    : user.isDewaGuru
+                    ? Colors.purple.withAlpha(50)
                     : AppTheme.primaryColor.withAlpha(50),
                 width: 1,
               ),
@@ -201,15 +185,31 @@ class ProfilePage extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  user.isAdmin ? Icons.admin_panel_settings : Icons.school,
+                  user.isAdmin
+                      ? Icons.admin_panel_settings
+                      : user.isDewaGuru
+                      ? Icons.school
+                      : Icons.person,
                   size: 16,
-                  color: user.isAdmin ? Colors.red : AppTheme.primaryColor,
+                  color: user.isAdmin
+                      ? Colors.red
+                      : user.isDewaGuru
+                      ? Colors.purple
+                      : AppTheme.primaryColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  user.isAdmin ? 'Admin' : 'Santri',
+                  user.isAdmin
+                      ? 'Admin'
+                      : user.isDewaGuru
+                      ? 'Dewan Guru'
+                      : 'Santri',
                   style: TextStyle(
-                    color: user.isAdmin ? Colors.red : AppTheme.primaryColor,
+                    color: user.isAdmin
+                        ? Colors.red
+                        : user.isDewaGuru
+                        ? Colors.purple
+                        : AppTheme.primaryColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -321,6 +321,23 @@ class ProfilePage extends ConsumerWidget {
             ),
             const Divider(height: 1),
           ],
+          // Dashboard Dewan Guru (hanya untuk dewan guru)
+          if (user.isDewaGuru) ...[
+            _buildMenuItem(
+              icon: Icons.dashboard,
+              title: 'Dashboard Dewan Guru',
+              subtitle: 'Akses fitur khusus dewan guru',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DewaGuruDashboardPage(user: user),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+          ],
           _buildMenuItem(
             icon: Icons.person_outline,
             title: 'Edit Profil',
@@ -335,61 +352,6 @@ class ProfilePage extends ConsumerWidget {
             },
           ),
           const Divider(height: 1),
-          _buildMenuItem(
-            icon: Icons.description,
-            title: 'Data Pribadi',
-            subtitle: 'Informasi dan dokumen pribadi',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PersonalDataPage(),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildMenuItem(
-            icon: Icons.analytics,
-            title: 'Statistik Personal',
-            subtitle: 'Lihat pencapaian dan progress Anda',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PersonalStatsPage(),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildMenuItem(
-            icon: Icons.history,
-            title: 'Riwayat Aktivitas',
-            subtitle: 'Aktivitas dan presensi terbaru',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ActivityHistoryPage(),
-                ),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildMenuItem(
-            icon: Icons.notifications,
-            title: 'Notifikasi',
-            subtitle: 'Pengaturan notifikasi dan preferensi',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationPreferencesPage(),
-                ),
-              );
-            },
-          ),
           const Divider(height: 1),
           _buildMenuItem(
             icon: Icons.security_outlined,

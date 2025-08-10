@@ -168,6 +168,123 @@ class AuthService {
     await _createUserDocument(uid: uid, email: email, nama: nama, role: role);
   }
 
+  /// Update role user
+  static Future<void> updateUserRole(String uid, String newRole) async {
+    try {
+      // Validasi role yang diizinkan
+      const allowedRoles = ['admin', 'santri', 'dewan_guru'];
+      if (!allowedRoles.contains(newRole)) {
+        throw Exception(
+          'Role tidak valid. Role yang diizinkan: ${allowedRoles.join(', ')}',
+        );
+      }
+
+      await _firestore.collection('users').doc(uid).update({
+        'role': newRole,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error mengupdate role user: $e');
+    }
+  }
+
+  /// Get semua users berdasarkan role
+  static Future<List<UserModel>> getUsersByRole(String role) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: role)
+          .orderBy('nama')
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
+          .toList();
+    } catch (e) {
+      throw Exception('Error mengambil users berdasarkan role: $e');
+    }
+  }
+
+  /// Get semua dewan guru
+  static Future<List<UserModel>> getDewaGuruList() async {
+    return getUsersByRole('dewan_guru');
+  }
+
+  /// Get semua santri
+  static Future<List<UserModel>> getSantriList() async {
+    return getUsersByRole('santri');
+  }
+
+  /// Get semua admin
+  static Future<List<UserModel>> getAdminList() async {
+    return getUsersByRole('admin');
+  }
+
+  /// Stream untuk realtime data semua users
+  static Stream<List<UserModel>> getUsersStream() {
+    return _firestore
+        .collection('users')
+        .orderBy('nama')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
+              .toList(),
+        );
+  }
+
+  /// Stream untuk realtime data users berdasarkan role
+  static Stream<List<UserModel>> getUsersByRoleStream(String role) {
+    return _firestore
+        .collection('users')
+        .where('role', isEqualTo: role)
+        .orderBy('nama')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
+              .toList(),
+        );
+  }
+
+  /// Promote santri menjadi dewan guru
+  static Future<void> promoteSantriToDewaGuru(String uid) async {
+    try {
+      final userData = await getUserData(uid);
+      if (userData == null) {
+        throw Exception('User tidak ditemukan');
+      }
+
+      if (userData.role != 'santri') {
+        throw Exception(
+          'Hanya santri yang bisa dipromosikan menjadi dewan guru',
+        );
+      }
+
+      await updateUserRole(uid, 'dewan_guru');
+    } catch (e) {
+      throw Exception('Error promoting santri to dewan guru: $e');
+    }
+  }
+
+  /// Demote dewan guru menjadi santri
+  static Future<void> demoteDewaGuruToSantri(String uid) async {
+    try {
+      final userData = await getUserData(uid);
+      if (userData == null) {
+        throw Exception('User tidak ditemukan');
+      }
+
+      if (userData.role != 'dewan_guru') {
+        throw Exception('Hanya dewan guru yang bisa diturunkan menjadi santri');
+      }
+
+      await updateUserRole(uid, 'santri');
+    } catch (e) {
+      throw Exception('Error demoting dewan guru to santri: $e');
+    }
+  }
+
   /// Buat dokumen user baru di Firestore
   static Future<void> _createUserDocument({
     required String uid,
