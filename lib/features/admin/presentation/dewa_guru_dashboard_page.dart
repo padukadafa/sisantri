@@ -7,10 +7,10 @@ import '../../leaderboard/presentation/leaderboard_page.dart';
 import '../../pengumuman/presentation/pengumuman_page.dart';
 import '../../jadwal/presentation/jadwal_page.dart';
 
-class DewaGuruDashboardPage extends ConsumerWidget {
+class DewanGuruDashboardPage extends ConsumerWidget {
   final UserModel user;
 
-  const DewaGuruDashboardPage({super.key, required this.user});
+  const DewanGuruDashboardPage({super.key, required this.user});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../shared/services/dummy_data_service.dart';
 import '../features/admin/presentation/rfid_management_page.dart';
 
 /// Halaman admin untuk mengelola data aplikasi
@@ -120,30 +119,6 @@ class _AdminPageState extends ConsumerState<AdminPage> {
                 );
               },
               color: Colors.blue,
-            ),
-            const SizedBox(height: 12),
-            _buildActionButton(
-              icon: Icons.add_circle_outline,
-              title: 'Buat Dummy Data',
-              subtitle: 'Buat data sample untuk testing aplikasi',
-              onTap: _createDummyData,
-              color: Colors.green,
-            ),
-            const SizedBox(height: 12),
-            _buildActionButton(
-              icon: Icons.delete_outline,
-              title: 'Hapus Semua Data',
-              subtitle: 'Hapus semua data dari database (hati-hati!)',
-              onTap: _deleteDummyData,
-              color: Colors.red,
-            ),
-            const SizedBox(height: 12),
-            _buildActionButton(
-              icon: Icons.refresh,
-              title: 'Reset Data',
-              subtitle: 'Hapus data lama dan buat data baru',
-              onTap: _resetData,
-              color: Colors.orange,
             ),
           ],
         ),
@@ -318,148 +293,6 @@ class _AdminPageState extends ConsumerState<AdminPage> {
             textAlign: TextAlign.center,
           ),
         ],
-      ),
-    );
-  }
-
-  Future<void> _createDummyData() async {
-    final confirmed = await _showConfirmationDialog(
-      title: 'Buat Dummy Data',
-      message: 'Apakah Anda yakin ingin membuat data sample untuk testing?',
-    );
-
-    if (!confirmed) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await DummyDataService.createAllDummyData();
-      if (mounted) {
-        _showSuccessSnackbar('Dummy data berhasil dibuat!');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackbar('Gagal membuat dummy data: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _deleteDummyData() async {
-    final confirmed = await _showConfirmationDialog(
-      title: 'Hapus Semua Data',
-      message:
-          'PERINGATAN: Semua data akan dihapus permanen. Apakah Anda yakin?',
-      isDestructive: true,
-    );
-
-    if (!confirmed) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await DummyDataService.deleteAllDummyData();
-      if (mounted) {
-        _showSuccessSnackbar('Semua data berhasil dihapus!');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackbar('Gagal menghapus data: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _resetData() async {
-    final confirmed = await _showConfirmationDialog(
-      title: 'Reset Data',
-      message: 'Data lama akan dihapus dan data baru akan dibuat. Lanjutkan?',
-    );
-
-    if (!confirmed) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await DummyDataService.deleteAllDummyData();
-      await Future.delayed(const Duration(seconds: 1));
-      await DummyDataService.createAllDummyData();
-      if (mounted) {
-        _showSuccessSnackbar('Data berhasil direset!');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorSnackbar('Gagal reset data: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<bool> _showConfirmationDialog({
-    required String title,
-    required String message,
-    bool isDestructive = false,
-  }) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: isDestructive
-                ? TextButton.styleFrom(foregroundColor: Colors.red)
-                : null,
-            child: const Text('Ya'),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
-
-  void _showSuccessSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

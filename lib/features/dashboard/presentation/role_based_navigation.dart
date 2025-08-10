@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/auth_service.dart';
@@ -7,15 +8,26 @@ import '../../../shared/widgets/splash_screen.dart';
 import 'main_navigation.dart';
 import 'dewa_guru_navigation.dart';
 
-/// Provider untuk mendapatkan data user saat ini
-final currentUserDataProvider = FutureProvider<UserModel?>((ref) async {
-  final currentUser = AuthService.currentUser;
-  if (currentUser == null) return null;
+/// Provider untuk mendapatkan data user saat ini dengan real-time updates
+final currentUserDataProvider = StreamProvider<UserModel?>((ref) {
+  return AuthService.authStateChanges.asyncMap((user) async {
+    if (user == null) return null;
 
-  return await AuthService.getUserData(currentUser.uid);
+    try {
+      return await AuthService.getUserData(user.uid);
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+      return null;
+    }
+  });
 });
 
-/// Widget untuk menentukan navigasi berdasarkan role user
+/// Provider untuk auth state changes
+final authStateChangesProvider = StreamProvider<User?>((ref) {
+  return AuthService.authStateChanges;
+});
+
+/// Widget untuk menentukan navigasi berdasarkan role user dengan real-time updates
 class RoleBasedNavigation extends ConsumerWidget {
   const RoleBasedNavigation({super.key});
 
@@ -32,11 +44,31 @@ class RoleBasedNavigation extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Error: $error', textAlign: TextAlign.center),
+              const Text(
+                'Terjadi kesalahan saat memuat data',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.grey),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.refresh(currentUserDataProvider),
+                onPressed: () => ref.invalidate(currentUserDataProvider),
                 child: const Text('Coba Lagi'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await AuthService.signOut();
+                  } catch (e) {
+                    debugPrint('Error signing out: $e');
+                  }
+                },
+                child: const Text('Logout'),
               ),
             ],
           ),
@@ -45,16 +77,70 @@ class RoleBasedNavigation extends ConsumerWidget {
       data: (user) {
         if (user == null) {
           return const Scaffold(
-            body: Center(child: Text('User data tidak ditemukan')),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_off, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Data pengguna tidak ditemukan',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Silakan login ulang',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
-        // Navigasi berdasarkan role
+        // Navigasi berdasarkan role dengan validasi
         if (user.isDewaGuru) {
           return const DewaGuruNavigation();
-        } else {
+        } else if (user.isAdmin || user.isSantri) {
           // Admin dan Santri menggunakan navigasi yang sama
           return const MainNavigation();
+        } else {
+          // Role tidak dikenali
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.help_outline,
+                    size: 64,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Role tidak dikenali',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Role: ${user.role}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        await AuthService.signOut();
+                      } catch (e) {
+                        debugPrint('Error signing out: $e');
+                      }
+                    },
+                    child: const Text('Logout'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
       },
     );

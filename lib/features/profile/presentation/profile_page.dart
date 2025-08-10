@@ -331,7 +331,7 @@ class ProfilePage extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DewaGuruDashboardPage(user: user),
+                    builder: (context) => DewanGuruDashboardPage(user: user),
                   ),
                 );
               },
