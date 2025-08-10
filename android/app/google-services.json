@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "266005122727",
+    "project_id": "belajar-login-system",
+    "storage_bucket": "belajar-login-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266005122727:android:6510c7afe699a4fb03d582",
+        "android_client_info": {
+          "package_name": "com.example.login"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHBxkWlXsFClsvrlA33OEgidInCLhyJ-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266005122727:android:81bd4f15e287243c03d582",
+        "android_client_info": {
+          "package_name": "com.example.sisantri"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHBxkWlXsFClsvrlA33OEgidInCLhyJ-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
