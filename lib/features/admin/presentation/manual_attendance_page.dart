@@ -13,6 +13,52 @@ final santriListProvider = FutureProvider<List<UserModel>>((ref) async {
   return await AuthService.getSantriList();
 });
 
+/// Provider untuk status absensi santri berdasarkan activity yang dipilih
+final attendanceStatusProvider =
+    FutureProvider.family<Map<String, String>, String?>((
+      ref,
+      activityId,
+    ) async {
+      if (activityId == null) return {};
+
+      try {
+        final today = DateTime.now();
+        final startOfDay = DateTime(today.year, today.month, today.day);
+        final endOfDay = DateTime(
+          today.year,
+          today.month,
+          today.day,
+          23,
+          59,
+          59,
+        );
+
+        final snapshot = await FirebaseFirestore.instance
+            .collection('presensi')
+            .where('activity', isEqualTo: activityId)
+            .where(
+              'timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
+            .where(
+              'timestamp',
+              isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
+            )
+            .get();
+
+        final statusMap = <String, String>{};
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          statusMap[data['userId']] = data['status'];
+        }
+
+        return statusMap;
+      } catch (e) {
+        print('Error loading attendance status: $e');
+        return {};
+      }
+    });
+
 /// Provider untuk 5 kegiatan terakhir yang tersedia
 final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
   try {
@@ -78,7 +124,9 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedActivity;
-  String _attendanceStatus = 'hadir';
+
+  // Track individual attendance status for each santri
+  final Map<String, String> _santriAttendanceStatus = {};
 
   // Track selected santri for bulk operations
   final Set<String> _selectedSantri = {};
@@ -94,12 +142,13 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
   Widget build(BuildContext context) {
     final santriAsync = ref.watch(santriListProvider);
     final activitiesAsync = ref.watch(activitiesProvider);
+    final attendanceStatusAsync = ref.watch(
+      attendanceStatusProvider(_selectedActivity),
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Absensi Manual'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
         actions: [
           if (_isSelectMode)
             TextButton(
@@ -129,7 +178,14 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             child: santriAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(child: Text('Error: $error')),
-              data: (santriList) => _buildSantriList(santriList),
+              data: (santriList) {
+                return attendanceStatusAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => _buildSantriList(santriList, {}),
+                  data: (statusMap) => _buildSantriList(santriList, statusMap),
+                );
+              },
             ),
           ),
         ],
@@ -137,9 +193,12 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
       floatingActionButton: _isSelectMode && _selectedSantri.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: _bulkAttendance,
-              backgroundColor: AppTheme.primaryColor,
               icon: const Icon(Icons.check),
-              label: Text('Absen ${_selectedSantri.length} Santri'),
+
+              label: Text(
+                '${_selectedSantri.length}',
+                style: TextStyle(fontSize: 18),
+              ),
             )
           : null,
     );
@@ -191,91 +250,118 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             ),
             const SizedBox(height: 8),
             activitiesAsync.when(
-              loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('Error loading activities: $error'),
-              data: (activities) => DropdownButtonFormField<String>(
-                value: _selectedActivity,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  prefixIcon: const Icon(Icons.event),
+              loading: () => const SizedBox(
+                height: 56,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, stack) => Container(
+                height: 56,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.red),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                hint: const Text('Pilih dari kegiatan tersedia'),
-                items: activities.map((jadwal) {
-                  return DropdownMenuItem<String>(
-                    value: jadwal.id,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getKategoriColor(
-                                jadwal.kategori.value,
-                              ).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(
-                                color: _getKategoriColor(
-                                  jadwal.kategori.value,
-                                ).withOpacity(0.3),
-                              ),
-                            ),
-                            child: Text(
-                              jadwal.kategori.value.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: _getKategoriColor(jadwal.kategori.value),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              jadwal.displayTitle,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                child: Center(
+                  child: Text(
+                    'Error loading activities: $error',
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              data: (activities) {
+                if (activities.isEmpty) {
+                  return Container(
+                    height: 56,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Tidak ada kegiatan tersedia',
+                        style: TextStyle(color: Colors.grey),
                       ),
                     ),
                   );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedActivity = value;
-                  });
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
+                }
 
-            // Status selector
-            const Text(
-              'Status Kehadiran:',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatusChip('hadir', 'Hadir', Colors.green),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatusChip('izin', 'Izin', Colors.orange),
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: _buildStatusChip('alpha', 'Alpha', Colors.red)),
-              ],
+                return SizedBox(
+                  width: double.infinity,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedActivity,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      prefixIcon: const Icon(Icons.event),
+                    ),
+                    hint: const Text('Pilih dari kegiatan tersedia'),
+                    isExpanded: true,
+                    items: activities.map((jadwal) {
+                      return DropdownMenuItem<String>(
+                        value: jadwal.id,
+                        child: Container(
+                          width: double.infinity,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getKategoriColor(
+                                    jadwal.kategori.value,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: _getKategoriColor(
+                                      jadwal.kategori.value,
+                                    ).withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  jadwal.kategori.value.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getKategoriColor(
+                                      jadwal.kategori.value,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  jadwal.displayTitle,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedActivity = value;
+                        // Clear local status when activity changes
+                        _santriAttendanceStatus.clear();
+                      });
+                      // Refresh attendance status provider
+                      if (value != null) {
+                        ref.invalidate(attendanceStatusProvider(value));
+                      }
+                    },
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -283,37 +369,25 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
     );
   }
 
-  Widget _buildStatusChip(String value, String label, Color color) {
-    final isSelected = _attendanceStatus == value;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _attendanceStatus = value;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? color : color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color, width: isSelected ? 2 : 1),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.white : color,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ),
-    );
+  Color _getKategoriColor(String? kategori) {
+    switch (kategori?.toLowerCase()) {
+      case 'kajian':
+        return Colors.blue;
+      case 'tahfidz':
+        return Colors.purple;
+      case 'kerja bakti':
+        return Colors.orange;
+      case 'olahraga':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 
-  Widget _buildSantriList(List<UserModel> santriList) {
+  Widget _buildSantriList(
+    List<UserModel> santriList,
+    Map<String, String> existingStatusMap,
+  ) {
     // Filter santri based on search query
     final filteredSantri = santriList.where((santri) {
       if (_searchQuery.isEmpty) return true;
@@ -395,16 +469,69 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             ),
             trailing: _isSelectMode
                 ? null
-                : ElevatedButton(
-                    onPressed: _selectedActivity == null
-                        ? null
-                        : () => _recordAttendance(santri),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _getStatusColor(_attendanceStatus),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                : SizedBox(
+                    width: 120,
+                    child: DropdownButtonFormField<String>(
+                      value:
+                          _santriAttendanceStatus[santri.id] ??
+                          existingStatusMap[santri.id] ??
+                          'alpha',
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'alpha',
+                          child: Row(
+                            children: [
+                              Icon(Icons.cancel, color: Colors.red, size: 16),
+                              SizedBox(width: 4),
+                              Text('Alpha', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'hadir',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text('Hadir', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'izin',
+                          child: Row(
+                            children: [
+                              Icon(Icons.info, color: Colors.orange, size: 16),
+                              SizedBox(width: 4),
+                              Text('Izin', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onChanged: _selectedActivity == null
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _santriAttendanceStatus[santri.id] = value;
+                                });
+                                // Auto record attendance when status changes
+                                _recordAttendance(santri, value);
+                              }
+                            },
                     ),
-                    child: Text(_getStatusLabel(_attendanceStatus)),
                   ),
             onTap: _isSelectMode
                 ? () {
@@ -449,22 +576,10 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
     }
   }
 
-  Color _getKategoriColor(String? kategori) {
-    switch (kategori?.toLowerCase()) {
-      case 'kajian':
-        return Colors.blue;
-      case 'tahfidz':
-        return Colors.purple;
-      case 'kerja bakti':
-        return Colors.orange;
-      case 'olahraga':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Future<void> _recordAttendance(UserModel santri) async {
+  Future<void> _recordAttendance(
+    UserModel santri,
+    String attendanceStatus,
+  ) async {
     if (_selectedActivity == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -484,7 +599,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         'userId': santri.id,
         'userName': santri.nama,
         'activity': _selectedActivity,
-        'status': _attendanceStatus,
+        'status': attendanceStatus,
         'timestamp': Timestamp.fromDate(now),
         'recordedBy': AuthService.currentUserId,
         'recordedByName': 'Admin',
@@ -497,13 +612,14 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         'type': 'manual_attendance',
         'title': 'Absensi Manual',
         'description':
-            '${santri.nama} - $_selectedActivity: ${_getStatusLabel(_attendanceStatus)}',
+            '${santri.nama} - $_selectedActivity: ${_getStatusLabel(attendanceStatus)}',
         'userId': santri.id,
         'recordedBy': AuthService.currentUserId,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
       if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -512,7 +628,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Absensi ${santri.nama} berhasil dicatat (${_getStatusLabel(_attendanceStatus)})',
+                    'Absensi ${santri.nama} berhasil dicatat (${_getStatusLabel(attendanceStatus)})',
                   ),
                 ),
               ],
@@ -520,10 +636,13 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Refresh attendance status provider to reflect changes
+        ref.invalidate(attendanceStatusProvider(_selectedActivity));
       }
 
       // Send notification to dewan guru if alpha
-      if (_attendanceStatus == 'alpha') {
+      if (attendanceStatus == 'alpha') {
         try {
           await MessagingHelper.sendPresensiNotificationToGuru(
             santriName: santri.nama,
@@ -565,12 +684,76 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
     if (_selectedSantri.isEmpty) return;
 
+    // Show dialog to select bulk status
+    final bulkStatus = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pilih Status untuk Semua'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Pilih status kehadiran untuk ${_selectedSantri.length} santri yang dipilih:',
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Status Kehadiran',
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'alpha',
+                  child: Row(
+                    children: [
+                      Icon(Icons.cancel, color: Colors.red, size: 20),
+                      SizedBox(width: 8),
+                      Text('Alpha'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'hadir',
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 20),
+                      SizedBox(width: 8),
+                      Text('Hadir'),
+                    ],
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'izin',
+                  child: Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.orange, size: 20),
+                      SizedBox(width: 8),
+                      Text('Izin'),
+                    ],
+                  ),
+                ),
+              ],
+              onChanged: (value) => Navigator.pop(context, value),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+        ],
+      ),
+    );
+
+    if (bulkStatus == null) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Konfirmasi Absensi Massal'),
         content: Text(
-          'Apakah Anda yakin ingin mencatat absensi untuk ${_selectedSantri.length} santri dengan status "${_getStatusLabel(_attendanceStatus)}"?',
+          'Apakah Anda yakin ingin mencatat absensi untuk ${_selectedSantri.length} santri dengan status "${_getStatusLabel(bulkStatus)}"?',
         ),
         actions: [
           TextButton(
@@ -580,7 +763,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _getStatusColor(_attendanceStatus),
+              backgroundColor: _getStatusColor(bulkStatus),
             ),
             child: const Text('Ya, Catat'),
           ),
@@ -608,7 +791,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           'userId': santri.id,
           'userName': santri.nama,
           'activity': _selectedActivity,
-          'status': _attendanceStatus,
+          'status': bulkStatus,
           'timestamp': Timestamp.fromDate(now),
           'recordedBy': AuthService.currentUserId,
           'recordedByName': 'Admin',
@@ -622,11 +805,14 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           'type': 'bulk_attendance',
           'title': 'Absensi Massal',
           'description':
-              '${santri.nama} - $_selectedActivity: ${_getStatusLabel(_attendanceStatus)}',
+              '${santri.nama} - $_selectedActivity: ${_getStatusLabel(bulkStatus)}',
           'userId': santri.id,
           'recordedBy': AuthService.currentUserId,
           'timestamp': FieldValue.serverTimestamp(),
         });
+
+        // Update local status
+        _santriAttendanceStatus[santri.id] = bulkStatus;
       }
 
       await batch.commit();
@@ -652,6 +838,9 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           _selectedSantri.clear();
           _isSelectMode = false;
         });
+
+        // Refresh attendance status provider to reflect changes
+        ref.invalidate(attendanceStatusProvider(_selectedActivity));
       }
     } catch (e) {
       if (mounted) {
@@ -668,8 +857,6 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           ),
         );
       }
-    } finally {
-      // Clean up any resources if needed
     }
   }
 }
