@@ -73,7 +73,9 @@ final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
     if (jadwalSnapshot.docs.isNotEmpty) {
       return jadwalSnapshot.docs.map((doc) {
         final data = doc.data();
-        return JadwalModel.fromJson({'id': doc.id, ...data});
+        // Adapter untuk handling field yang berbeda
+        final adaptedData = _adaptJadwalData(data);
+        return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
       }).toList();
     }
 
@@ -87,7 +89,8 @@ final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
     if (fallbackSnapshot.docs.isNotEmpty) {
       return fallbackSnapshot.docs.map((doc) {
         final data = doc.data();
-        return JadwalModel.fromJson({'id': doc.id, ...data});
+        final adaptedData = _adaptJadwalData(data);
+        return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
       }).toList();
     }
 
@@ -102,7 +105,8 @@ final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
 
       return simpleSnapshot.docs.map((doc) {
         final data = doc.data();
-        return JadwalModel.fromJson({'id': doc.id, ...data});
+        final adaptedData = _adaptJadwalData(data);
+        return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
       }).toList();
     } catch (e2) {
       print('Error loading activities: $e2');
@@ -110,6 +114,67 @@ final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
     }
   }
 });
+
+// Fungsi adapter untuk mengkonversi data dari format baru ke format lama
+Map<String, dynamic> _adaptJadwalData(Map<String, dynamic> data) {
+  final adaptedData = Map<String, dynamic>.from(data);
+
+  // Convert 'judul' ke 'nama' jika ada
+  if (data.containsKey('judul') && !data.containsKey('nama')) {
+    adaptedData['nama'] = data['judul'];
+  }
+
+  // Convert TimeOfDay objects ke string jika ada
+  if (data.containsKey('jamMulai') && data['jamMulai'] is Map) {
+    final jamMulai = data['jamMulai'] as Map<String, dynamic>;
+    final hour = jamMulai['hour'] ?? 0;
+    final minute = jamMulai['minute'] ?? 0;
+    adaptedData['waktuMulai'] =
+        '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  }
+
+  if (data.containsKey('jamSelesai') && data['jamSelesai'] is Map) {
+    final jamSelesai = data['jamSelesai'] as Map<String, dynamic>;
+    final hour = jamSelesai['hour'] ?? 0;
+    final minute = jamSelesai['minute'] ?? 0;
+    adaptedData['waktuSelesai'] =
+        '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  }
+
+  // Handle hari field - untuk jadwal event, gunakan tanggal sebagai hari
+  if (data.containsKey('jenis')) {
+    if (data['jenis'] == 'event' &&
+        data.containsKey('tanggal') &&
+        !data.containsKey('hari')) {
+      // Untuk event, gunakan tanggal sebagai hari
+      adaptedData['hari'] = data['tanggal'] ?? 'Senin';
+    } else if (!data.containsKey('hari')) {
+      adaptedData['hari'] = 'Senin'; // default
+    }
+  }
+
+  // Ensure tanggal is set
+  if (!data.containsKey('tanggal') || data['tanggal'] == null) {
+    adaptedData['tanggal'] = Timestamp.now(); // default ke hari ini
+  } else if (data['tanggal'] is String) {
+    // Convert string date to Timestamp
+    try {
+      final parts = data['tanggal'].split('-');
+      if (parts.length == 3) {
+        final date = DateTime(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+        );
+        adaptedData['tanggal'] = Timestamp.fromDate(date);
+      }
+    } catch (e) {
+      adaptedData['tanggal'] = Timestamp.now();
+    }
+  }
+
+  return adaptedData;
+}
 
 /// Halaman untuk absensi manual oleh admin
 class ManualAttendancePage extends ConsumerStatefulWidget {
@@ -171,24 +236,83 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildFiltersSection(activitiesAsync),
-          Expanded(
-            child: santriAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
-              data: (santriList) {
-                return attendanceStatusAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => _buildSantriList(santriList, {}),
-                  data: (statusMap) => _buildSantriList(santriList, statusMap),
-                );
-              },
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Show loading feedback
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text('Memperbarui data...'),
+                ],
+              ),
+              backgroundColor: Colors.blue,
+              duration: Duration(milliseconds: 1500),
             ),
-          ),
-        ],
+          );
+
+          // Refresh all providers
+          ref.invalidate(santriListProvider);
+          ref.invalidate(activitiesProvider);
+          if (_selectedActivity != null) {
+            ref.invalidate(attendanceStatusProvider(_selectedActivity));
+          }
+
+          // Clear local attendance status
+          setState(() {
+            _santriAttendanceStatus.clear();
+          });
+
+          // Wait a bit for the providers to refresh
+          await Future.delayed(const Duration(milliseconds: 800));
+
+          // Hide loading snackbar and show success
+          if (mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Data berhasil diperbarui'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+                duration: Duration(milliseconds: 1000),
+              ),
+            );
+          }
+        },
+        child: Column(
+          children: [
+            _buildFiltersSection(activitiesAsync),
+            Expanded(
+              child: santriAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Center(child: Text('Error: $error')),
+                data: (santriList) {
+                  return attendanceStatusAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (error, stack) => _buildSantriList(santriList, {}),
+                    data: (statusMap) =>
+                        _buildSantriList(santriList, statusMap),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: _isSelectMode && _selectedSantri.isNotEmpty
           ? FloatingActionButton.extended(
@@ -261,12 +385,23 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                   border: Border.all(color: Colors.red),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Center(
-                  child: Text(
-                    'Error loading activities: $error',
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Error loading activities: $error',
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.red),
+                      onPressed: () {
+                        ref.invalidate(activitiesProvider);
+                      },
+                      tooltip: 'Refresh',
+                    ),
+                  ],
                 ),
               ),
               data: (activities) {
@@ -278,11 +413,23 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'Tidak ada kegiatan tersedia',
-                        style: TextStyle(color: Colors.grey),
-                      ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Tidak ada kegiatan tersedia',
+                            style: TextStyle(color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, color: Colors.grey),
+                          onPressed: () {
+                            ref.invalidate(activitiesProvider);
+                          },
+                          tooltip: 'Refresh',
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -397,24 +544,31 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
     }).toList();
 
     if (filteredSantri.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              _searchQuery.isEmpty
-                  ? 'Tidak ada santri yang terdaftar'
-                  : 'Tidak ada santri yang sesuai dengan pencarian',
-              style: TextStyle(color: Colors.grey[600]),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  _searchQuery.isEmpty
+                      ? 'Tidak ada santri yang terdaftar'
+                      : 'Tidak ada santri yang sesuai dengan pencarian',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     }
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: filteredSantri.length,
       itemBuilder: (context, index) {

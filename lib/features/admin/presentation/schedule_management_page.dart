@@ -182,20 +182,34 @@ class ScheduleManagementPage extends ConsumerWidget {
         body: TabBarView(
           children: [
             // Tab Jadwal Harian
-            jadwalHarianAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) =>
-                  _buildErrorView(ref, jadwalHarianProvider),
-              data: (jadwalList) =>
-                  _buildJadwalHarianView(context, ref, jadwalList),
+            RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(jadwalHarianProvider);
+                // Wait a bit for the provider to refresh
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: jadwalHarianAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) =>
+                    _buildErrorView(ref, jadwalHarianProvider),
+                data: (jadwalList) =>
+                    _buildJadwalHarianView(context, ref, jadwalList),
+              ),
             ),
             // Tab Event Khusus
-            jadwalEventAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) =>
-                  _buildErrorView(ref, jadwalEventProvider),
-              data: (jadwalList) =>
-                  _buildJadwalEventView(context, ref, jadwalList),
+            RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(jadwalEventProvider);
+                // Wait a bit for the provider to refresh
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: jadwalEventAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) =>
+                    _buildErrorView(ref, jadwalEventProvider),
+                data: (jadwalList) =>
+                    _buildJadwalEventView(context, ref, jadwalList),
+              ),
             ),
           ],
         ),
@@ -209,19 +223,39 @@ class ScheduleManagementPage extends ConsumerWidget {
   }
 
   Widget _buildErrorView(WidgetRef ref, provider) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
-          const SizedBox(height: 16),
-          const Text('Terjadi kesalahan saat memuat data'),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => ref.invalidate(provider),
-            child: const Text('Coba Lagi'),
-          ),
-        ],
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(provider);
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Container(
+              height: constraints.maxHeight > 400 ? constraints.maxHeight : 400,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Terjadi kesalahan saat memuat data'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(provider),
+                      child: const Text('Coba Lagi'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -267,28 +301,34 @@ class ScheduleManagementPage extends ConsumerWidget {
     List<JadwalKegiatan> jadwalList,
   ) {
     if (jadwalList.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.schedule, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada jadwal harian',
-              style: TextStyle(color: Colors.grey[600]),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.schedule, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Belum ada jadwal harian',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () =>
+                      _showAddEditDialog(context, ref, jenisJadwal: 'harian'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Jadwal Harian'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  _showAddEditDialog(context, ref, jenisJadwal: 'harian'),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Jadwal Harian'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -340,7 +380,13 @@ class ScheduleManagementPage extends ConsumerWidget {
             child: TabBarView(
               children: hariUrutan.map((hari) {
                 final jadwalHari = groupedJadwal[hari] ?? [];
-                return _buildDaySchedule(context, ref, hari, jadwalHari);
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(jadwalHarianProvider);
+                    await Future.delayed(const Duration(milliseconds: 500));
+                  },
+                  child: _buildDaySchedule(context, ref, hari, jadwalHari),
+                );
               }).toList(),
             ),
           ),
@@ -355,28 +401,34 @@ class ScheduleManagementPage extends ConsumerWidget {
     List<JadwalKegiatan> jadwalList,
   ) {
     if (jadwalList.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.event, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'Belum ada event khusus',
-              style: TextStyle(color: Colors.grey[600]),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event, size: 64, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Belum ada event khusus',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () =>
+                      _showAddEditDialog(context, ref, jenisJadwal: 'event'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Event'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  _showAddEditDialog(context, ref, jenisJadwal: 'event'),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Event'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -390,6 +442,7 @@ class ScheduleManagementPage extends ConsumerWidget {
     });
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: jadwalList.length,
       itemBuilder: (context, index) {
@@ -609,28 +662,34 @@ class ScheduleManagementPage extends ConsumerWidget {
     List<JadwalKegiatan> jadwalHari,
   ) {
     if (jadwalHari.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.event_available, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'Tidak ada kegiatan di hari $hari',
-              style: TextStyle(color: Colors.grey[600]),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.event_available, size: 48, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text(
+                  'Tidak ada kegiatan di hari $hari',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () =>
+                      _showAddEditDialog(context, ref, preselectedDay: hari),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Kegiatan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  _showAddEditDialog(context, ref, preselectedDay: hari),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Kegiatan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -643,6 +702,7 @@ class ScheduleManagementPage extends ConsumerWidget {
     });
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: jadwalHari.length,
       itemBuilder: (context, index) {
