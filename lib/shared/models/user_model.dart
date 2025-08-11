@@ -10,6 +10,10 @@ class UserModel {
   final String? rfidCardId; // ID kartu RFID untuk presensi otomatis
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? nim;
+  final String? jurusan;
+  final String? kampus;
+  final String? tempatKos;
 
   const UserModel({
     required this.id,
@@ -22,6 +26,10 @@ class UserModel {
     this.rfidCardId,
     this.createdAt,
     this.updatedAt,
+    this.nim,
+    this.jurusan,
+    this.kampus,
+    this.tempatKos,
   });
 
   /// Factory constructor untuk membuat UserModel dari JSON
@@ -45,6 +53,10 @@ class UserModel {
               json['updatedAt'].millisecondsSinceEpoch,
             )
           : null,
+      nim: json['nim'] as String?,
+      jurusan: json['jurusan'] as String?,
+      kampus: json['kampus'] as String?,
+      tempatKos: json['tempatKos'] as String?,
     );
   }
 
@@ -61,6 +73,10 @@ class UserModel {
       'rfidCardId': rfidCardId,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'nim': nim,
+      'jurusan': jurusan,
+      'kampus': kampus,
+      'tempatKos': tempatKos,
     };
   }
 
@@ -76,6 +92,10 @@ class UserModel {
     String? rfidCardId,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? nim,
+    String? jurusan,
+    String? kampus,
+    String? tempatKos,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -88,6 +108,10 @@ class UserModel {
       rfidCardId: rfidCardId ?? this.rfidCardId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      nim: nim ?? this.nim,
+      jurusan: jurusan ?? this.jurusan,
+      kampus: kampus ?? this.kampus,
+      tempatKos: tempatKos ?? this.tempatKos,
     );
   }
 
@@ -105,6 +129,71 @@ class UserModel {
 
   /// Check apakah user perlu setup RFID (santri tanpa RFID)
   bool get needsRfidSetup => isSantri && !hasRfidSetup;
+
+  /// Daftar pilihan tempat kos
+  static const List<String> tempatKosPilihan = [
+    'Asrama Putra',
+    'Kos Pak Harsono',
+    'Kos Pak Sigit',
+    'Asrama Putri',
+    'Kos Pak Sukadi',
+    'Kos Abah Rahmat',
+    'Kos Biru',
+    'Kos Bu Mardiana',
+    'Kos Pak Sugi',
+    'Lainnya',
+  ];
+
+  /// Daftar pilihan kampus (contoh - bisa disesuaikan)
+  static const List<String> kampusPilihan = [
+    'Institut Teknologi Sumatera',
+    'UIN Raden Intan Lampung',
+    'Universitas Lampung',
+    'Institut Maritim Prasetya Mandiri',
+    'Universitas Bandar Lampung',
+    'Universitas Teknokrat Indonesia',
+    'Universitas Muhammadiyah Metro',
+    'Universitas Muhammadiyah Lampung',
+    'Universitas Malahayati',
+    'Universitas Mitra Indonesia',
+    'Universitas Saburai',
+    'Universitas Tulang bawang',
+    'Institut Informatika dan Bisnis Darmajaya',
+    'STIKP PGRI Lampung',
+    'Politeknik Negeri Lampung',
+    'Universitas Terbuka',
+    'Lainnya',
+  ];
+
+  /// Helper method untuk mendapatkan icon tempat kos
+  static String getTempatKosIcon(String? tempatKos) {
+    if (tempatKos == null) return '🏠';
+
+    switch (tempatKos.toLowerCase()) {
+      case 'asrama putra':
+      case 'asrama putri':
+        return '🏢';
+      case 'kos pak harsono':
+      case 'kos pak sigit':
+      case 'kos pak sukadi':
+      case 'kos pak sugi':
+        return '🏘️';
+      case 'kos abah rahmat':
+        return '🕌';
+      case 'kos biru':
+        return '🔵';
+      case 'kos bu mardiana':
+        return '🏡';
+      default:
+        return '🏠';
+    }
+  }
+
+  /// Helper method untuk format tempat kos dengan icon
+  String get formattedTempatKos {
+    if (tempatKos == null || tempatKos!.isEmpty) return 'Belum diatur';
+    return '${getTempatKosIcon(tempatKos)} $tempatKos';
+  }
 
   @override
   String toString() {

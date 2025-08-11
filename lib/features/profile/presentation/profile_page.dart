@@ -342,13 +342,16 @@ class ProfilePage extends ConsumerWidget {
             icon: Icons.person_outline,
             title: 'Edit Profil',
             subtitle: 'Ubah informasi profil Anda',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => EditProfilePage(user: user),
-                ),
+                MaterialPageRoute(builder: (_) => EditProfilePage(user: user)),
               );
+
+              // Refresh data if profile was updated
+              if (result == true) {
+                ref.invalidate(userProfileProvider);
+              }
             },
           ),
           const Divider(height: 1),
