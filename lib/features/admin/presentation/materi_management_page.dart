@@ -22,8 +22,6 @@ class _MateriManagementPageState extends ConsumerState<MateriManagementPage> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Kelola Materi Kajian'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(

@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/helpers/messaging_helper.dart';
+import '../../../shared/providers/materi_provider.dart';
+import '../../../shared/services/materi_service.dart';
 
 /// Model untuk jadwal kegiatan
 class JadwalKegiatan {
@@ -17,6 +19,8 @@ class JadwalKegiatan {
   final TimeOfDay waktuSelesai;
   final String tempat;
   final String kategori;
+  final String? materiId; // ID materi yang dipilih
+  final String? materiNama; // Nama materi untuk display
   final bool isAktif;
   final DateTime createdAt;
 
@@ -31,6 +35,8 @@ class JadwalKegiatan {
     required this.waktuSelesai,
     required this.tempat,
     required this.kategori,
+    this.materiId,
+    this.materiNama,
     this.isAktif = true,
     required this.createdAt,
   });
@@ -49,6 +55,8 @@ class JadwalKegiatan {
       waktuSelesai: _timeFromString(json['waktuSelesai'] ?? '00:00'),
       tempat: json['tempat'] ?? '',
       kategori: json['kategori'] ?? 'umum',
+      materiId: json['materiId'],
+      materiNama: json['materiNama'],
       isAktif: json['isAktif'] ?? true,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -67,6 +75,8 @@ class JadwalKegiatan {
           '${waktuSelesai.hour.toString().padLeft(2, '0')}:${waktuSelesai.minute.toString().padLeft(2, '0')}',
       'tempat': tempat,
       'kategori': kategori,
+      if (materiId != null) 'materiId': materiId,
+      if (materiNama != null) 'materiNama': materiNama,
       'isAktif': isAktif,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -766,6 +776,35 @@ class ScheduleManagementPage extends ConsumerWidget {
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
+              if (jadwal.materiNama != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.menu_book, size: 14, color: Colors.green[700]),
+                      const SizedBox(width: 4),
+                      Text(
+                        jadwal.materiNama!,
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -956,7 +995,7 @@ class ScheduleManagementPage extends ConsumerWidget {
 }
 
 /// Dialog form untuk menambah/edit jadwal
-class _JadwalFormDialog extends StatefulWidget {
+class _JadwalFormDialog extends ConsumerStatefulWidget {
   final JadwalKegiatan? jadwal;
   final String? preselectedDay;
   final String? jenisJadwal;
@@ -970,10 +1009,10 @@ class _JadwalFormDialog extends StatefulWidget {
   });
 
   @override
-  State<_JadwalFormDialog> createState() => _JadwalFormDialogState();
+  ConsumerState<_JadwalFormDialog> createState() => _JadwalFormDialogState();
 }
 
-class _JadwalFormDialogState extends State<_JadwalFormDialog> {
+class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
   final _deskripsiController = TextEditingController();
@@ -983,6 +1022,8 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
   String _selectedHari = 'Senin';
   DateTime? _selectedDate;
   String _selectedKategori = 'umum';
+  String? _selectedMateriId;
+  String? _selectedMateriNama;
   TimeOfDay _waktuMulai = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _waktuSelesai = const TimeOfDay(hour: 9, minute: 0);
   bool _isAktif = true;
@@ -1016,6 +1057,8 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       _selectedHari = widget.jadwal!.hari ?? 'Senin';
       _selectedDate = widget.jadwal!.tanggal;
       _selectedKategori = widget.jadwal!.kategori;
+      _selectedMateriId = widget.jadwal!.materiId;
+      _selectedMateriNama = widget.jadwal!.materiNama;
       _waktuMulai = widget.jadwal!.waktuMulai;
       _waktuSelesai = widget.jadwal!.waktuSelesai;
       _isAktif = widget.jadwal!.isAktif;
@@ -1241,10 +1284,191 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
                   onChanged: (value) {
                     setState(() {
                       _selectedKategori = value!;
+                      // Reset materi jika kategori bukan kajian/tahfidz
+                      if (value != 'kajian' && value != 'tahfidz') {
+                        _selectedMateriId = null;
+                        _selectedMateriNama = null;
+                      }
                     });
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // Dropdown untuk memilih materi (khusus kategori kajian/tahfidz)
+                if (_selectedKategori == 'kajian' ||
+                    _selectedKategori == 'tahfidz') ...[
+                  Builder(
+                    builder: (context) {
+                      final materiAsync = ref.watch(materiProvider);
+
+                      return materiAsync.when(
+                        data: (materiList) {
+                          print(
+                            'DEBUG: Materi loaded: ${materiList.length} items',
+                          );
+                          if (materiList.isEmpty) {
+                            return Column(
+                              children: [
+                                const InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Materi (Opsional)',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  child: Text(
+                                    'Belum ada materi tersedia',
+                                    style: TextStyle(color: Colors.orange),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    try {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Membuat dummy data materi...',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                        ),
+                                      );
+
+                                      await MateriService.createDummyMateri();
+
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).hideCurrentSnackBar();
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              '✅ Dummy data materi berhasil dibuat!',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).hideCurrentSnackBar();
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('❌ Error: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Icons.storage),
+                                  label: const Text('Buat Data Dummy'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return DropdownButtonFormField<String>(
+                            value: _selectedMateriId,
+                            decoration: const InputDecoration(
+                              labelText: 'Materi (Opsional)',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            isExpanded: true,
+                            items: [
+                              const DropdownMenuItem(
+                                value: null,
+                                child: Text(
+                                  'Pilih Materi (Opsional)',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                              ...materiList.map((materi) {
+                                return DropdownMenuItem(
+                                  value: materi.id,
+                                  child: Text(
+                                    materi.nama,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                );
+                              }),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedMateriId = value;
+                                if (value != null) {
+                                  final selectedMateri = materiList.firstWhere(
+                                    (m) => m.id == value,
+                                  );
+                                  _selectedMateriNama = selectedMateri.nama;
+                                } else {
+                                  _selectedMateriNama = null;
+                                }
+                              });
+                            },
+                          );
+                        },
+                        loading: () => const InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Materi (Opsional)',
+                            border: OutlineInputBorder(),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text('Memuat materi...'),
+                            ],
+                          ),
+                        ),
+                        error: (error, stack) => Column(
+                          children: [
+                            InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Materi (Opsional)',
+                                border: OutlineInputBorder(),
+                              ),
+                              child: Text(
+                                'Error: $error',
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                ref.invalidate(materiProvider);
+                              },
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Coba Lagi'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 Row(
                   children: [
@@ -1329,6 +1553,8 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
       waktuSelesai: _waktuSelesai,
       tempat: _tempatController.text.trim(),
       kategori: _selectedKategori,
+      materiId: _selectedMateriId,
+      materiNama: _selectedMateriNama,
       isAktif: _isAktif,
       createdAt: widget.jadwal?.createdAt ?? DateTime.now(),
     );
