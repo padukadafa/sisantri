@@ -451,8 +451,6 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
   Color _getKategoriColor(String? kategori) {
     switch (kategori?.toLowerCase()) {
-      case 'sholat':
-        return Colors.green;
       case 'kajian':
         return Colors.blue;
       case 'tahfidz':

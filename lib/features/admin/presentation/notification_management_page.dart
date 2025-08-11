@@ -310,18 +310,6 @@ class _NotificationManagementPageState
             ),
             const SizedBox(height: 16),
             _buildQuickActionButton(
-              'Pengingat Sholat Maghrib',
-              'Kirim pengingat sholat maghrib kepada semua santri',
-              Icons.access_time,
-              Colors.orange,
-              () => _sendQuickNotification(
-                'Pengingat Sholat',
-                'Waktu sholat maghrib akan segera tiba. Bersiaplah untuk sholat berjamaah.',
-                'santri',
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildQuickActionButton(
               'Pengumuman Kegiatan',
               'Kirim pengumuman kegiatan kepada semua santri',
               Icons.event,

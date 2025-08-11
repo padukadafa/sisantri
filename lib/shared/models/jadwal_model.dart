@@ -2,7 +2,6 @@
 enum TipeJadwal {
   kegiatan('kegiatan'),
   pengajian('pengajian'),
-  sholat('sholat'),
   kajian('kajian'),
   tahfidz('tahfidz'),
   kerjaBakti('kerja_bakti'),

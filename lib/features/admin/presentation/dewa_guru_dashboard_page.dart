@@ -328,11 +328,11 @@ class DewanGuruDashboardPage extends ConsumerWidget {
         'color': Colors.orange,
       },
       {
-        'title': 'Presensi Sholat Maghrib',
+        'title': 'Presensi Kajian Tafsir',
         'description': '42 dari 45 santri telah melakukan presensi',
         'time': '3 jam lalu',
-        'icon': Icons.mosque,
-        'color': Colors.green,
+        'icon': Icons.menu_book,
+        'color': Colors.blue,
       },
       {
         'title': 'Ranking Diperbarui',

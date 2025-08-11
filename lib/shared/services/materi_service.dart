@@ -164,54 +164,6 @@ class MateriService {
           updatedAt: DateTime.now(),
         ),
 
-        // Materi Fiqih
-        MateriModel(
-          id: '',
-          nama: 'Fiqih Ibadah',
-          jenis: JenisMateri.fiqih,
-          deskripsi: 'Dasar-dasar fiqih ibadah (shalat, puasa, zakat, haji)',
-          totalHalaman: 250,
-          tags: ['fiqih', 'ibadah', 'shalat', 'puasa'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-
-        // Materi Akidah
-        MateriModel(
-          id: '',
-          nama: 'Aqidah Ahli Sunnah wal Jamaah',
-          jenis: JenisMateri.akidah,
-          deskripsi: 'Pembelajaran akidah sesuai manhaj salaf',
-          totalHalaman: 180,
-          tags: ['akidah', 'tauhid', 'salaf'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-
-        // Materi Akhlak
-        MateriModel(
-          id: '',
-          nama: 'Akhlakul Karimah',
-          jenis: JenisMateri.akhlak,
-          deskripsi: 'Pembinaan akhlak mulia dalam kehidupan sehari-hari',
-          totalHalaman: 200,
-          tags: ['akhlak', 'adab', 'karakter'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-
-        // Materi Sirah
-        MateriModel(
-          id: '',
-          nama: 'Sirah Nabawiyah',
-          jenis: JenisMateri.sirah,
-          deskripsi: 'Sejarah hidup Rasulullah SAW dan para sahabat',
-          totalHalaman: 350,
-          tags: ['sirah', 'sejarah', 'rasulullah', 'sahabat'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-
         // Materi Bahasa Arab
         MateriModel(
           id: '',

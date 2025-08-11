@@ -35,7 +35,7 @@ void main(List<String> args) async {
 
     print('\n✅ Script selesai dijalankan!');
     print('\n📊 Data yang dibuat:');
-    print('   • 2 jadwal sholat (Subuh & Maghrib)');
+    print('   • 2 jadwal kajian (Tafsir & Akhlak)');
     print('   • 2 jadwal kajian/pengajian');
     print('   • 2 jadwal tahfidz');
     print('   • 1 jadwal kerja bakti');

@@ -263,34 +263,6 @@ class DummyDataService {
     final baseDate = DateTime.now();
 
     final jadwalData = [
-      // Sholat
-      {
-        'nama': 'Sholat Subuh Berjamaah',
-        'tanggal': baseDate.add(const Duration(days: 1)),
-        'waktuMulai': '04:30',
-        'waktuSelesai': '05:00',
-        'hari': 'Senin',
-        'kategori': 'sholat',
-        'tempat': 'Masjid Al-Ikhlas',
-        'deskripsi': 'Sholat subuh berjamaah dilanjutkan dengan dzikir pagi',
-        'isAktif': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-      {
-        'nama': 'Sholat Maghrib Berjamaah',
-        'tanggal': baseDate.add(const Duration(days: 1)),
-        'waktuMulai': '18:00',
-        'waktuSelesai': '18:30',
-        'hari': 'Senin',
-        'kategori': 'sholat',
-        'tempat': 'Masjid Al-Ikhlas',
-        'deskripsi': 'Sholat maghrib berjamaah dilanjutkan dengan mengaji',
-        'isAktif': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      },
-
       // Kajian/Pengajian
       {
         'nama': 'Kajian Tafsir Al-Quran',

@@ -423,8 +423,6 @@ class ScheduleManagementPage extends ConsumerWidget {
 
   Color _getKategoriColor(String kategori) {
     switch (kategori.toLowerCase()) {
-      case 'sholat':
-        return Colors.green;
       case 'kajian':
         return Colors.blue;
       case 'tahfidz':
@@ -619,7 +617,6 @@ class _JadwalFormDialogState extends State<_JadwalFormDialog> {
     'Minggu',
   ];
   final List<String> _kategoriOptions = [
-    'sholat',
     'kajian',
     'tahfidz',
     'kerja bakti',

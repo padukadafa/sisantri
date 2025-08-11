@@ -7,44 +7,58 @@ import '../../../shared/services/presensi_service.dart';
 final selectedPeriodProvider = StateProvider<String>((ref) => 'Minggu Ini');
 
 /// Provider untuk ringkasan presensi
-final presensiSummaryProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final presensiSummaryProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   return await PresensiService.getPresensiSummary();
 });
 
 /// Provider untuk statistik presensi berdasarkan periode
-final presensiStatsProvider = FutureProvider.family<List<PresensiStatsModel>, String>((ref, period) async {
-  final now = DateTime.now();
-  DateTime startDate;
-  DateTime endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
+final presensiStatsProvider =
+    FutureProvider.family<List<PresensiStatsModel>, String>((
+      ref,
+      period,
+    ) async {
+      final now = DateTime.now();
+      DateTime startDate;
+      DateTime endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
-  switch (period) {
-    case 'Hari Ini':
-      startDate = DateTime(now.year, now.month, now.day);
-      break;
-    case 'Minggu Ini':
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-      startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
-      break;
-    case 'Bulan Ini':
-      startDate = DateTime(now.year, now.month, 1);
-      break;
-    case 'Semester Ini':
-      // Asumsi semester dimulai dari bulan Juli atau Januari
-      final semesterStart = now.month >= 7 ? DateTime(now.year, 7, 1) : DateTime(now.year, 1, 1);
-      startDate = semesterStart;
-      break;
-    default:
-      startDate = DateTime(now.year, now.month, now.day);
-  }
+      switch (period) {
+        case 'Hari Ini':
+          startDate = DateTime(now.year, now.month, now.day);
+          break;
+        case 'Minggu Ini':
+          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+          startDate = DateTime(
+            startOfWeek.year,
+            startOfWeek.month,
+            startOfWeek.day,
+          );
+          break;
+        case 'Bulan Ini':
+          startDate = DateTime(now.year, now.month, 1);
+          break;
+        case 'Semester Ini':
+          // Asumsi semester dimulai dari bulan Juli atau Januari
+          final semesterStart = now.month >= 7
+              ? DateTime(now.year, 7, 1)
+              : DateTime(now.year, 1, 1);
+          startDate = semesterStart;
+          break;
+        default:
+          startDate = DateTime(now.year, now.month, now.day);
+      }
 
-  return await PresensiService.getPresensiStats(
-    startDate: startDate,
-    endDate: endDate,
-  );
-});
+      return await PresensiService.getPresensiStats(
+        startDate: startDate,
+        endDate: endDate,
+      );
+    });
 
 /// Provider untuk aktivitas terbaru
-final recentActivitiesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final recentActivitiesProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) async {
   return await PresensiService.getRecentActivities(limit: 5);
 });
 
@@ -59,12 +73,12 @@ class PresensiSummaryPage extends ConsumerStatefulWidget {
 class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  
+
   final List<String> periods = [
     'Hari Ini',
     'Minggu Ini',
     'Bulan Ini',
-    'Semester Ini'
+    'Semester Ini',
   ];
 
   @override
@@ -82,7 +96,7 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
   @override
   Widget build(BuildContext context) {
     final selectedPeriod = ref.watch(selectedPeriodProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rangkuman Presensi'),
@@ -96,10 +110,10 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
               ref.read(selectedPeriodProvider.notifier).state = value;
             },
             itemBuilder: (BuildContext context) => periods
-                .map((period) => PopupMenuItem<String>(
-                      value: period,
-                      child: Text(period),
-                    ))
+                .map(
+                  (period) =>
+                      PopupMenuItem<String>(value: period, child: Text(period)),
+                )
                 .toList(),
             child: Container(
               margin: const EdgeInsets.only(right: 16),
@@ -107,7 +121,9 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
               decoration: BoxDecoration(
                 color: AppTheme.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -171,7 +187,8 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                 final summaryAsync = ref.watch(presensiSummaryProvider);
                 return summaryAsync.when(
                   loading: () => _buildSummaryCardsLoading(),
-                  error: (error, stack) => _buildSummaryCardsError(error.toString()),
+                  error: (error, stack) =>
+                      _buildSummaryCardsError(error.toString()),
                   data: (summary) => _buildSummaryCardsWithData(summary),
                 );
               },
@@ -184,8 +201,10 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                 final activitiesAsync = ref.watch(recentActivitiesProvider);
                 return activitiesAsync.when(
                   loading: () => _buildRecentActivitiesLoading(),
-                  error: (error, stack) => _buildRecentActivitiesError(error.toString()),
-                  data: (activities) => _buildRecentActivitiesWithData(activities),
+                  error: (error, stack) =>
+                      _buildRecentActivitiesError(error.toString()),
+                  data: (activities) =>
+                      _buildRecentActivitiesWithData(activities),
                 );
               },
             ),
@@ -218,7 +237,8 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
             Expanded(
               child: _buildSummaryCard(
                 title: 'Rata-rata Hadir',
-                value: '${weeklyStats['persentaseKehadiran'].toStringAsFixed(0)}%',
+                value:
+                    '${weeklyStats['persentaseKehadiran'].toStringAsFixed(0)}%',
                 subtitle: 'Dari $totalSantri santri',
                 icon: Icons.trending_up,
                 color: Colors.blue,
@@ -346,44 +366,52 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                 ),
               )
             else
-              ...activities.map((activity) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _getColorFromString(activity['color'] as String).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        _getIconFromString(activity['icon'] as String),
-                        color: _getColorFromString(activity['color'] as String),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            activity['message'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+              ...activities.map(
+                (activity) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: _getColorFromString(
+                            activity['color'] as String,
+                          ).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          _getIconFromString(activity['icon'] as String),
+                          color: _getColorFromString(
+                            activity['color'] as String,
                           ),
-                          Text(
-                            activity['time'] as String,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              activity['message'] as String,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              activity['time'] as String,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              )),
+              ),
           ],
         ),
       ),
@@ -510,10 +538,7 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -547,10 +572,18 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: List.generate(7, (index) {
-                  final days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+                  final days = [
+                    'Sen',
+                    'Sel',
+                    'Rab',
+                    'Kam',
+                    'Jum',
+                    'Sab',
+                    'Min',
+                  ];
                   final values = [85, 92, 88, 95, 90, 75, 80];
                   final height = (values[index] / 100) * 150;
-                  
+
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -575,10 +608,7 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                       const SizedBox(height: 8),
                       Text(
                         days[index],
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   );
@@ -595,21 +625,21 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
     final activities = [
       {
         'type': 'hadir',
-        'message': 'Ahmad Rizki melakukan presensi Sholat Maghrib',
+        'message': 'Ahmad Rizki melakukan presensi Kajian Tafsir',
         'time': '2 menit yang lalu',
         'icon': Icons.check_circle,
         'color': Colors.green,
       },
       {
         'type': 'terlambat',
-        'message': 'Budi Santoso terlambat 15 menit Sholat Isya',
+        'message': 'Budi Santoso terlambat 15 menit Kajian Hadist',
         'time': '5 menit yang lalu',
         'icon': Icons.schedule,
         'color': Colors.orange,
       },
       {
         'type': 'alpha',
-        'message': 'Candra Wijaya tidak hadir Sholat Subuh',
+        'message': 'Candra Wijaya tidak hadir Tahfidz Pagi',
         'time': '1 jam yang lalu',
         'icon': Icons.cancel,
         'color': Colors.red,
@@ -635,44 +665,46 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
               ],
             ),
             const SizedBox(height: 16),
-            ...activities.map((activity) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: (activity['color'] as Color).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+            ...activities.map(
+              (activity) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (activity['color'] as Color).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        activity['icon'] as IconData,
+                        color: activity['color'] as Color,
+                        size: 20,
+                      ),
                     ),
-                    child: Icon(
-                      activity['icon'] as IconData,
-                      color: activity['color'] as Color,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          activity['message'] as String,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          activity['time'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            activity['message'] as String,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                        ),
-                      ],
+                          Text(
+                            activity['time'] as String,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            )),
+            ),
           ],
         ),
       ),
@@ -681,11 +713,41 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
 
   Widget _buildPerSantriTab() {
     final santriList = [
-      {'nama': 'Ahmad Rizki', 'hadir': 28, 'terlambat': 2, 'alpha': 0, 'persentase': 93},
-      {'nama': 'Budi Santoso', 'hadir': 26, 'terlambat': 3, 'alpha': 1, 'persentase': 87},
-      {'nama': 'Candra Wijaya', 'hadir': 25, 'terlambat': 2, 'alpha': 3, 'persentase': 83},
-      {'nama': 'Dedi Kurniawan', 'hadir': 29, 'terlambat': 1, 'alpha': 0, 'persentase': 97},
-      {'nama': 'Eko Prasetyo', 'hadir': 27, 'terlambat': 2, 'alpha': 1, 'persentase': 90},
+      {
+        'nama': 'Ahmad Rizki',
+        'hadir': 28,
+        'terlambat': 2,
+        'alpha': 0,
+        'persentase': 93,
+      },
+      {
+        'nama': 'Budi Santoso',
+        'hadir': 26,
+        'terlambat': 3,
+        'alpha': 1,
+        'persentase': 87,
+      },
+      {
+        'nama': 'Candra Wijaya',
+        'hadir': 25,
+        'terlambat': 2,
+        'alpha': 3,
+        'persentase': 83,
+      },
+      {
+        'nama': 'Dedi Kurniawan',
+        'hadir': 29,
+        'terlambat': 1,
+        'alpha': 0,
+        'persentase': 97,
+      },
+      {
+        'nama': 'Eko Prasetyo',
+        'hadir': 27,
+        'terlambat': 2,
+        'alpha': 1,
+        'persentase': 90,
+      },
     ];
 
     return SingleChildScrollView(
@@ -694,14 +756,18 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
         children: [
           Card(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -709,7 +775,10 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                       const SizedBox(width: 8),
                       const Text(
                         'Presensi Per Santri',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -718,11 +787,15 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: santriList.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final santri = santriList[index];
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       leading: CircleAvatar(
                         backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                         child: Text(
@@ -739,23 +812,39 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
                       ),
                       subtitle: Row(
                         children: [
-                          _buildStatusBadge('H: ${santri['hadir']}', Colors.green),
+                          _buildStatusBadge(
+                            'H: ${santri['hadir']}',
+                            Colors.green,
+                          ),
                           const SizedBox(width: 4),
-                          _buildStatusBadge('T: ${santri['terlambat']}', Colors.orange),
+                          _buildStatusBadge(
+                            'T: ${santri['terlambat']}',
+                            Colors.orange,
+                          ),
                           const SizedBox(width: 4),
-                          _buildStatusBadge('A: ${santri['alpha']}', Colors.red),
+                          _buildStatusBadge(
+                            'A: ${santri['alpha']}',
+                            Colors.red,
+                          ),
                         ],
                       ),
                       trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getPercentageColor(santri['persentase'] as int).withOpacity(0.1),
+                          color: _getPercentageColor(
+                            santri['persentase'] as int,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${santri['persentase']}%',
                           style: TextStyle(
-                            color: _getPercentageColor(santri['persentase'] as int),
+                            color: _getPercentageColor(
+                              santri['persentase'] as int,
+                            ),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -892,10 +981,7 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
       child: const Center(
         child: Text(
           'Grafik trend akan ditampilkan di sini',
-          style: TextStyle(
-            color: Colors.grey,
-            fontStyle: FontStyle.italic,
-          ),
+          style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
         ),
       ),
     );

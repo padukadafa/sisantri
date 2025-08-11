@@ -10,6 +10,7 @@ import 'manual_attendance_page.dart';
 import 'schedule_management_page.dart';
 import 'announcement_management_page.dart';
 import 'notification_management_page.dart';
+import 'materi_management_page.dart';
 
 /// Provider untuk statistics admin dashboard
 final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
@@ -208,7 +209,6 @@ class AdminDashboardPage extends ConsumerWidget {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.2,
       children: [
         _buildStatCard(
           'Total Santri',
@@ -392,7 +392,12 @@ class AdminDashboardPage extends ConsumerWidget {
                     Icons.menu_book,
                     Colors.teal,
                     () {
-                      _showMateriManagementDialog(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MateriManagementPage(),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -662,53 +667,6 @@ class AdminDashboardPage extends ConsumerWidget {
     return '${diff.inDays}h yang lalu';
   }
 
-  void _showMateriManagementDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Kelola Materi Kajian'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.add, color: Colors.green),
-              title: const Text('Tambah Materi Baru'),
-              subtitle: const Text('Buat materi kajian baru'),
-              onTap: () {
-                Navigator.pop(context);
-                _showAddMateriDialog(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.list, color: Colors.blue),
-              title: const Text('Lihat Semua Materi'),
-              subtitle: const Text('Kelola materi yang ada'),
-              onTap: () {
-                Navigator.pop(context);
-                _showMateriListDialog(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.analytics, color: Colors.purple),
-              title: const Text('Progress Santri'),
-              subtitle: const Text('Lihat progress kajian santri'),
-              onTap: () {
-                Navigator.pop(context);
-                _showProgressDialog(context);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showDummyDataDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -754,33 +712,6 @@ class AdminDashboardPage extends ConsumerWidget {
             child: const Text('Batal'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showAddMateriDialog(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur tambah materi akan segera tersedia'),
-        backgroundColor: Colors.blue,
-      ),
-    );
-  }
-
-  void _showMateriListDialog(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur daftar materi akan segera tersedia'),
-        backgroundColor: Colors.blue,
-      ),
-    );
-  }
-
-  void _showProgressDialog(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur progress santri akan segera tersedia'),
-        backgroundColor: Colors.purple,
       ),
     );
   }

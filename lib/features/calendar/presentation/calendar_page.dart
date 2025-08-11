@@ -12,7 +12,7 @@ class KegiatanEvent {
   final TimeOfDay startTime;
   final TimeOfDay endTime;
   final String location;
-  final String category; // 'sholat', 'kajian', 'olahraga', 'umum'
+  final String category; // 'kajian', 'olahraga', 'umum'
   final bool isWajib;
   final String? pengampu; // Ustadz/Pengajar
 
@@ -34,20 +34,9 @@ class KegiatanEvent {
 final kegiatanListProvider = StateProvider<List<KegiatanEvent>>(
   (ref) => [
     KegiatanEvent(
-      id: '1',
-      title: 'Sholat Subuh Berjamaah',
-      description: 'Sholat Subuh berjamaah di Masjid Al-Awwabin',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 4, minute: 30),
-      endTime: const TimeOfDay(hour: 5, minute: 0),
-      location: 'Masjid Al-Awwabin',
-      category: 'sholat',
-      isWajib: true,
-    ),
-    KegiatanEvent(
       id: '2',
       title: 'Kajian Tafsir Al-Quran',
-      description: 'Kajian rutin tafsir Al-Quran setelah sholat Maghrib',
+      description: 'Kajian rutin tafsir Al-Quran pada malam hari',
       date: DateTime.now(),
       startTime: const TimeOfDay(hour: 19, minute: 30),
       endTime: const TimeOfDay(hour: 20, minute: 30),
@@ -77,18 +66,6 @@ final kegiatanListProvider = StateProvider<List<KegiatanEvent>>(
       location: 'Seluruh Area Pondok',
       category: 'umum',
       isWajib: true,
-    ),
-    KegiatanEvent(
-      id: '5',
-      title: 'Sholat Jumat',
-      description: 'Sholat Jumat berjamaah dengan khutbah',
-      date: DateTime.now().add(const Duration(days: 5)),
-      startTime: const TimeOfDay(hour: 12, minute: 0),
-      endTime: const TimeOfDay(hour: 13, minute: 0),
-      location: 'Masjid Al-Awwabin',
-      category: 'sholat',
-      isWajib: true,
-      pengampu: 'Ustadz Muhammad Hakim',
     ),
   ],
 );
@@ -357,7 +334,6 @@ class CalendarPage extends ConsumerWidget {
   ) {
     final categories = [
       {'value': 'semua', 'label': 'Semua', 'icon': Icons.all_inclusive},
-      {'value': 'sholat', 'label': 'Sholat', 'icon': Icons.mosque},
       {'value': 'kajian', 'label': 'Kajian', 'icon': Icons.menu_book},
       {'value': 'olahraga', 'label': 'Olahraga', 'icon': Icons.sports},
       {'value': 'umum', 'label': 'Umum', 'icon': Icons.event},
@@ -638,8 +614,6 @@ class CalendarPage extends ConsumerWidget {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case 'sholat':
-        return Colors.green;
       case 'kajian':
         return Colors.blue;
       case 'olahraga':
@@ -653,8 +627,6 @@ class CalendarPage extends ConsumerWidget {
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
-      case 'sholat':
-        return Icons.mosque;
       case 'kajian':
         return Icons.menu_book;
       case 'olahraga':
@@ -763,8 +735,6 @@ class CalendarPage extends ConsumerWidget {
 
   String _getCategoryLabel(String category) {
     switch (category) {
-      case 'sholat':
-        return 'Sholat';
       case 'kajian':
         return 'Kajian';
       case 'olahraga':

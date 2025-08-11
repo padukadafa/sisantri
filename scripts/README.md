@@ -22,13 +22,9 @@ dart scripts/create_dummy_jadwal.dart --all
 
 ## 📅 Data Yang Dibuat
 
-Script akan membuat 11 jadwal dengan kategori berbeda:
+Script akan membuat 9 jadwal dengan kategori berbeda:
 
-### 🕌 Sholat (2 jadwal)
-- Sholat Subuh Berjamaah (04:30-05:00)
-- Sholat Maghrib Berjamaah (18:00-18:30)
-
-### 📖 Kajian/Pengajian (2 jadwal)
+###  Kajian/Pengajian (2 jadwal)
 - Kajian Tafsir Al-Quran (Selasa 19:30-21:00)
 - Pengajian Akhlak (Rabu 20:00-21:30)
 
@@ -52,7 +48,7 @@ Script akan membuat 11 jadwal dengan kategori berbeda:
 ## 🔧 Features
 
 - **isAktif field**: Semua jadwal memiliki status aktif/tidak aktif
-- **Kategori lengkap**: Sholat, Kajian, Tahfidz, Kerja Bakti, Olahraga, Kegiatan
+- **Kategori lengkap**: Kajian, Tahfidz, Kerja Bakti, Olahraga, Kegiatan
 - **Data pengajian**: Pemateri dan tema untuk kajian/pengajian
 - **Waktu detail**: Waktu mulai dan selesai
 - **Timestamp**: CreatedAt dan updatedAt otomatis

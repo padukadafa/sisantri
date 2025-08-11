@@ -5,7 +5,7 @@ class PresensiModel {
   final String id;
   final String userId;
   final String userName;
-  final String jenisKegiatan; // 'sholat_subuh', 'sholat_maghrib', etc
+  final String jenisKegiatan; // 'kajian_tafsir', 'tahfidz_pagi', etc
   final DateTime tanggal;
   final DateTime? waktuPresensi;
   final String status; // 'hadir', 'terlambat', 'alpha'
