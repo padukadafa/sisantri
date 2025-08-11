@@ -141,7 +141,7 @@ class _JadwalPengajianTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        jadwal.tema,
+                        jadwal.tema ?? jadwal.nama,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -175,14 +175,14 @@ class _JadwalPengajianTab extends ConsumerWidget {
                 ),
               ],
             ),
-            if (jadwal.lokasi != null) ...[
+            if (jadwal.tempat != null) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 8),
                   Text(
-                    jadwal.lokasi!,
+                    jadwal.tempat!,
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
@@ -286,7 +286,7 @@ class _JadwalKegiatanTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        jadwal.namaKegiatan,
+                        jadwal.nama,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -294,7 +294,7 @@ class _JadwalKegiatanTab extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        jadwal.lokasi,
+                        jadwal.tempat ?? '',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],

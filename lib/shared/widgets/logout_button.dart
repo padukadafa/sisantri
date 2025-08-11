@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/services/auth_service.dart';
+import '../helpers/messaging_helper.dart';
 
 /// Widget tombol logout yang dapat ditempatkan di mana saja
 class LogoutButton extends StatelessWidget {
@@ -179,6 +180,9 @@ class LogoutButton extends StatelessWidget {
     }
 
     try {
+      // Cleanup messaging sebelum logout
+      await MessagingHelper.unsubscribeFromAllTopics();
+
       await AuthService.signOut();
 
       // Tutup loading dialog

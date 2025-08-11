@@ -182,7 +182,7 @@ final notificationsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
           notifications.add({
             'type': 'kegiatan',
             'title': 'Kegiatan Hari Ini',
-            'message': kegiatan.namaKegiatan,
+            'message': kegiatan.nama,
             'time': kegiatan.formattedWaktu,
             'icon': Icons.event,
             'color': Colors.blue,
@@ -281,26 +281,6 @@ class DashboardPage extends ConsumerWidget {
                 ),
               );
             },
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'logout') {
-                _showLogoutDialog(context);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Logout', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),
@@ -825,7 +805,7 @@ class DashboardPage extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item.namaKegiatan,
+                              item.nama,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
@@ -834,7 +814,7 @@ class DashboardPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${item.formattedTanggal} • ${item.lokasi}',
+                              '${item.formattedTanggal} • ${item.tempat ?? ''}',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 13,
@@ -1283,82 +1263,6 @@ class DashboardPage extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Menampilkan dialog konfirmasi logout
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.withAlpha(15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withAlpha(50), width: 1),
-              ),
-              child: const Icon(Icons.logout, color: Colors.red, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Konfirmasi Logout',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2E2E2E),
-              ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari aplikasi?',
-          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280), height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: const Text(
-              'Batal',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await AuthService.signOut();
-                // Navigation akan ditangani oleh AuthWrapper
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: const Text(
-              'Logout',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
           ),
         ],
       ),

@@ -14,6 +14,7 @@ class UserModel {
   final String? jurusan;
   final String? kampus;
   final String? tempatKos;
+  final List<String>? deviceTokens; // FCM tokens untuk push notifications
 
   const UserModel({
     required this.id,
@@ -30,6 +31,7 @@ class UserModel {
     this.jurusan,
     this.kampus,
     this.tempatKos,
+    this.deviceTokens,
   });
 
   /// Factory constructor untuk membuat UserModel dari JSON
@@ -57,6 +59,9 @@ class UserModel {
       jurusan: json['jurusan'] as String?,
       kampus: json['kampus'] as String?,
       tempatKos: json['tempatKos'] as String?,
+      deviceTokens: json['deviceTokens'] != null
+          ? List<String>.from(json['deviceTokens'] as List)
+          : null,
     );
   }
 
@@ -77,6 +82,7 @@ class UserModel {
       'jurusan': jurusan,
       'kampus': kampus,
       'tempatKos': tempatKos,
+      'deviceTokens': deviceTokens,
     };
   }
 
@@ -96,6 +102,7 @@ class UserModel {
     String? jurusan,
     String? kampus,
     String? tempatKos,
+    List<String>? deviceTokens,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -112,6 +119,7 @@ class UserModel {
       jurusan: jurusan ?? this.jurusan,
       kampus: kampus ?? this.kampus,
       tempatKos: tempatKos ?? this.tempatKos,
+      deviceTokens: deviceTokens ?? this.deviceTokens,
     );
   }
 
@@ -129,6 +137,27 @@ class UserModel {
 
   /// Check apakah user perlu setup RFID (santri tanpa RFID)
   bool get needsRfidSetup => isSantri && !hasRfidSetup;
+
+  /// Check apakah user memiliki device tokens untuk push notifications
+  bool get hasDeviceTokens => deviceTokens != null && deviceTokens!.isNotEmpty;
+
+  /// Get list device tokens (tidak null)
+  List<String> get safeDeviceTokens => deviceTokens ?? [];
+
+  /// Method untuk menambah device token baru (tanpa duplikasi)
+  List<String> addDeviceToken(String token) {
+    final currentTokens = safeDeviceTokens;
+    if (!currentTokens.contains(token)) {
+      return [...currentTokens, token];
+    }
+    return currentTokens;
+  }
+
+  /// Method untuk menghapus device token
+  List<String> removeDeviceToken(String token) {
+    final currentTokens = safeDeviceTokens;
+    return currentTokens.where((t) => t != token).toList();
+  }
 
   /// Daftar pilihan tempat kos
   static const List<String> tempatKosPilihan = [

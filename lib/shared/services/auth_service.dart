@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../models/user_model.dart';
 
@@ -26,6 +27,12 @@ class AuthService {
         email: email,
         password: password,
       );
+
+      // Setelah login berhasil, update device token
+      if (credential.user != null) {
+        await _updateDeviceTokenAfterLogin();
+      }
+
       return credential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
@@ -102,6 +109,9 @@ class AuthService {
             role: 'santri',
           );
         }
+
+        // Update device token setelah login berhasil
+        await _updateDeviceTokenAfterLogin();
       }
 
       return userCredential;
@@ -115,6 +125,12 @@ class AuthService {
   /// Logout
   static Future<void> signOut() async {
     try {
+      // Hapus device token sebelum logout
+      final token = await _getDeviceToken();
+      if (token != null) {
+        await removeDeviceToken(token);
+      }
+
       await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
     } catch (e) {
       throw Exception('Error saat logout: $e');
@@ -337,6 +353,127 @@ class AuthService {
 
   /// Get current user ID
   static String? get currentUserId => currentUser?.uid;
+
+  /// Update device token untuk user saat ini
+  static Future<void> updateDeviceToken(String token) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        final userData = UserModel.fromJson({
+          'id': user.uid,
+          ...userDoc.data()!,
+        });
+
+        // Tambah token baru ke list (tanpa duplikasi)
+        final updatedTokens = userData.addDeviceToken(token);
+
+        await _firestore.collection('users').doc(user.uid).update({
+          'deviceTokens': updatedTokens,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      throw Exception('Error updating device token: $e');
+    }
+  }
+
+  /// Remove device token untuk user saat ini
+  static Future<void> removeDeviceToken(String token) async {
+    final user = currentUser;
+    if (user == null) return;
+
+    try {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        final userData = UserModel.fromJson({
+          'id': user.uid,
+          ...userDoc.data()!,
+        });
+
+        // Hapus token dari list
+        final updatedTokens = userData.removeDeviceToken(token);
+
+        await _firestore.collection('users').doc(user.uid).update({
+          'deviceTokens': updatedTokens,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      throw Exception('Error removing device token: $e');
+    }
+  }
+
+  /// Helper method untuk update device token setelah login
+  static Future<void> _updateDeviceTokenAfterLogin() async {
+    try {
+      // Import NotificationService di atas jika belum ada
+      // Dapatkan FCM token dari NotificationService
+      final token = await _getDeviceToken();
+      if (token != null) {
+        await updateDeviceToken(token);
+      }
+    } catch (e) {
+      // Log error tapi tidak throw, agar login tetap berhasil meski gagal update token
+      print('Warning: Failed to update device token after login: $e');
+    }
+  }
+
+  /// Helper method untuk mendapatkan device token
+  static Future<String?> _getDeviceToken() async {
+    try {
+      // Kita akan import NotificationService atau langsung gunakan FirebaseMessaging
+      final messaging = FirebaseMessaging.instance;
+      return await messaging.getToken();
+    } catch (e) {
+      print('Error getting device token: $e');
+      return null;
+    }
+  }
+
+  /// Get all users yang memiliki device tokens (untuk keperluan push notification)
+  static Future<List<UserModel>> getUsersWithDeviceTokens() async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('deviceTokens', isNotEqualTo: null)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
+          .where((user) => user.hasDeviceTokens)
+          .toList();
+    } catch (e) {
+      throw Exception('Error getting users with device tokens: $e');
+    }
+  }
+
+  /// Get device tokens untuk role tertentu (contoh: semua santri)
+  static Future<List<String>> getDeviceTokensByRole(String role) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: role)
+          .where('deviceTokens', isNotEqualTo: null)
+          .get();
+
+      List<String> allTokens = [];
+
+      for (final doc in querySnapshot.docs) {
+        final userData = UserModel.fromJson({'id': doc.id, ...doc.data()});
+
+        allTokens.addAll(userData.safeDeviceTokens);
+      }
+
+      return allTokens;
+    } catch (e) {
+      throw Exception('Error getting device tokens by role: $e');
+    }
+  }
 
   /// Get current user email
   static String? get currentUserEmail => currentUser?.email;

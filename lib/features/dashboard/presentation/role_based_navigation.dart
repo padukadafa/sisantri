@@ -6,6 +6,7 @@ import '../../../shared/models/user_model.dart';
 import '../../../shared/services/auth_service.dart';
 import '../../../shared/widgets/splash_screen.dart';
 import 'main_navigation.dart';
+import 'admin_navigation.dart';
 import 'dewa_guru_navigation.dart';
 
 /// Provider untuk mendapatkan data user saat ini dengan real-time updates
@@ -99,10 +100,11 @@ class RoleBasedNavigation extends ConsumerWidget {
         }
 
         // Navigasi berdasarkan role dengan validasi
-        if (user.isDewaGuru) {
+        if (user.isAdmin) {
+          return AdminNavigation(admin: user);
+        } else if (user.isDewaGuru) {
           return const DewaGuruNavigation();
-        } else if (user.isAdmin || user.isSantri) {
-          // Admin dan Santri menggunakan navigasi yang sama
+        } else if (user.isSantri) {
           return const MainNavigation();
         } else {
           // Role tidak dikenali

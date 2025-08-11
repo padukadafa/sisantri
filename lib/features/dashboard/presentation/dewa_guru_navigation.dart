@@ -9,7 +9,6 @@ import '../../../shared/services/presensi_service.dart';
 import '../../jadwal/presentation/jadwal_page.dart';
 import '../../presensi/presentation/presensi_summary_page.dart';
 import '../../leaderboard/presentation/leaderboard_page.dart';
-import '../../pengumuman/presentation/pengumuman_page.dart';
 import '../../profile/presentation/profile_page.dart';
 import '../../admin/presentation/dewa_guru_dashboard_page.dart';
 

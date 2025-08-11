@@ -2,6 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'auth_service.dart';
+
 /// Service untuk mengelola notifikasi lokal dan push notifications
 class NotificationService {
   static final FlutterLocalNotificationsPlugin
@@ -80,11 +82,29 @@ class NotificationService {
     String? token = await _firebaseMessaging.getToken();
     print('FCM Token: $token');
 
+    if (token != null) {
+      // Update token di Firestore melalui AuthService
+      try {
+        await _updateTokenInFirestore(token);
+      } catch (e) {
+        print('Error updating token in Firestore: $e');
+      }
+    }
+
     // Listen to token refresh
     _firebaseMessaging.onTokenRefresh.listen((newToken) {
       print('FCM Token refreshed: $newToken');
-      // TODO: Update token di Firestore
+      _updateTokenInFirestore(newToken);
     });
+  }
+
+  /// Helper method untuk update token di Firestore
+  static Future<void> _updateTokenInFirestore(String token) async {
+    try {
+      await AuthService.updateDeviceToken(token);
+    } catch (e) {
+      print('Error updating token in Firestore: $e');
+    }
   }
 
   /// Setup handler untuk foreground messages
@@ -177,5 +197,78 @@ class NotificationService {
   /// Unsubscribe dari topic
   static Future<void> unsubscribeFromTopic(String topic) async {
     await _firebaseMessaging.unsubscribeFromTopic(topic);
+  }
+
+  /// Send notification to specific device tokens (untuk admin)
+  /// Note: Ini memerlukan server-side implementation atau Firebase Functions
+  /// Karena client tidak bisa langsung send ke token lain
+  static Future<void> sendNotificationToTokens({
+    required List<String> tokens,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    // Implementasi ini memerlukan Firebase Functions atau backend server
+    // Untuk sekarang, kita bisa log saja sebagai placeholder
+    print('Sending notification to ${tokens.length} devices:');
+    print('Title: $title');
+    print('Body: $body');
+    print('Tokens: $tokens');
+    print('Data: $data');
+
+    // TODO: Implementasi dengan Firebase Functions atau backend API
+    // Example call to backend:
+    // await http.post(
+    //   Uri.parse('https://your-backend.com/send-notification'),
+    //   headers: {'Content-Type': 'application/json'},
+    //   body: jsonEncode({
+    //     'tokens': tokens,
+    //     'title': title,
+    //     'body': body,
+    //     'data': data,
+    //   }),
+    // );
+  }
+
+  /// Send notification ke semua santri
+  static Future<void> sendNotificationToAllSantri({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      final santriTokens = await AuthService.getDeviceTokensByRole('santri');
+      if (santriTokens.isNotEmpty) {
+        await sendNotificationToTokens(
+          tokens: santriTokens,
+          title: title,
+          body: body,
+          data: data,
+        );
+      }
+    } catch (e) {
+      print('Error sending notification to all santri: $e');
+    }
+  }
+
+  /// Send notification ke semua dewan guru
+  static Future<void> sendNotificationToAllDewaGuru({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      final guruTokens = await AuthService.getDeviceTokensByRole('dewan_guru');
+      if (guruTokens.isNotEmpty) {
+        await sendNotificationToTokens(
+          tokens: guruTokens,
+          title: title,
+          body: body,
+          data: data,
+        );
+      }
+    } catch (e) {
+      print('Error sending notification to all dewa guru: $e');
+    }
   }
 }

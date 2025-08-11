@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../shared/services/auth_service.dart';
 import '../../../shared/widgets/splash_screen.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/helpers/messaging_helper.dart';
 import 'login_page.dart';
 import 'rfid_setup_required_page.dart';
 import '../../dashboard/presentation/role_based_navigation.dart';
@@ -103,6 +104,13 @@ class AuthWrapper extends ConsumerWidget {
                 ),
                 data: (userData) {
                   if (userData != null) {
+                    // Initialize messaging setelah user data berhasil dimuat
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      MessagingHelper.initializeAfterLogin().catchError((e) {
+                        print('Error initializing messaging: $e');
+                      });
+                    });
+
                     // Check if santri needs RFID setup
                     if (userData.needsRfidSetup) {
                       return const MaterialApp(

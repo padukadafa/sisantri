@@ -8,8 +8,7 @@ class DummyDataService {
   static Future<void> createAllDummyData() async {
     try {
       await createDummyUsers();
-      await createDummyJadwalPengajian();
-      await createDummyJadwalKegiatan();
+      await createDummyJadwal(); // Jadwal terpadu baru
       await createDummyPengumuman();
       print('✅ Semua dummy data berhasil dibuat');
     } catch (e) {
@@ -259,6 +258,206 @@ class DummyDataService {
     print('✅ Dummy pengumuman created');
   }
 
+  /// Buat dummy jadwal terpadu (menggunakan JadwalModel)
+  static Future<void> createDummyJadwal() async {
+    final baseDate = DateTime.now();
+
+    final jadwalData = [
+      // Sholat
+      {
+        'nama': 'Sholat Subuh Berjamaah',
+        'tanggal': baseDate.add(const Duration(days: 1)),
+        'waktuMulai': '04:30',
+        'waktuSelesai': '05:00',
+        'hari': 'Senin',
+        'kategori': 'sholat',
+        'tempat': 'Masjid Al-Ikhlas',
+        'deskripsi': 'Sholat subuh berjamaah dilanjutkan dengan dzikir pagi',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      {
+        'nama': 'Sholat Maghrib Berjamaah',
+        'tanggal': baseDate.add(const Duration(days: 1)),
+        'waktuMulai': '18:00',
+        'waktuSelesai': '18:30',
+        'hari': 'Senin',
+        'kategori': 'sholat',
+        'tempat': 'Masjid Al-Ikhlas',
+        'deskripsi': 'Sholat maghrib berjamaah dilanjutkan dengan mengaji',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+
+      // Kajian/Pengajian
+      {
+        'nama': 'Kajian Tafsir Al-Quran',
+        'tanggal': baseDate.add(const Duration(days: 2)),
+        'waktuMulai': '19:30',
+        'waktuSelesai': '21:00',
+        'hari': 'Selasa',
+        'kategori': 'kajian',
+        'tempat': 'Aula Pondok',
+        'deskripsi': 'Kajian tafsir surat Al-Baqarah ayat 1-10',
+        'pemateri': 'Ustadz Ahmad Yazid',
+        'tema': 'Rahasia Huruf Muqatta\'ah dalam Al-Quran',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      {
+        'nama': 'Pengajian Akhlak',
+        'tanggal': baseDate.add(const Duration(days: 3)),
+        'waktuMulai': '20:00',
+        'waktuSelesai': '21:30',
+        'hari': 'Rabu',
+        'kategori': 'pengajian',
+        'tempat': 'Masjid Al-Ikhlas',
+        'deskripsi': 'Pembahasan tentang akhlak kepada Allah dan sesama',
+        'pemateri': 'Ustadz Muhammad Farid',
+        'tema': 'Membangun Akhlak Mulia dalam Kehidupan Sehari-hari',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+
+      // Tahfidz
+      {
+        'nama': 'Tahfidz Al-Quran',
+        'tanggal': baseDate.add(const Duration(days: 1)),
+        'waktuMulai': '06:00',
+        'waktuSelesai': '07:30',
+        'hari': 'Senin',
+        'kategori': 'tahfidz',
+        'tempat': 'Ruang Tahfidz',
+        'deskripsi': 'Hafalan Al-Quran juz 30 dan muraja\'ah',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      {
+        'nama': 'Tahfidz Al-Quran',
+        'tanggal': baseDate.add(const Duration(days: 4)),
+        'waktuMulai': '06:00',
+        'waktuSelesai': '07:30',
+        'hari': 'Kamis',
+        'kategori': 'tahfidz',
+        'tempat': 'Ruang Tahfidz',
+        'deskripsi': 'Hafalan Al-Quran juz 1 dan tasmi\'',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+
+      // Kerja Bakti
+      {
+        'nama': 'Kerja Bakti Kebersihan',
+        'tanggal': baseDate.add(const Duration(days: 6)),
+        'waktuMulai': '07:00',
+        'waktuSelesai': '09:00',
+        'hari': 'Sabtu',
+        'kategori': 'kerja_bakti',
+        'tempat': 'Area Pondok',
+        'deskripsi': 'Membersihkan area pondok, halaman, dan fasilitas umum',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+
+      // Olahraga
+      {
+        'nama': 'Senam Pagi',
+        'tanggal': baseDate.add(const Duration(days: 7)),
+        'waktuMulai': '05:30',
+        'waktuSelesai': '06:30',
+        'hari': 'Minggu',
+        'kategori': 'olahraga',
+        'tempat': 'Lapangan Pondok',
+        'deskripsi': 'Senam pagi bersama untuk menjaga kesehatan',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      {
+        'nama': 'Futsal Santri',
+        'tanggal': baseDate.add(const Duration(days: 5)),
+        'waktuMulai': '16:00',
+        'waktuSelesai': '17:30',
+        'hari': 'Jumat',
+        'kategori': 'olahraga',
+        'tempat': 'Lapangan Futsal',
+        'deskripsi': 'Pertandingan futsal antar kamar santri',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+
+      // Kegiatan Umum
+      {
+        'nama': 'Rapat Koordinasi Santri',
+        'tanggal': baseDate.add(const Duration(days: 8)),
+        'waktuMulai': '19:00',
+        'waktuSelesai': '20:30',
+        'hari': 'Senin',
+        'kategori': 'kegiatan',
+        'tempat': 'Aula Pondok',
+        'deskripsi': 'Rapat koordinasi program kegiatan bulan depan',
+        'isAktif': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+
+      // Jadwal yang tidak aktif (untuk testing)
+      {
+        'nama': 'Kegiatan Lama',
+        'tanggal': baseDate.subtract(const Duration(days: 30)),
+        'waktuMulai': '10:00',
+        'waktuSelesai': '11:00',
+        'hari': 'Kamis',
+        'kategori': 'umum',
+        'tempat': 'Ruang Kelas',
+        'deskripsi': 'Kegiatan yang sudah tidak aktif',
+        'isAktif': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+    ];
+
+    final batch = _firestore.batch();
+
+    for (final jadwal in jadwalData) {
+      final docRef = _firestore.collection('jadwal').doc();
+      batch.set(docRef, jadwal);
+    }
+
+    await batch.commit();
+    print('✅ Dummy jadwal berhasil dibuat (${jadwalData.length} jadwal)');
+  }
+
+  /// Buat ulang semua jadwal (hapus lama, buat baru)
+  static Future<void> recreateJadwalData() async {
+    try {
+      // Hapus jadwal lama
+      final jadwalSnapshot = await _firestore.collection('jadwal').get();
+      final batch = _firestore.batch();
+
+      for (final doc in jadwalSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+
+      await batch.commit();
+      print('✅ Jadwal lama berhasil dihapus');
+
+      // Buat jadwal baru
+      await createDummyJadwal();
+      print('✅ Jadwal baru berhasil dibuat');
+    } catch (e) {
+      print('❌ Error recreate jadwal data: $e');
+    }
+  }
+
   /// Hapus semua dummy data
   static Future<void> deleteAllDummyData() async {
     try {
@@ -268,7 +467,13 @@ class DummyDataService {
         await doc.reference.delete();
       }
 
-      // Hapus jadwal pengajian
+      // Hapus jadwal terpadu
+      final jadwalSnapshot = await _firestore.collection('jadwal').get();
+      for (final doc in jadwalSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Hapus jadwal pengajian (legacy)
       final jadwalPengajianSnapshot = await _firestore
           .collection('jadwal_pengajian')
           .get();
@@ -276,7 +481,7 @@ class DummyDataService {
         await doc.reference.delete();
       }
 
-      // Hapus jadwal kegiatan
+      // Hapus jadwal kegiatan (legacy)
       final jadwalKegiatanSnapshot = await _firestore
           .collection('jadwal_kegiatan')
           .get();
