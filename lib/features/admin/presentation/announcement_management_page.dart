@@ -95,21 +95,19 @@ final pengumumanProvider = StreamProvider<List<Pengumuman>>((ref) {
 });
 
 /// Provider untuk statistik pengumuman
-final pengumumanStatsProvider = FutureProvider<Map<String, int>>((ref) async {
-  final snapshot = await FirebaseFirestore.instance
-      .collection('pengumuman')
-      .get();
+final pengumumanStatsProvider = Provider<Map<String, int>>((ref) {
+  final pengumumanAsync = ref.watch(pengumumanProvider);
 
-  final pengumumanList = snapshot.docs
-      .map((doc) => Pengumuman.fromJson(doc.id, doc.data()))
-      .toList();
-
-  return {
-    'total': pengumumanList.length,
-    'active': pengumumanList.where((p) => p.isActive && !p.isExpired).length,
-    'expired': pengumumanList.where((p) => p.isExpired).length,
-    'draft': pengumumanList.where((p) => !p.isActive).length,
-  };
+  return pengumumanAsync.when(
+    data: (pengumumanList) => {
+      'total': pengumumanList.length,
+      'active': pengumumanList.where((p) => p.isActive && !p.isExpired).length,
+      'expired': pengumumanList.where((p) => p.isExpired).length,
+      'draft': pengumumanList.where((p) => !p.isActive).length,
+    },
+    loading: () => {'total': 0, 'active': 0, 'expired': 0, 'draft': 0},
+    error: (_, __) => {'total': 0, 'active': 0, 'expired': 0, 'draft': 0},
+  );
 });
 
 /// Halaman manajemen pengumuman
@@ -136,13 +134,11 @@ class _AnnouncementManagementPageState
   @override
   Widget build(BuildContext context) {
     final pengumumanAsync = ref.watch(pengumumanProvider);
-    final statsAsync = ref.watch(pengumumanStatsProvider);
+    final stats = ref.watch(pengumumanStatsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen Pengumuman'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -156,47 +152,32 @@ class _AnnouncementManagementPageState
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.grey[50],
-            child: statsAsync.when(
-              loading: () => const SizedBox(
-                height: 60,
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (error, stack) => const SizedBox.shrink(),
-              data: (stats) => Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total',
-                      stats['total']!,
-                      Colors.blue,
-                    ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard('Total', stats['total']!, Colors.blue),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard(
+                    'Aktif',
+                    stats['active']!,
+                    Colors.green,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Aktif',
-                      stats['active']!,
-                      Colors.green,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard(
+                    'Kadaluarsa',
+                    stats['expired']!,
+                    Colors.orange,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Kadaluarsa',
-                      stats['expired']!,
-                      Colors.orange,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Draft',
-                      stats['draft']!,
-                      Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildStatCard('Draft', stats['draft']!, Colors.grey),
+                ),
+              ],
             ),
           ),
 
@@ -1037,11 +1018,20 @@ class _PengumumanFormDialogState extends State<_PengumumanFormDialog> {
                         decoration: const InputDecoration(
                           labelText: 'Kategori',
                           border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
+                        isExpanded: true,
                         items: _kategoriOptions.map((kategori) {
                           return DropdownMenuItem(
                             value: kategori,
-                            child: Text(kategori.toUpperCase()),
+                            child: Text(
+                              kategori.toUpperCase(),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -1058,11 +1048,20 @@ class _PengumumanFormDialogState extends State<_PengumumanFormDialog> {
                         decoration: const InputDecoration(
                           labelText: 'Prioritas',
                           border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
+                        isExpanded: true,
                         items: _prioritasOptions.map((prioritas) {
                           return DropdownMenuItem(
                             value: prioritas,
-                            child: Text(prioritas.toUpperCase()),
+                            child: Text(
+                              prioritas.toUpperCase(),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {

@@ -9,7 +9,6 @@ import '../../../shared/services/progress_santri_service.dart';
 import 'manual_attendance_page.dart';
 import 'schedule_management_page.dart';
 import 'announcement_management_page.dart';
-import 'notification_management_page.dart';
 import 'materi_management_page.dart';
 
 /// Provider untuk statistics admin dashboard
@@ -84,8 +83,6 @@ class AdminDashboardPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -351,43 +348,6 @@ class AdminDashboardPage extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _buildQuickActionButton(
-                    'Atur Jadwal',
-                    Icons.event,
-                    Colors.green,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ScheduleManagementPage(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildQuickActionButton(
-                    'Kirim Notifikasi',
-                    Icons.notifications,
-                    Colors.purple,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const NotificationManagementPage(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionButton(
                     'Kelola Materi',
                     Icons.menu_book,
                     Colors.teal,
@@ -404,11 +364,16 @@ class AdminDashboardPage extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildQuickActionButton(
-                    'Data Dummy',
-                    Icons.storage,
-                    Colors.indigo,
+                    'Atur Jadwal',
+                    Icons.event,
+                    Colors.green,
                     () {
-                      _showDummyDataDialog(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ScheduleManagementPage(),
+                        ),
+                      );
                     },
                   ),
                 ),
