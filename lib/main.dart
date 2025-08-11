@@ -7,13 +7,17 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_wrapper.dart';
 import 'shared/services/notification_service.dart';
-import 'shared/widgets/splash_screen.dart';
 import 'firebase_options.dart';
 
 /// Background message handler untuk Firebase Messaging
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print('Handling a background message: ${message.messageId}');
+  try {
+    await Firebase.initializeApp();
+    print('Handling a background message: ${message.messageId}');
+  } catch (e) {
+    print('Background message handler error: $e');
+    // Jangan throw error, biarkan aplikasi tetap berjalan
+  }
 }
 
 /// Flutter Local Notifications plugin instance
@@ -23,13 +27,33 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase Core berhasil diinisialisasi');
 
-  // Initialize Firebase Messaging background handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Initialize Firebase Messaging background handler dengan error handling
+    try {
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
+      print('✅ Firebase Messaging background handler berhasil diatur');
+    } catch (e) {
+      print('⚠️ Firebase Messaging error (akan diabaikan): $e');
+    }
 
-  // Initialize local notifications
-  await NotificationService.initialize();
+    // Initialize local notifications
+    try {
+      await NotificationService.initialize();
+      print('✅ Local notifications berhasil diinisialisasi');
+    } catch (e) {
+      print('⚠️ Local notifications error (akan diabaikan): $e');
+    }
+  } catch (e) {
+    print('❌ Firebase initialization error: $e');
+    // Lanjutkan saja meskipun ada error Firebase
+  }
 
   runApp(const ProviderScope(child: SiSantriApp()));
 }
@@ -43,40 +67,8 @@ class SiSantriApp extends StatelessWidget {
       title: 'SiSantri',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: FutureBuilder(
-        future: Firebase.initializeApp(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const SplashScreen();
-          }
-
-          if (snapshot.hasError) {
-            return Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text('Error: ${snapshot.error}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Restart app
-                        main();
-                      },
-                      child: const Text('Coba Lagi'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          // Show main app after successful initialization
-          return const AuthWrapper();
-        },
-      ),
+      // Firebase sudah diinisialisasi di main(), langsung tampilkan AuthWrapper
+      home: const AuthWrapper(),
     );
   }
 }

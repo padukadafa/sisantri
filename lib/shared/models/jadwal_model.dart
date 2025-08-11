@@ -33,6 +33,18 @@ class JadwalModel {
   final String? deskripsi;
   final String? pemateri; // Untuk pengajian
   final String? tema; // Untuk pengajian
+
+  // Fields untuk tracking materi kajian
+  final String? materiId; // Reference ke materi kajian
+  final String? surah; // Untuk kajian Quran
+  final int? ayatMulai; // Untuk kajian Quran
+  final int? ayatSelesai; // Untuk kajian Quran
+  final int? halamanMulai; // Untuk kitab umum
+  final int? halamanSelesai; // Untuk kitab umum
+  final int? hadistMulai; // Untuk kitab hadist
+  final int? hadistSelesai; // Untuk kitab hadist
+  final String? topikBahasan; // Topik spesifik yang dibahas
+
   final bool isAktif;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -49,6 +61,15 @@ class JadwalModel {
     this.deskripsi,
     this.pemateri,
     this.tema,
+    this.materiId,
+    this.surah,
+    this.ayatMulai,
+    this.ayatSelesai,
+    this.halamanMulai,
+    this.halamanSelesai,
+    this.hadistMulai,
+    this.hadistSelesai,
+    this.topikBahasan,
     this.isAktif = true,
     this.createdAt,
     this.updatedAt,
@@ -72,6 +93,15 @@ class JadwalModel {
       deskripsi: json['deskripsi'] as String?,
       pemateri: json['pemateri'] as String?,
       tema: json['tema'] as String?,
+      materiId: json['materiId'] as String?,
+      surah: json['surah'] as String?,
+      ayatMulai: json['ayatMulai'] as int?,
+      ayatSelesai: json['ayatSelesai'] as int?,
+      halamanMulai: json['halamanMulai'] as int?,
+      halamanSelesai: json['halamanSelesai'] as int?,
+      hadistMulai: json['hadistMulai'] as int?,
+      hadistSelesai: json['hadistSelesai'] as int?,
+      topikBahasan: json['topikBahasan'] as String?,
       isAktif: json['isAktif'] as bool? ?? true,
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] is DateTime
@@ -104,6 +134,15 @@ class JadwalModel {
       'deskripsi': deskripsi,
       'pemateri': pemateri,
       'tema': tema,
+      'materiId': materiId,
+      'surah': surah,
+      'ayatMulai': ayatMulai,
+      'ayatSelesai': ayatSelesai,
+      'halamanMulai': halamanMulai,
+      'halamanSelesai': halamanSelesai,
+      'hadistMulai': hadistMulai,
+      'hadistSelesai': hadistSelesai,
+      'topikBahasan': topikBahasan,
       'isAktif': isAktif,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -123,6 +162,15 @@ class JadwalModel {
     String? deskripsi,
     String? pemateri,
     String? tema,
+    String? materiId,
+    String? surah,
+    int? ayatMulai,
+    int? ayatSelesai,
+    int? halamanMulai,
+    int? halamanSelesai,
+    int? hadistMulai,
+    int? hadistSelesai,
+    String? topikBahasan,
     bool? isAktif,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -139,6 +187,15 @@ class JadwalModel {
       deskripsi: deskripsi ?? this.deskripsi,
       pemateri: pemateri ?? this.pemateri,
       tema: tema ?? this.tema,
+      materiId: materiId ?? this.materiId,
+      surah: surah ?? this.surah,
+      ayatMulai: ayatMulai ?? this.ayatMulai,
+      ayatSelesai: ayatSelesai ?? this.ayatSelesai,
+      halamanMulai: halamanMulai ?? this.halamanMulai,
+      halamanSelesai: halamanSelesai ?? this.halamanSelesai,
+      hadistMulai: hadistMulai ?? this.hadistMulai,
+      hadistSelesai: hadistSelesai ?? this.hadistSelesai,
+      topikBahasan: topikBahasan ?? this.topikBahasan,
       isAktif: isAktif ?? this.isAktif,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

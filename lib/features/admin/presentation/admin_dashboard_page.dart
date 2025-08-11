@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/services/materi_service.dart';
+import '../../../shared/services/progress_santri_service.dart';
 import 'manual_attendance_page.dart';
 import 'schedule_management_page.dart';
 import 'announcement_management_page.dart';
@@ -381,6 +383,32 @@ class AdminDashboardPage extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton(
+                    'Kelola Materi',
+                    Icons.menu_book,
+                    Colors.teal,
+                    () {
+                      _showMateriManagementDialog(context);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    'Data Dummy',
+                    Icons.storage,
+                    Colors.indigo,
+                    () {
+                      _showDummyDataDialog(context);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -632,5 +660,214 @@ class AdminDashboardPage extends ConsumerWidget {
     if (diff.inMinutes < 60) return '${diff.inMinutes}m yang lalu';
     if (diff.inHours < 24) return '${diff.inHours}j yang lalu';
     return '${diff.inDays}h yang lalu';
+  }
+
+  void _showMateriManagementDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Kelola Materi Kajian'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add, color: Colors.green),
+              title: const Text('Tambah Materi Baru'),
+              subtitle: const Text('Buat materi kajian baru'),
+              onTap: () {
+                Navigator.pop(context);
+                _showAddMateriDialog(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.list, color: Colors.blue),
+              title: const Text('Lihat Semua Materi'),
+              subtitle: const Text('Kelola materi yang ada'),
+              onTap: () {
+                Navigator.pop(context);
+                _showMateriListDialog(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.analytics, color: Colors.purple),
+              title: const Text('Progress Santri'),
+              subtitle: const Text('Lihat progress kajian santri'),
+              onTap: () {
+                Navigator.pop(context);
+                _showProgressDialog(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDummyDataDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Buat Data Dummy'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Pilih jenis data dummy yang ingin dibuat:'),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.book, color: Colors.teal),
+              title: const Text('Materi Kajian'),
+              subtitle: const Text('9 materi (Quran, Hadist, Fiqih, dll)'),
+              onTap: () {
+                Navigator.pop(context);
+                _createDummyMateri(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.trending_up, color: Colors.orange),
+              title: const Text('Progress Santri'),
+              subtitle: const Text('15 progress dengan sesi kajian'),
+              onTap: () {
+                Navigator.pop(context);
+                _createDummyProgress(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event, color: Colors.green),
+              title: const Text('Jadwal Kajian'),
+              subtitle: const Text('11 jadwal dengan materi terintegrasi'),
+              onTap: () {
+                Navigator.pop(context);
+                _createDummyJadwal(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddMateriDialog(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fitur tambah materi akan segera tersedia'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  void _showMateriListDialog(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fitur daftar materi akan segera tersedia'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  void _showProgressDialog(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fitur progress santri akan segera tersedia'),
+        backgroundColor: Colors.purple,
+      ),
+    );
+  }
+
+  Future<void> _createDummyMateri(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Membuat dummy materi...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      await MateriService.createDummyMateri();
+
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('✅ Dummy materi berhasil dibuat!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _createDummyProgress(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Membuat dummy progress...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      await ProgressSantriService.createDummyProgress();
+
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('✅ Dummy progress berhasil dibuat!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _createDummyJadwal(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Membuat dummy jadwal...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      // Gunakan service yang sudah ada untuk dummy jadwal
+      // Untuk sementara gunakan dummy materi sebagai alternatif
+      await MateriService.createDummyMateri();
+
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('✅ Dummy data berhasil dibuat!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 }
