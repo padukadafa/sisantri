@@ -4,12 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/user_model.dart';
-import '../../../shared/services/materi_service.dart';
-import '../../../shared/services/progress_santri_service.dart';
-import 'manual_attendance_page.dart';
-import 'schedule_management_page.dart';
-import 'announcement_management_page.dart';
-import 'materi_management_page.dart';
+import 'user_management_page.dart';
 
 /// Provider untuk statistics admin dashboard
 final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
@@ -307,15 +302,15 @@ class AdminDashboardPage extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _buildManagementTile(
-              'Kelola RFID',
-              'Atur kartu RFID santri',
-              Icons.contactless,
-              Colors.blue,
+              'Manajemen Materi',
+              'Atur capaian materi santri',
+              Icons.book,
+              Colors.blueGrey,
               () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
-                      'Halaman manajemen RFID sedang dalam pengembangan',
+                      'Halaman Manajemen Materi sedang dalam pengembangan',
                     ),
                   ),
                 );
@@ -342,11 +337,10 @@ class AdminDashboardPage extends ConsumerWidget {
               Icons.people_alt,
               Colors.orange,
               () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Halaman manajemen user sedang dalam pengembangan',
-                    ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserManagementPage(),
                   ),
                 );
               },
