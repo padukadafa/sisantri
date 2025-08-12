@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/admin/presentation/rfid_management_page.dart';
+// import '../features/admin/presentation/rfid_management_page.dart';
 
 /// Halaman admin untuk mengelola data aplikasi
 class AdminPage extends ConsumerStatefulWidget {
@@ -106,20 +106,20 @@ class _AdminPageState extends ConsumerState<AdminPage> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildActionButton(
-              icon: Icons.contactless,
-              title: 'Manajemen RFID',
-              subtitle: 'Kelola kartu RFID santri untuk presensi otomatis',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const RfidManagementPage(),
-                  ),
-                );
-              },
-              color: Colors.blue,
-            ),
+            // _buildActionButton(
+            //   icon: Icons.contactless,
+            //   title: 'Manajemen RFID',
+            //   subtitle: 'Kelola kartu RFID santri untuk presensi otomatis',
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (context) => const RfidManagementPage(),
+            //       ),
+            //     );
+            //   },
+            //   color: Colors.blue,
+            // ),
           ],
         ),
       ),

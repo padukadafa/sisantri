@@ -1,13 +1,65 @@
-# Integrasi Sistem IoT RFID untuk Presensi
+# Integrasi Sistem IoT RFID untuk Presensi dan User Management
 
 ## Overview
-Aplikasi SiSantri telah diperbarui untuk mengintegrasikan sistem presensi berbasis RFID IoT. Santri tidak lagi melakukan presensi manual melalui aplikasi, melainkan dengan mengetap kartu RFID mereka pada reader yang tersedia.
+Aplikasi SiSantri telah diperbarui untuk mengintegrasikan sistem presensi berbasis RFID IoT dan fitur manajemen kartu RFID melalui NFC smartphone. Santri dapat melakukan presensi dengan mengetap kartu RFID mereka pada reader, sementara admin dapat mengelola kartu RFID menggunakan fitur NFC scanning.
 
 ## Arsitektur Sistem
 
 ```
 [Kartu RFID Santri] → [RFID Reader] → [IoT Device] → [Firebase Firestore] → [Aplikasi Mobile]
+                                                          ↑
+[Admin Phone NFC] ← [Kartu Mifare] ← [User Management] ← [Admin Interface]
 ```
+
+## Fitur Baru: NFC-Based RFID Management
+
+### **User Management dengan RFID**
+- ✅ Assign/Update kartu RFID untuk setiap user
+- ✅ Scan kartu Mifare menggunakan NFC phone  
+- ✅ Input manual ID kartu RFID
+- ✅ Status indicator RFID di user card
+- ✅ Hapus assignment kartu RFID
+- ✅ Validasi duplikasi kartu antar user
+
+### **NFC Scanning Capabilities**
+- Support untuk kartu Mifare Classic dan Mifare Ultralight
+- Auto-detection tipe kartu (ISO14443-A/B, NfcA, NfcB)
+- Format otomatis ID kartu untuk display
+- Real-time card scanning dengan feedback visual
+
+### **Admin Interface Integration**
+- Menu "Kelola RFID" di setiap user card
+- Dialog scanning dengan status indicator
+- Activity logging untuk semua operasi RFID
+- Error handling dan user feedback
+
+## Cara Menggunakan Fitur RFID Management
+
+### **Menambah/Update Kartu RFID ke User:**
+
+1. **Akses User Management**
+   - Buka aplikasi sebagai Admin
+   - Masuk ke halaman "Manajemen User"
+
+2. **Kelola RFID User** 
+   - Pilih user yang ingin di-assign kartu
+   - Tap menu ⋮ → "Kelola RFID"
+
+3. **Scan atau Input Kartu**
+   - **Metode Scan NFC:**
+     - Pastikan NFC phone aktif
+     - Tap tombol "Scan Kartu RFID" 
+     - Tempelkan kartu Mifare pada bagian belakang phone
+     - ID kartu akan otomatis terdeteksi dan divalidasi
+   
+   - **Metode Manual:**
+     - Masukkan ID kartu secara manual di field "ID Kartu RFID"
+     - Format: 8+ karakter hexadecimal (contoh: A1B2C3D4)
+
+4. **Simpan Assignment**
+   - Review ID kartu yang sudah discan/diinput
+   - Sistem akan cek duplikasi otomatis
+   - Tap "Simpan" untuk assign kartu ke user
 
 ## Komponen Sistem
 
