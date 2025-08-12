@@ -5,20 +5,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/helpers/messaging_helper.dart';
 import '../../../shared/providers/materi_provider.dart';
-import '../../../shared/services/materi_service.dart';
 
-/// Model untuk jadwal kegiatan (semua jadwal sekarang menggunakan tanggal spesifik)
+/// Model untuk jadwal kegiatan (disederhanakan)
 class JadwalKegiatan {
   final String id;
   final String nama;
   final String deskripsi;
-  final DateTime tanggal; // Semua jadwal sekarang menggunakan tanggal spesifik
+  final DateTime tanggal; // Semua jadwal menggunakan tanggal spesifik
   final TimeOfDay waktuMulai;
   final TimeOfDay waktuSelesai;
   final String tempat;
   final String kategori;
-  final String? materiId; // ID materi yang dipilih
-  final String? materiNama; // Nama materi untuk display
+  final String? materiId;
+  final String? materiNama;
   final bool isAktif;
   final DateTime createdAt;
 
@@ -84,7 +83,7 @@ class JadwalKegiatan {
   }
 }
 
-/// Provider untuk daftar semua jadwal kegiatan
+/// Provider untuk semua jadwal
 final jadwalProvider = StreamProvider<List<JadwalKegiatan>>((ref) {
   return FirebaseFirestore.instance
       .collection('jadwal')
@@ -98,7 +97,7 @@ final jadwalProvider = StreamProvider<List<JadwalKegiatan>>((ref) {
       });
 });
 
-/// Halaman manajemen jadwal kegiatan
+/// Halaman manajemen jadwal yang disederhanakan
 class ScheduleManagementPage extends ConsumerWidget {
   const ScheduleManagementPage({super.key});
 
@@ -124,7 +123,7 @@ class ScheduleManagementPage extends ConsumerWidget {
         },
         child: jadwalAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => _buildErrorView(ref, jadwalProvider),
+          error: (error, stack) => _buildErrorView(ref),
           data: (jadwalList) => _buildJadwalView(context, ref, jadwalList),
         ),
       ),
@@ -136,49 +135,61 @@ class ScheduleManagementPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildErrorView(WidgetRef ref) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text('Terjadi kesalahan saat memuat data'),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => ref.invalidate(jadwalProvider),
+            child: const Text('Coba Lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildJadwalView(
     BuildContext context,
     WidgetRef ref,
     List<JadwalKegiatan> jadwalList,
   ) {
     if (jadwalList.isEmpty) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.event_note, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                Text(
-                  'Belum ada kegiatan terjadwal',
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Tambahkan kegiatan baru untuk memulai',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => _showAddEditDialog(context, ref),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Tambah Kegiatan'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ],
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_note, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Belum ada kegiatan terjadwal',
+              style: TextStyle(color: Colors.grey[600]),
             ),
-          ),
+            const SizedBox(height: 8),
+            Text(
+              'Tambahkan kegiatan baru untuk memulai',
+              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _showAddEditDialog(context, ref),
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Kegiatan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    // Group jadwal by date for better organization
+    // Group jadwal by date
     final groupedJadwal = <String, List<JadwalKegiatan>>{};
 
     for (final jadwal in jadwalList) {
@@ -196,7 +207,6 @@ class ScheduleManagementPage extends ConsumerWidget {
       });
 
     return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
@@ -284,102 +294,6 @@ class ScheduleManagementPage extends ConsumerWidget {
           ],
         );
       },
-    );
-  }
-
-  String _formatDateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  DateTime _parseDateKey(String dateKey) {
-    final parts = dateKey.split('-');
-    return DateTime(
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-      int.parse(parts[2]),
-    );
-  }
-
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
-  String _formatDateHeader(DateTime date) {
-    final now = DateTime.now();
-    final tomorrow = now.add(const Duration(days: 1));
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    if (_isToday(date)) {
-      return 'Hari Ini, ${_formatDate(date)}';
-    } else if (date.year == tomorrow.year &&
-        date.month == tomorrow.month &&
-        date.day == tomorrow.day) {
-      return 'Besok, ${_formatDate(date)}';
-    } else if (date.year == yesterday.year &&
-        date.month == yesterday.month &&
-        date.day == yesterday.day) {
-      return 'Kemarin, ${_formatDate(date)}';
-    } else {
-      return _formatDate(date);
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final months = [
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  Widget _buildErrorView(WidgetRef ref, provider) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(provider);
-        await Future.delayed(const Duration(milliseconds: 500));
-      },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Container(
-              height: constraints.maxHeight > 400 ? constraints.maxHeight : 400,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Terjadi kesalahan saat memuat data'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => ref.invalidate(provider),
-                      child: const Text('Coba Lagi'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 
@@ -688,6 +602,69 @@ class ScheduleManagementPage extends ConsumerWidget {
     );
   }
 
+  // Helper methods
+  String _formatDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  DateTime _parseDateKey(String dateKey) {
+    final parts = dateKey.split('-');
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  String _formatDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+    final yesterday = now.subtract(const Duration(days: 1));
+
+    if (_isToday(date)) {
+      return 'Hari Ini, ${_formatDate(date)}';
+    } else if (date.year == tomorrow.year &&
+        date.month == tomorrow.month &&
+        date.day == tomorrow.day) {
+      return 'Besok, ${_formatDate(date)}';
+    } else if (date.year == yesterday.year &&
+        date.month == yesterday.month &&
+        date.day == yesterday.day) {
+      return 'Kemarin, ${_formatDate(date)}';
+    } else {
+      return _formatDate(date);
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatTime(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
   Color _getKategoriColor(String kategori) {
     switch (kategori.toLowerCase()) {
       case 'kajian':
@@ -705,23 +682,16 @@ class ScheduleManagementPage extends ConsumerWidget {
     }
   }
 
-  String _formatTime(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
+  // CRUD Operations
   void _showAddEditDialog(
     BuildContext context,
     WidgetRef ref, {
     JadwalKegiatan? jadwal,
-    String? preselectedDay,
-    String? jenisJadwal,
   }) {
     showDialog(
       context: context,
       builder: (context) => _JadwalFormDialog(
         jadwal: jadwal,
-        preselectedDay: preselectedDay,
-        jenisJadwal: jenisJadwal,
         onSave: (newJadwal) {
           if (jadwal == null) {
             _addJadwal(ref, newJadwal);
@@ -739,7 +709,6 @@ class ScheduleManagementPage extends ConsumerWidget {
           .collection('jadwal')
           .add(jadwal.toJson());
 
-      // Send notification about new schedule
       await MessagingHelper.sendPengumumanToSantri(
         title: 'Jadwal Baru Ditambahkan',
         message:
@@ -785,7 +754,9 @@ class ScheduleManagementPage extends ConsumerWidget {
       id: '',
       nama: '${jadwal.nama} (Copy)',
       deskripsi: jadwal.deskripsi,
-      tanggal: jadwal.tanggal,
+      tanggal: jadwal.tanggal.add(
+        const Duration(days: 1),
+      ), // Duplikasi untuk hari berikutnya
       waktuMulai: jadwal.waktuMulai,
       waktuSelesai: jadwal.waktuSelesai,
       tempat: jadwal.tempat,
@@ -903,7 +874,6 @@ class ScheduleManagementPage extends ConsumerWidget {
 
     if (confirmed == true) {
       try {
-        // Backup original data
         final originalData = {
           'nama_asli': jadwal.nama,
           'kategori_asli': jadwal.kategori,
@@ -912,7 +882,6 @@ class ScheduleManagementPage extends ConsumerWidget {
           'deskripsi_asli': jadwal.deskripsi,
         };
 
-        // Update to libur
         await FirebaseFirestore.instance
             .collection('jadwal')
             .doc(jadwal.id)
@@ -922,18 +891,15 @@ class ScheduleManagementPage extends ConsumerWidget {
               'materiId': null,
               'materiNama': null,
               'deskripsi': 'Kegiatan diliburkan',
-              'backup_data':
-                  originalData, // Store original data for restoration
+              'backup_data': originalData,
             });
 
-        // Send cancellation notification
         await MessagingHelper.sendPengumumanToSantri(
           title: 'Kegiatan Diliburkan',
           message:
               '${jadwal.nama} pada ${_formatDate(jadwal.tanggal)} ${_formatTime(jadwal.waktuMulai)} telah diliburkan.',
         );
 
-        // Show success message
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -962,7 +928,6 @@ class ScheduleManagementPage extends ConsumerWidget {
     JadwalKegiatan jadwal,
   ) async {
     try {
-      // Get backup data
       final doc = await FirebaseFirestore.instance
           .collection('jadwal')
           .doc(jadwal.id)
@@ -972,7 +937,6 @@ class ScheduleManagementPage extends ConsumerWidget {
       final backupData = data?['backup_data'] as Map<String, dynamic>?;
 
       if (backupData == null) {
-        // No backup data, show manual edit dialog
         if (context.mounted) {
           final shouldEdit = await showDialog<bool>(
             context: context,
@@ -1001,7 +965,6 @@ class ScheduleManagementPage extends ConsumerWidget {
         return;
       }
 
-      // Confirm restoration
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -1054,7 +1017,6 @@ class ScheduleManagementPage extends ConsumerWidget {
       );
 
       if (confirmed == true) {
-        // Restore original data
         await FirebaseFirestore.instance
             .collection('jadwal')
             .doc(jadwal.id)
@@ -1064,17 +1026,15 @@ class ScheduleManagementPage extends ConsumerWidget {
               'materiId': backupData['materi_id_asli'],
               'materiNama': backupData['materi_nama_asli'],
               'deskripsi': backupData['deskripsi_asli'] ?? '',
-              'backup_data': FieldValue.delete(), // Remove backup data
+              'backup_data': FieldValue.delete(),
             });
 
-        // Send restoration notification
         await MessagingHelper.sendPengumumanToSantri(
           title: 'Kegiatan Dikembalikan',
           message:
               '${backupData['nama_asli']} pada ${_formatDate(jadwal.tanggal)} ${_formatTime(jadwal.waktuMulai)} telah dikembalikan.',
         );
 
-        // Show success message
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1101,9 +1061,7 @@ class ScheduleManagementPage extends ConsumerWidget {
     try {
       await MessagingHelper.sendKegiatanReminderToSantri(
         kegiatanName: jadwal.nama,
-        waktu: DateTime.now().add(
-          const Duration(minutes: 15),
-        ), // 15 minutes from now
+        waktu: DateTime.now().add(const Duration(minutes: 15)),
         tempat: jadwal.tempat,
       );
     } catch (e) {
@@ -1112,19 +1070,12 @@ class ScheduleManagementPage extends ConsumerWidget {
   }
 }
 
-/// Dialog form untuk menambah/edit jadwal
+/// Dialog form yang disederhanakan
 class _JadwalFormDialog extends ConsumerStatefulWidget {
   final JadwalKegiatan? jadwal;
-  final String? preselectedDay;
-  final String? jenisJadwal;
   final Function(JadwalKegiatan) onSave;
 
-  const _JadwalFormDialog({
-    this.jadwal,
-    this.preselectedDay,
-    this.jenisJadwal,
-    required this.onSave,
-  });
+  const _JadwalFormDialog({this.jadwal, required this.onSave});
 
   @override
   ConsumerState<_JadwalFormDialog> createState() => _JadwalFormDialogState();
@@ -1136,13 +1087,14 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   final _deskripsiController = TextEditingController();
   final _tempatController = TextEditingController();
 
-  DateTime? _selectedDate;
+  DateTime _selectedDate = DateTime.now();
   String _selectedKategori = 'umum';
   String? _selectedMateriId;
   String? _selectedMateriNama;
   TimeOfDay _waktuMulai = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _waktuSelesai = const TimeOfDay(hour: 9, minute: 0);
   bool _isAktif = true;
+
   final List<String> _kategoriOptions = [
     'kajian',
     'tahfidz',
@@ -1167,9 +1119,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
       _waktuMulai = widget.jadwal!.waktuMulai;
       _waktuSelesai = widget.jadwal!.waktuSelesai;
       _isAktif = widget.jadwal!.isAktif;
-    } else {
-      // Set default date to today
-      _selectedDate = DateTime.now();
     }
   }
 
@@ -1184,7 +1133,7 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.jadwal == null ? 'Tambah Jadwal' : 'Edit Jadwal'),
+      title: Text(widget.jadwal == null ? 'Tambah Kegiatan' : 'Edit Kegiatan'),
       content: SizedBox(
         width: MediaQuery.of(context).size.width * 0.9,
         child: Form(
@@ -1193,7 +1142,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Nama Kegiatan
                 TextFormField(
                   controller: _namaController,
                   decoration: InputDecoration(
@@ -1245,7 +1193,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Deskripsi
                 TextFormField(
                   controller: _deskripsiController,
                   decoration: const InputDecoration(
@@ -1256,12 +1203,11 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Tanggal
                 InkWell(
                   onTap: () async {
                     final date = await showDatePicker(
                       context: context,
-                      initialDate: _selectedDate ?? DateTime.now(),
+                      initialDate: _selectedDate,
                       firstDate: DateTime.now().subtract(
                         const Duration(days: 30),
                       ),
@@ -1277,13 +1223,8 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                     decoration: const InputDecoration(
                       labelText: 'Tanggal Kegiatan',
                       border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.calendar_today),
                     ),
-                    child: Text(
-                      _selectedDate != null
-                          ? _formatDate(_selectedDate!)
-                          : 'Pilih tanggal',
-                    ),
+                    child: Text(_formatDate(_selectedDate)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -1401,7 +1342,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                   onChanged: (value) {
                     setState(() {
                       _selectedKategori = value!;
-                      // Reset materi jika kategori bukan kajian/tahfidz atau jika libur
                       if (value != 'kajian' && value != 'tahfidz' ||
                           value == 'libur') {
                         _selectedMateriId = null;
@@ -1412,7 +1352,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Dropdown untuk memilih materi (khusus kategori kajian/tahfidz dan bukan libur)
                 if ((_selectedKategori == 'kajian' ||
                         _selectedKategori == 'tahfidz') &&
                     _selectedKategori != 'libur') ...[
@@ -1422,167 +1361,39 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
 
                       return materiAsync.when(
                         data: (materiList) {
-                          print(
-                            'DEBUG: Materi loaded: ${materiList.length} items',
-                          );
-                          if (materiList.isEmpty) {
-                            return Column(
-                              children: [
-                                const InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'Materi (Opsional)',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  child: Text(
-                                    'Belum ada materi tersedia',
-                                    style: TextStyle(color: Colors.orange),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                ElevatedButton.icon(
-                                  onPressed: () async {
-                                    try {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Membuat dummy data materi...',
-                                          ),
-                                          backgroundColor: Colors.orange,
-                                        ),
-                                      );
-
-                                      await MateriService.createDummyMateri();
-
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).hideCurrentSnackBar();
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              '✅ Dummy data materi berhasil dibuat!',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).hideCurrentSnackBar();
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text('❌ Error: $e'),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  icon: const Icon(Icons.storage),
-                                  label: const Text('Buat Data Dummy'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-
                           return DropdownButtonFormField<String>(
                             value: _selectedMateriId,
                             decoration: const InputDecoration(
-                              labelText: 'Materi (Opsional)',
+                              labelText: 'Pilih Materi (Opsional)',
                               border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
                             ),
-                            isExpanded: true,
                             items: [
-                              const DropdownMenuItem(
+                              const DropdownMenuItem<String>(
                                 value: null,
-                                child: Text(
-                                  'Pilih Materi (Opsional)',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
+                                child: Text('-- Tanpa Materi --'),
                               ),
                               ...materiList.map((materi) {
-                                return DropdownMenuItem(
+                                return DropdownMenuItem<String>(
                                   value: materi.id,
-                                  child: Text(
-                                    materi.nama,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
+                                  child: Text(materi.nama),
                                 );
                               }),
                             ],
                             onChanged: (value) {
                               setState(() {
                                 _selectedMateriId = value;
-                                if (value != null) {
-                                  final selectedMateri = materiList.firstWhere(
-                                    (m) => m.id == value,
-                                  );
-                                  _selectedMateriNama = selectedMateri.nama;
-                                } else {
-                                  _selectedMateriNama = null;
-                                }
+                                _selectedMateriNama = value != null
+                                    ? materiList
+                                          .firstWhere((m) => m.id == value)
+                                          .nama
+                                    : null;
                               });
                             },
                           );
                         },
-                        loading: () => const InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'Materi (Opsional)',
-                            border: OutlineInputBorder(),
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text('Memuat materi...'),
-                            ],
-                          ),
-                        ),
-                        error: (error, stack) => Column(
-                          children: [
-                            InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Materi (Opsional)',
-                                border: OutlineInputBorder(),
-                              ),
-                              child: Text(
-                                'Error: $error',
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                ref.invalidate(materiProvider);
-                              },
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Coba Lagi'),
-                            ),
-                          ],
-                        ),
+                        loading: () => const CircularProgressIndicator(),
+                        error: (error, stack) =>
+                            const Text('Error loading materi'),
                       );
                     },
                   ),
@@ -1591,7 +1402,7 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
 
                 Row(
                   children: [
-                    const Text('Status Aktif:'),
+                    const Text('Aktif'),
                     const Spacer(),
                     Switch(
                       value: _isAktif,
@@ -1600,6 +1411,7 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                           _isAktif = value;
                         });
                       },
+                      activeColor: AppTheme.primaryColor,
                     ),
                   ],
                 ),
@@ -1650,22 +1462,11 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   void _saveJadwal() {
     if (!_formKey.currentState!.validate()) return;
 
-    // Validasi tanggal
-    if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih tanggal untuk kegiatan'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     final jadwal = JadwalKegiatan(
       id: widget.jadwal?.id ?? '',
       nama: _namaController.text.trim(),
       deskripsi: _deskripsiController.text.trim(),
-      tanggal: _selectedDate!,
+      tanggal: _selectedDate,
       waktuMulai: _waktuMulai,
       waktuSelesai: _waktuSelesai,
       tempat: _tempatController.text.trim(),
