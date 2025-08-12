@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/user_model.dart';
 import 'user_management_page.dart';
+import 'attendance_report_page.dart';
 
 /// Provider untuk statistics admin dashboard
 final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
@@ -323,9 +324,10 @@ class AdminDashboardPage extends ConsumerWidget {
               Icons.analytics,
               Colors.green,
               () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Halaman laporan sedang dalam pengembangan'),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AttendanceReportPage(),
                   ),
                 );
               },
