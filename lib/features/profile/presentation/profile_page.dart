@@ -306,22 +306,6 @@ class ProfilePage extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          // Admin Panel (hanya untuk admin)
-          if (user.isAdmin) ...[
-            _buildMenuItem(
-              icon: Icons.admin_panel_settings,
-              title: 'Admin Panel',
-              subtitle: 'Kelola data aplikasi',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AdminPage()),
-                );
-              },
-            ),
-            const Divider(height: 1),
-          ],
-          // Dashboard Dewan Guru (hanya untuk dewan guru)
           if (user.isDewaGuru) ...[
             _buildMenuItem(
               icon: Icons.dashboard,

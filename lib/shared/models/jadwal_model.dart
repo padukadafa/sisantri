@@ -6,6 +6,7 @@ enum TipeJadwal {
   tahfidz('tahfidz'),
   kerjaBakti('kerja_bakti'),
   olahraga('olahraga'),
+  libur('libur'),
   umum('umum');
 
   const TipeJadwal(this.value);
@@ -26,7 +27,6 @@ class JadwalModel {
   final DateTime tanggal;
   final String? waktuMulai;
   final String? waktuSelesai;
-  final String hari;
   final TipeJadwal kategori;
   final String? tempat;
   final String? deskripsi;
@@ -54,7 +54,6 @@ class JadwalModel {
     required this.tanggal,
     this.waktuMulai,
     this.waktuSelesai,
-    required this.hari,
     required this.kategori,
     this.tempat,
     this.deskripsi,
@@ -86,7 +85,6 @@ class JadwalModel {
             ),
       waktuMulai: json['waktuMulai'] as String?,
       waktuSelesai: json['waktuSelesai'] as String?,
-      hari: json['hari'] as String,
       kategori: TipeJadwal.fromString(json['kategori'] as String? ?? 'umum'),
       tempat: json['tempat'] as String?,
       deskripsi: json['deskripsi'] as String?,
@@ -127,7 +125,6 @@ class JadwalModel {
       'tanggal': tanggal,
       'waktuMulai': waktuMulai,
       'waktuSelesai': waktuSelesai,
-      'hari': hari,
       'kategori': kategori.value,
       'tempat': tempat,
       'deskripsi': deskripsi,
@@ -180,7 +177,6 @@ class JadwalModel {
       tanggal: tanggal ?? this.tanggal,
       waktuMulai: waktuMulai ?? this.waktuMulai,
       waktuSelesai: waktuSelesai ?? this.waktuSelesai,
-      hari: hari ?? this.hari,
       kategori: kategori ?? this.kategori,
       tempat: tempat ?? this.tempat,
       deskripsi: deskripsi ?? this.deskripsi,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/helpers/messaging_helper.dart';
 import '../../../shared/providers/materi_provider.dart';
+import '../../../shared/services/attendance_service.dart';
 
 /// Model untuk jadwal kegiatan (disederhanakan)
 class JadwalKegiatan {
@@ -705,10 +707,26 @@ class ScheduleManagementPage extends ConsumerWidget {
 
   Future<void> _addJadwal(WidgetRef ref, JadwalKegiatan jadwal) async {
     try {
-      await FirebaseFirestore.instance
+      // Step 1: Save jadwal to Firestore
+      final docRef = await FirebaseFirestore.instance
           .collection('jadwal')
           .add(jadwal.toJson());
 
+      // Step 2: Generate default attendance records for all active santri
+      // Only generate for non-libur activities
+      if (jadwal.kategori.toLowerCase() != 'libur') {
+        print('🔄 Generating default attendance for new jadwal: ${docRef.id}');
+        await AttendanceService.generateDefaultAttendanceForJadwal(
+          jadwalId: docRef.id,
+          createdBy: 'admin', // TODO: get from current user
+          createdByName: 'Admin', // TODO: get from current user
+        );
+        print('✅ Default attendance records generated successfully');
+      } else {
+        print('ℹ️  Skipping attendance generation for libur activity');
+      }
+
+      // Step 3: Send notification
       await MessagingHelper.sendPengumumanToSantri(
         title: 'Jadwal Baru Ditambahkan',
         message:
@@ -767,7 +785,7 @@ class ScheduleManagementPage extends ConsumerWidget {
       createdAt: DateTime.now(),
     );
 
-    await _addJadwal(ref, newJadwal);
+    await _addJadwal(ref, newJadwal); // This will handle attendance generation
   }
 
   Future<void> _deleteJadwal(
@@ -1029,6 +1047,21 @@ class ScheduleManagementPage extends ConsumerWidget {
               'backup_data': FieldValue.delete(),
             });
 
+        // Generate default attendance for restored activity
+        try {
+          print(
+            '🔄 Generating default attendance for restored activity: ${jadwal.id}',
+          );
+          await AttendanceService.generateDefaultAttendanceForJadwal(
+            jadwalId: jadwal.id,
+            createdBy: 'admin', // TODO: get from current user
+            createdByName: 'Admin', // TODO: get from current user
+          );
+          print('✅ Default attendance records generated for restored activity');
+        } catch (e) {
+          print('⚠️  Error generating attendance for restored activity: $e');
+        }
+
         await MessagingHelper.sendPengumumanToSantri(
           title: 'Kegiatan Dikembalikan',
           message:
@@ -1094,15 +1127,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   TimeOfDay _waktuMulai = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _waktuSelesai = const TimeOfDay(hour: 9, minute: 0);
   bool _isAktif = true;
-
-  final List<String> _kategoriOptions = [
-    'kajian',
-    'tahfidz',
-    'kerja bakti',
-    'olahraga',
-    'libur',
-    'umum',
-  ];
 
   @override
   void initState() {
@@ -1333,10 +1357,10 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                     labelText: 'Kategori',
                     border: OutlineInputBorder(),
                   ),
-                  items: _kategoriOptions.map((kategori) {
+                  items: TipeJadwal.values.map((kategori) {
                     return DropdownMenuItem(
-                      value: kategori,
-                      child: Text(kategori.toUpperCase()),
+                      value: kategori.value,
+                      child: Text(kategori.value.toUpperCase()),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -1484,7 +1508,7 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   String _getHintTextForKategori(String kategori) {
     switch (kategori.toLowerCase()) {
       case 'kajian':
-        return 'Contoh: Kajian Kitab Kuning, Tafsir Al-Quran';
+        return 'Contoh: Tafsir Al-Quran';
       case 'tahfidz':
         return 'Contoh: Hafalan Juz 1, Muraja\'ah Surah';
       case 'kerja bakti':

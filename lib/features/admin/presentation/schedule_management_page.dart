@@ -6,6 +6,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/helpers/messaging_helper.dart';
 import '../../../shared/providers/materi_provider.dart';
 import '../../../shared/services/materi_service.dart';
+import '../../../shared/models/jadwal_model.dart';
+import '../../../shared/services/attendance_service.dart';
+import 'add_edit_jadwal_page.dart';
 
 /// Model untuk jadwal kegiatan (semua jadwal sekarang menggunakan tanggal spesifik)
 class JadwalKegiatan {
@@ -16,9 +19,18 @@ class JadwalKegiatan {
   final TimeOfDay waktuMulai;
   final TimeOfDay waktuSelesai;
   final String tempat;
-  final String kategori;
+  final TipeJadwal kategori;
   final String? materiId; // ID materi yang dipilih
   final String? materiNama; // Nama materi untuk display
+
+  // Fields untuk kajian/tahfidz
+  final String? surah; // Nama surah untuk kajian Quran
+  final int? ayatMulai; // Ayat mulai untuk kajian Quran
+  final int? ayatSelesai; // Ayat selesai untuk kajian Quran
+  final int? halamanMulai; // Halaman mulai untuk kitab
+  final int? halamanSelesai; // Halaman selesai untuk kitab
+  final String? catatan; // Catatan tambahan untuk kajian
+
   final bool isAktif;
   final DateTime createdAt;
 
@@ -33,6 +45,12 @@ class JadwalKegiatan {
     required this.kategori,
     this.materiId,
     this.materiNama,
+    this.surah,
+    this.ayatMulai,
+    this.ayatSelesai,
+    this.halamanMulai,
+    this.halamanSelesai,
+    this.catatan,
     this.isAktif = true,
     required this.createdAt,
   });
@@ -46,9 +64,15 @@ class JadwalKegiatan {
       waktuMulai: _timeFromString(json['waktuMulai'] ?? '00:00'),
       waktuSelesai: _timeFromString(json['waktuSelesai'] ?? '00:00'),
       tempat: json['tempat'] ?? '',
-      kategori: json['kategori'] ?? 'umum',
+      kategori: TipeJadwal.fromString(json['kategori'] ?? 'umum'),
       materiId: json['materiId'],
       materiNama: json['materiNama'],
+      surah: json['surah'],
+      ayatMulai: json['ayatMulai'],
+      ayatSelesai: json['ayatSelesai'],
+      halamanMulai: json['halamanMulai'],
+      halamanSelesai: json['halamanSelesai'],
+      catatan: json['catatan'],
       isAktif: json['isAktif'] ?? true,
       createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
@@ -64,9 +88,15 @@ class JadwalKegiatan {
       'waktuSelesai':
           '${waktuSelesai.hour.toString().padLeft(2, '0')}:${waktuSelesai.minute.toString().padLeft(2, '0')}',
       'tempat': tempat,
-      'kategori': kategori,
+      'kategori': kategori.value,
       if (materiId != null) 'materiId': materiId,
       if (materiNama != null) 'materiNama': materiNama,
+      if (surah != null) 'surah': surah,
+      if (ayatMulai != null) 'ayatMulai': ayatMulai,
+      if (ayatSelesai != null) 'ayatSelesai': ayatSelesai,
+      if (halamanMulai != null) 'halamanMulai': halamanMulai,
+      if (halamanSelesai != null) 'halamanSelesai': halamanSelesai,
+      if (catatan != null) 'catatan': catatan,
       'isAktif': isAktif,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -392,16 +422,16 @@ class ScheduleManagementPage extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: jadwal.kategori.toLowerCase() == 'libur' ? 1 : 2,
+      elevation: jadwal.kategori == TipeJadwal.libur ? 1 : 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: jadwal.kategori.toLowerCase() == 'libur'
+      color: jadwal.kategori == TipeJadwal.libur
           ? Colors.green.withOpacity(0.05)
           : null,
       child: InkWell(
         onTap: () => _showAddEditDialog(context, ref, jadwal: jadwal),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          decoration: jadwal.kategori.toLowerCase() == 'libur'
+          decoration: jadwal.kategori == TipeJadwal.libur
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
@@ -430,7 +460,7 @@ class ScheduleManagementPage extends ConsumerWidget {
                         ),
                       ),
                       child: Text(
-                        jadwal.kategori.toUpperCase(),
+                        _getKategoriDisplayName(jadwal.kategori),
                         style: TextStyle(
                           color: kategoriColor,
                           fontSize: 10,
@@ -499,7 +529,7 @@ class ScheduleManagementPage extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        if (jadwal.kategori.toLowerCase() != 'libur')
+                        if (jadwal.kategori != TipeJadwal.libur)
                           const PopupMenuItem(
                             value: 'convert_to_libur',
                             child: Row(
@@ -517,7 +547,7 @@ class ScheduleManagementPage extends ConsumerWidget {
                               ],
                             ),
                           ),
-                        if (jadwal.kategori.toLowerCase() == 'libur')
+                        if (jadwal.kategori == TipeJadwal.libur)
                           const PopupMenuItem(
                             value: 'restore_activity',
                             child: Row(
@@ -558,7 +588,7 @@ class ScheduleManagementPage extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: jadwal.kategori.toLowerCase() == 'libur'
+                    color: jadwal.kategori == TipeJadwal.libur
                         ? Colors.green[700]
                         : null,
                   ),
@@ -570,14 +600,14 @@ class ScheduleManagementPage extends ConsumerWidget {
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,
-                      fontStyle: jadwal.kategori.toLowerCase() == 'libur'
+                      fontStyle: jadwal.kategori == TipeJadwal.libur
                           ? FontStyle.italic
                           : FontStyle.normal,
                     ),
                   ),
                 ],
                 if (jadwal.materiNama != null &&
-                    jadwal.kategori.toLowerCase() != 'libur') ...[
+                    jadwal.kategori != TipeJadwal.libur) ...[
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -610,8 +640,43 @@ class ScheduleManagementPage extends ConsumerWidget {
                     ),
                   ),
                 ],
+                // Display informasi kajian (halaman/ayat)
+                if (jadwal.kategori == TipeJadwal.kajian &&
+                    (jadwal.surah != null || jadwal.halamanMulai != null)) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          jadwal.surah != null ? Icons.book : Icons.article,
+                          size: 14,
+                          color: Colors.blue[700],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _getKajianInfo(jadwal),
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 // Special indicator for libur (break time)
-                if (jadwal.kategori.toLowerCase() == 'libur') ...[
+                if (jadwal.kategori == TipeJadwal.libur) ...[
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -648,11 +713,11 @@ class ScheduleManagementPage extends ConsumerWidget {
                 Row(
                   children: [
                     Icon(
-                      jadwal.kategori.toLowerCase() == 'libur'
+                      jadwal.kategori == TipeJadwal.libur
                           ? Icons.free_breakfast
                           : Icons.access_time,
                       size: 16,
-                      color: jadwal.kategori.toLowerCase() == 'libur'
+                      color: jadwal.kategori == TipeJadwal.libur
                           ? Colors.green[600]
                           : Colors.grey[600],
                     ),
@@ -660,11 +725,11 @@ class ScheduleManagementPage extends ConsumerWidget {
                     Text(
                       '${_formatTime(jadwal.waktuMulai)} - ${_formatTime(jadwal.waktuSelesai)}',
                       style: TextStyle(
-                        color: jadwal.kategori.toLowerCase() == 'libur'
+                        color: jadwal.kategori == TipeJadwal.libur
                             ? Colors.green[600]
                             : Colors.grey[600],
                         fontSize: 14,
-                        fontWeight: jadwal.kategori.toLowerCase() == 'libur'
+                        fontWeight: jadwal.kategori == TipeJadwal.libur
                             ? FontWeight.w600
                             : FontWeight.normal,
                       ),
@@ -688,17 +753,19 @@ class ScheduleManagementPage extends ConsumerWidget {
     );
   }
 
-  Color _getKategoriColor(String kategori) {
-    switch (kategori.toLowerCase()) {
-      case 'kajian':
+  Color _getKategoriColor(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kajian:
         return Colors.blue;
-      case 'tahfidz':
+      case TipeJadwal.tahfidz:
         return Colors.purple;
-      case 'kerja bakti':
+      case TipeJadwal.kerjaBakti:
         return Colors.orange;
-      case 'olahraga':
+      case TipeJadwal.olahraga:
         return Colors.red;
-      case 'libur':
+      case TipeJadwal.pengajian:
+        return Colors.green;
+      case TipeJadwal.libur:
         return Colors.green;
       default:
         return Colors.grey;
@@ -715,31 +782,49 @@ class ScheduleManagementPage extends ConsumerWidget {
     JadwalKegiatan? jadwal,
     String? preselectedDay,
     String? jenisJadwal,
-  }) {
-    showDialog(
-      context: context,
-      builder: (context) => _JadwalFormDialog(
-        jadwal: jadwal,
-        preselectedDay: preselectedDay,
-        jenisJadwal: jenisJadwal,
-        onSave: (newJadwal) {
-          if (jadwal == null) {
-            _addJadwal(ref, newJadwal);
-          } else {
-            _updateJadwal(ref, jadwal.id, newJadwal);
-          }
-        },
+  }) async {
+    final result = await Navigator.push<JadwalKegiatan>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddEditJadwalPage(
+          jadwal: jadwal,
+          preselectedDay: preselectedDay,
+          jenisJadwal: jenisJadwal,
+        ),
       ),
     );
+
+    if (result != null) {
+      if (jadwal == null) {
+        _addJadwal(ref, result);
+      } else {
+        _updateJadwal(ref, jadwal.id, result);
+      }
+    }
   }
 
   Future<void> _addJadwal(WidgetRef ref, JadwalKegiatan jadwal) async {
     try {
-      await FirebaseFirestore.instance
+      // Step 1: Save jadwal to Firestore
+      final docRef = await FirebaseFirestore.instance
           .collection('jadwal')
           .add(jadwal.toJson());
 
-      // Send notification about new schedule
+      // Step 2: Generate default attendance records for all active santri
+      // Only generate for non-libur activities
+      if (jadwal.kategori != TipeJadwal.libur) {
+        print('🔄 Generating default attendance for new jadwal: ${docRef.id}');
+        await AttendanceService.generateDefaultAttendanceForJadwal(
+          jadwalId: docRef.id,
+          createdBy: 'admin', // TODO: get from current user
+          createdByName: 'Admin', // TODO: get from current user
+        );
+        print('✅ Default attendance records generated successfully');
+      } else {
+        print('ℹ️  Skipping attendance generation for libur activity');
+      }
+
+      // Step 3: Send notification about new schedule
       await MessagingHelper.sendPengumumanToSantri(
         title: 'Jadwal Baru Ditambahkan',
         message:
@@ -792,11 +877,17 @@ class ScheduleManagementPage extends ConsumerWidget {
       kategori: jadwal.kategori,
       materiId: jadwal.materiId,
       materiNama: jadwal.materiNama,
+      surah: jadwal.surah,
+      ayatMulai: jadwal.ayatMulai,
+      ayatSelesai: jadwal.ayatSelesai,
+      halamanMulai: jadwal.halamanMulai,
+      halamanSelesai: jadwal.halamanSelesai,
+      catatan: jadwal.catatan,
       isAktif: true,
       createdAt: DateTime.now(),
     );
 
-    await _addJadwal(ref, newJadwal);
+    await _addJadwal(ref, newJadwal); // This will handle attendance generation
   }
 
   Future<void> _deleteJadwal(
@@ -918,7 +1009,7 @@ class ScheduleManagementPage extends ConsumerWidget {
             .doc(jadwal.id)
             .update({
               'nama': 'Libur',
-              'kategori': 'libur',
+              'kategori': TipeJadwal.libur.value,
               'materiId': null,
               'materiNama': null,
               'deskripsi': 'Kegiatan diliburkan',
@@ -1067,6 +1158,21 @@ class ScheduleManagementPage extends ConsumerWidget {
               'backup_data': FieldValue.delete(), // Remove backup data
             });
 
+        // Generate default attendance for restored activity
+        try {
+          print(
+            '🔄 Generating default attendance for restored activity: ${jadwal.id}',
+          );
+          await AttendanceService.generateDefaultAttendanceForJadwal(
+            jadwalId: jadwal.id,
+            createdBy: 'admin', // TODO: get from current user
+            createdByName: 'Admin', // TODO: get from current user
+          );
+          print('✅ Default attendance records generated for restored activity');
+        } catch (e) {
+          print('⚠️  Error generating attendance for restored activity: $e');
+        }
+
         // Send restoration notification
         await MessagingHelper.sendPengumumanToSantri(
           title: 'Kegiatan Dikembalikan',
@@ -1110,21 +1216,60 @@ class ScheduleManagementPage extends ConsumerWidget {
       print('Error sending notification: $e');
     }
   }
+
+  String _getKajianInfo(JadwalKegiatan jadwal) {
+    if (jadwal.surah != null) {
+      // Untuk kajian Quran
+      String info = 'Surah ${jadwal.surah}';
+      if (jadwal.ayatMulai != null) {
+        if (jadwal.ayatSelesai != null &&
+            jadwal.ayatSelesai != jadwal.ayatMulai) {
+          info += ' ayat ${jadwal.ayatMulai}-${jadwal.ayatSelesai}';
+        } else {
+          info += ' ayat ${jadwal.ayatMulai}';
+        }
+      }
+      return info;
+    } else if (jadwal.halamanMulai != null) {
+      // Untuk kajian kitab
+      if (jadwal.halamanSelesai != null &&
+          jadwal.halamanSelesai != jadwal.halamanMulai) {
+        return 'Halaman ${jadwal.halamanMulai}-${jadwal.halamanSelesai}';
+      } else {
+        return 'Halaman ${jadwal.halamanMulai}';
+      }
+    }
+    return '';
+  }
+
+  String _getKategoriDisplayName(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kajian:
+        return 'KAJIAN';
+      case TipeJadwal.tahfidz:
+        return 'TAHFIDZ';
+      case TipeJadwal.kerjaBakti:
+        return 'KERJA BAKTI';
+      case TipeJadwal.olahraga:
+        return 'OLAHRAGA';
+      case TipeJadwal.libur:
+        return 'LIBUR';
+      case TipeJadwal.pengajian:
+        return 'PENGAJIAN';
+      case TipeJadwal.kegiatan:
+        return 'KEGIATAN';
+      case TipeJadwal.umum:
+        return 'UMUM';
+    }
+  }
 }
 
 /// Dialog form untuk menambah/edit jadwal
 class _JadwalFormDialog extends ConsumerStatefulWidget {
   final JadwalKegiatan? jadwal;
-  final String? preselectedDay;
-  final String? jenisJadwal;
   final Function(JadwalKegiatan) onSave;
 
-  const _JadwalFormDialog({
-    this.jadwal,
-    this.preselectedDay,
-    this.jenisJadwal,
-    required this.onSave,
-  });
+  const _JadwalFormDialog({this.jadwal, required this.onSave});
 
   @override
   ConsumerState<_JadwalFormDialog> createState() => _JadwalFormDialogState();
@@ -1137,19 +1282,28 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
   final _tempatController = TextEditingController();
 
   DateTime? _selectedDate;
-  String _selectedKategori = 'umum';
+  TipeJadwal _selectedKategori = TipeJadwal.umum;
   String? _selectedMateriId;
   String? _selectedMateriNama;
+
+  // Fields untuk kajian
+  final _surahController = TextEditingController();
+  final _ayatMulaiController = TextEditingController();
+  final _ayatSelesaiController = TextEditingController();
+  final _halamanMulaiController = TextEditingController();
+  final _halamanSelesaiController = TextEditingController();
+  final _catatanController = TextEditingController();
+
   TimeOfDay _waktuMulai = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _waktuSelesai = const TimeOfDay(hour: 9, minute: 0);
   bool _isAktif = true;
-  final List<String> _kategoriOptions = [
-    'kajian',
-    'tahfidz',
-    'kerja bakti',
-    'olahraga',
-    'libur',
-    'umum',
+  final List<TipeJadwal> _kategoriOptions = [
+    TipeJadwal.kajian,
+    TipeJadwal.tahfidz,
+    TipeJadwal.kerjaBakti,
+    TipeJadwal.olahraga,
+    TipeJadwal.libur,
+    TipeJadwal.umum,
   ];
 
   @override
@@ -1167,6 +1321,17 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
       _waktuMulai = widget.jadwal!.waktuMulai;
       _waktuSelesai = widget.jadwal!.waktuSelesai;
       _isAktif = widget.jadwal!.isAktif;
+
+      // Fill kajian fields
+      _surahController.text = widget.jadwal!.surah ?? '';
+      _ayatMulaiController.text = widget.jadwal!.ayatMulai?.toString() ?? '';
+      _ayatSelesaiController.text =
+          widget.jadwal!.ayatSelesai?.toString() ?? '';
+      _halamanMulaiController.text =
+          widget.jadwal!.halamanMulai?.toString() ?? '';
+      _halamanSelesaiController.text =
+          widget.jadwal!.halamanSelesai?.toString() ?? '';
+      _catatanController.text = widget.jadwal!.catatan ?? '';
     } else {
       // Set default date to today
       _selectedDate = DateTime.now();
@@ -1178,6 +1343,12 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
     _namaController.dispose();
     _deskripsiController.dispose();
     _tempatController.dispose();
+    _surahController.dispose();
+    _ayatMulaiController.dispose();
+    _ayatSelesaiController.dispose();
+    _halamanMulaiController.dispose();
+    _halamanSelesaiController.dispose();
+    _catatanController.dispose();
     super.dispose();
   }
 
@@ -1200,7 +1371,7 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                     labelText: 'Nama Kegiatan',
                     border: const OutlineInputBorder(),
                     hintText: _getHintTextForKategori(_selectedKategori),
-                    suffixIcon: _selectedKategori == 'libur'
+                    suffixIcon: _selectedKategori == TipeJadwal.libur
                         ? PopupMenuButton<String>(
                             icon: const Icon(Icons.psychology),
                             tooltip: 'Template Libur',
@@ -1345,7 +1516,7 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                     labelText: 'Tempat',
                     border: const OutlineInputBorder(),
                     hintText: _getTempatHintForKategori(_selectedKategori),
-                    suffixIcon: _selectedKategori == 'libur'
+                    suffixIcon: _selectedKategori == TipeJadwal.libur
                         ? PopupMenuButton<String>(
                             icon: const Icon(Icons.location_on),
                             tooltip: 'Template Tempat',
@@ -1386,7 +1557,8 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                DropdownButtonFormField<String>(
+                // Kategori
+                DropdownButtonFormField<TipeJadwal>(
                   value: _selectedKategori,
                   decoration: const InputDecoration(
                     labelText: 'Kategori',
@@ -1395,15 +1567,16 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                   items: _kategoriOptions.map((kategori) {
                     return DropdownMenuItem(
                       value: kategori,
-                      child: Text(kategori.toUpperCase()),
+                      child: Text(_getKategoriDisplayName(kategori)),
                     );
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
                       _selectedKategori = value!;
                       // Reset materi jika kategori bukan kajian/tahfidz atau jika libur
-                      if (value != 'kajian' && value != 'tahfidz' ||
-                          value == 'libur') {
+                      if (value != TipeJadwal.kajian &&
+                              value != TipeJadwal.tahfidz ||
+                          value == TipeJadwal.libur) {
                         _selectedMateriId = null;
                         _selectedMateriNama = null;
                       }
@@ -1413,9 +1586,9 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                 const SizedBox(height: 16),
 
                 // Dropdown untuk memilih materi (khusus kategori kajian/tahfidz dan bukan libur)
-                if ((_selectedKategori == 'kajian' ||
-                        _selectedKategori == 'tahfidz') &&
-                    _selectedKategori != 'libur') ...[
+                if ((_selectedKategori == TipeJadwal.kajian ||
+                        _selectedKategori == TipeJadwal.tahfidz) &&
+                    _selectedKategori != TipeJadwal.libur) ...[
                   Builder(
                     builder: (context) {
                       final materiAsync = ref.watch(materiProvider);
@@ -1589,6 +1762,130 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
                   const SizedBox(height: 16),
                 ],
 
+                // Field untuk kajian (khusus kategori kajian)
+                if (_selectedKategori == TipeJadwal.kajian) ...[
+                  // Toggle untuk memilih jenis kajian (Quran atau Kitab)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.book, color: Colors.blue[700], size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Detail Kajian',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Field untuk kajian Quran
+                        TextFormField(
+                          controller: _surahController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nama Surah (Opsional)',
+                            border: OutlineInputBorder(),
+                            hintText: 'Contoh: Al-Fatihah, Al-Baqarah',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _ayatMulaiController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ayat Mulai (Opsional)',
+                                  border: OutlineInputBorder(),
+                                  hintText: '1',
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _ayatSelesaiController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Ayat Selesai (Opsional)',
+                                  border: OutlineInputBorder(),
+                                  hintText: '10',
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        const Divider(),
+                        const SizedBox(height: 8),
+
+                        Text(
+                          'Atau untuk kitab/buku:',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _halamanMulaiController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Halaman Mulai (Opsional)',
+                                  border: OutlineInputBorder(),
+                                  hintText: '1',
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _halamanSelesaiController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Halaman Selesai (Opsional)',
+                                  border: OutlineInputBorder(),
+                                  hintText: '5',
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        TextFormField(
+                          controller: _catatanController,
+                          decoration: const InputDecoration(
+                            labelText: 'Catatan Kajian (Opsional)',
+                            border: OutlineInputBorder(),
+                            hintText: 'Catatan tambahan untuk kajian ini',
+                          ),
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
                 Row(
                   children: [
                     const Text('Status Aktif:'),
@@ -1672,6 +1969,24 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
       kategori: _selectedKategori,
       materiId: _selectedMateriId,
       materiNama: _selectedMateriNama,
+      surah: _surahController.text.trim().isEmpty
+          ? null
+          : _surahController.text.trim(),
+      ayatMulai: _ayatMulaiController.text.trim().isEmpty
+          ? null
+          : int.tryParse(_ayatMulaiController.text.trim()),
+      ayatSelesai: _ayatSelesaiController.text.trim().isEmpty
+          ? null
+          : int.tryParse(_ayatSelesaiController.text.trim()),
+      halamanMulai: _halamanMulaiController.text.trim().isEmpty
+          ? null
+          : int.tryParse(_halamanMulaiController.text.trim()),
+      halamanSelesai: _halamanSelesaiController.text.trim().isEmpty
+          ? null
+          : int.tryParse(_halamanSelesaiController.text.trim()),
+      catatan: _catatanController.text.trim().isEmpty
+          ? null
+          : _catatanController.text.trim(),
       isAktif: _isAktif,
       createdAt: widget.jadwal?.createdAt ?? DateTime.now(),
     );
@@ -1680,34 +1995,55 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
     Navigator.pop(context);
   }
 
-  String _getHintTextForKategori(String kategori) {
-    switch (kategori.toLowerCase()) {
-      case 'kajian':
+  String _getKategoriDisplayName(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kajian:
+        return 'KAJIAN';
+      case TipeJadwal.tahfidz:
+        return 'TAHFIDZ';
+      case TipeJadwal.kerjaBakti:
+        return 'KERJA BAKTI';
+      case TipeJadwal.olahraga:
+        return 'OLAHRAGA';
+      case TipeJadwal.libur:
+        return 'LIBUR';
+      case TipeJadwal.pengajian:
+        return 'PENGAJIAN';
+      case TipeJadwal.kegiatan:
+        return 'KEGIATAN';
+      case TipeJadwal.umum:
+        return 'UMUM';
+    }
+  }
+
+  String _getHintTextForKategori(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kajian:
         return 'Contoh: Kajian Kitab Kuning, Tafsir Al-Quran';
-      case 'tahfidz':
+      case TipeJadwal.tahfidz:
         return 'Contoh: Hafalan Juz 1, Muraja\'ah Surah';
-      case 'kerja bakti':
+      case TipeJadwal.kerjaBakti:
         return 'Contoh: Bersih-bersih Masjid, Gotong Royong';
-      case 'olahraga':
+      case TipeJadwal.olahraga:
         return 'Contoh: Sepak Bola, Senam Pagi';
-      case 'libur':
+      case TipeJadwal.libur:
         return 'Contoh: Istirahat, Makan Siang, Waktu Sholat';
       default:
         return 'Masukkan nama kegiatan';
     }
   }
 
-  String _getTempatHintForKategori(String kategori) {
-    switch (kategori.toLowerCase()) {
-      case 'kajian':
+  String _getTempatHintForKategori(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kajian:
         return 'Contoh: Ruang Kelas, Masjid, Aula';
-      case 'tahfidz':
+      case TipeJadwal.tahfidz:
         return 'Contoh: Ruang Hafalan, Masjid';
-      case 'kerja bakti':
+      case TipeJadwal.kerjaBakti:
         return 'Contoh: Halaman, Dapur, Area Umum';
-      case 'olahraga':
+      case TipeJadwal.olahraga:
         return 'Contoh: Lapangan, Gym, Halaman';
-      case 'libur':
+      case TipeJadwal.libur:
         return 'Contoh: Kamar/Asrama, Ruang Makan, Masjid';
       default:
         return 'Masukkan lokasi kegiatan';

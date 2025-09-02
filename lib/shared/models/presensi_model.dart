@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Enum untuk status presensi
 enum StatusPresensi {
@@ -77,21 +78,60 @@ class PresensiModel {
 
   /// Factory constructor untuk membuat PresensiModel dari JSON
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
-    return PresensiModel(
+    print('DEBUG PresensiModel: Parsing JSON: $json');
+
+    DateTime tanggalParsed;
+    try {
+      // Try tanggal field first, then timestamp
+      dynamic dateField = json['tanggal'] ?? json['timestamp'];
+
+      if (dateField is DateTime) {
+        tanggalParsed = dateField;
+      } else if (dateField is Timestamp) {
+        tanggalParsed = dateField.toDate();
+      } else if (dateField is int) {
+        tanggalParsed = DateTime.fromMillisecondsSinceEpoch(dateField);
+      } else {
+        print(
+          'DEBUG PresensiModel: Unknown date format: ${dateField?.runtimeType}',
+        );
+        print('DEBUG PresensiModel: Available fields: ${json.keys.toList()}');
+        tanggalParsed = DateTime.now();
+      }
+    } catch (e) {
+      print('DEBUG PresensiModel: Error parsing date: $e');
+      tanggalParsed = DateTime.now();
+    }
+
+    DateTime? createdAtParsed;
+    try {
+      if (json['createdAt'] != null) {
+        if (json['createdAt'] is DateTime) {
+          createdAtParsed = json['createdAt'];
+        } else if (json['createdAt'] is Timestamp) {
+          createdAtParsed = (json['createdAt'] as Timestamp).toDate();
+        } else if (json['createdAt'] is int) {
+          createdAtParsed = DateTime.fromMillisecondsSinceEpoch(
+            json['createdAt'],
+          );
+        }
+      }
+    } catch (e) {
+      print('DEBUG PresensiModel: Error parsing createdAt: $e');
+    }
+
+    final result = PresensiModel(
       id: json['id'] as String,
       userId: json['userId'] as String,
-      tanggal: DateTime.fromMillisecondsSinceEpoch(
-        json['tanggal'].millisecondsSinceEpoch,
-      ),
-      status: StatusPresensi.fromString(json['status'] as String),
+      tanggal: tanggalParsed,
+      status: StatusPresensi.fromString(json['status'] as String? ?? 'hadir'),
       keterangan: json['keterangan'] as String?,
       poinDiperoleh: json['poinDiperoleh'] as int? ?? 0,
-      createdAt: json['createdAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              json['createdAt'].millisecondsSinceEpoch,
-            )
-          : null,
+      createdAt: createdAtParsed,
     );
+
+    print('DEBUG PresensiModel: Successfully parsed: $result');
+    return result;
   }
 
   /// Method untuk convert PresensiModel ke JSON
@@ -99,11 +139,11 @@ class PresensiModel {
     return {
       'id': id,
       'userId': userId,
-      'tanggal': tanggal,
+      'tanggal': Timestamp.fromDate(tanggal),
       'status': status.label,
       'keterangan': keterangan,
       'poinDiperoleh': poinDiperoleh,
-      'createdAt': createdAt,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
     };
   }
 

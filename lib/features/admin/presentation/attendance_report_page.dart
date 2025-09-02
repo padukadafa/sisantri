@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart' as excel_lib;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/user_model.dart';
@@ -23,17 +28,16 @@ final attendanceReportProvider =
             .where((user) => user.isSantri)
             .toList();
 
-        // Build attendance query
+        // Build attendance query with proper date filtering
         Query attendanceQuery = firestore.collection('presensi');
 
-        // Apply date filters
+        // Apply date filter to attendance records
         if (filter.startDate != null) {
           attendanceQuery = attendanceQuery.where(
-            'tanggal',
+            'timestamp',
             isGreaterThanOrEqualTo: Timestamp.fromDate(filter.startDate!),
           );
         }
-
         if (filter.endDate != null) {
           final endOfDay = DateTime(
             filter.endDate!.year,
@@ -44,7 +48,7 @@ final attendanceReportProvider =
             59,
           );
           attendanceQuery = attendanceQuery.where(
-            'tanggal',
+            'timestamp',
             isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
           );
         }
@@ -65,69 +69,82 @@ final attendanceReportProvider =
           );
         }
 
-        final attendanceSnapshot = await attendanceQuery
-            .orderBy('tanggal', descending: true)
-            .get();
+        final attendanceSnapshot = await attendanceQuery.get();
 
-        final attendanceRecords = attendanceSnapshot.docs
-            .map((doc) {
-              final data = doc.data() as Map<String, dynamic>?;
-              if (data != null) {
-                return PresensiModel.fromJson({'id': doc.id, ...data});
-              }
-              return null;
-            })
-            .where((record) => record != null)
-            .cast<PresensiModel>()
-            .toList();
+        // Parse to PresensiModel
+        final attendanceRecords = <PresensiModel>[];
+        for (var doc in attendanceSnapshot.docs) {
+          try {
+            final data = doc.data() as Map<String, dynamic>;
+            final record = PresensiModel.fromJson({'id': doc.id, ...data});
+            attendanceRecords.add(record);
+          } catch (e) {
+            // Skip invalid records
+            continue;
+          }
+        }
 
         // Calculate statistics
-        final totalRecords = attendanceRecords.length;
         final presentCount = attendanceRecords
             .where((a) => a.status == StatusPresensi.hadir)
             .length;
+
         final absentCount = attendanceRecords
             .where((a) => a.status == StatusPresensi.alpha)
             .length;
+
         final sickCount = attendanceRecords
             .where((a) => a.status == StatusPresensi.sakit)
             .length;
+
         final excusedCount = attendanceRecords
             .where((a) => a.status == StatusPresensi.izin)
             .length;
 
-        // Calculate attendance rate
-        final attendanceRate = totalRecords > 0
-            ? (presentCount / totalRecords * 100)
+        final totalExpectedAttendance = attendanceRecords.length;
+        final rawAttendanceRate = totalExpectedAttendance > 0
+            ? (presentCount / totalExpectedAttendance * 100)
             : 0.0;
+        final attendanceRate = rawAttendanceRate.clamp(0.0, 100.0);
 
         // Group by user for summary
         final userAttendanceSummary = <String, Map<String, dynamic>>{};
+
         for (final user in users) {
           final userRecords = attendanceRecords
               .where((a) => a.userId == user.id)
               .toList();
+
           final userPresent = userRecords
               .where((a) => a.status == StatusPresensi.hadir)
               .length;
-          final userTotal = userRecords.length;
+
+          final userAbsent = userRecords
+              .where((a) => a.status == StatusPresensi.alpha)
+              .length;
+
+          final userSick = userRecords
+              .where((a) => a.status == StatusPresensi.sakit)
+              .length;
+
+          final userExcused = userRecords
+              .where((a) => a.status == StatusPresensi.izin)
+              .length;
+
+          final userExpectedTotal = userRecords.length;
+          final rawUserAttendanceRate = userExpectedTotal > 0
+              ? (userPresent / userExpectedTotal * 100)
+              : 0.0;
+          final userAttendanceRate = rawUserAttendanceRate.clamp(0.0, 100.0);
 
           userAttendanceSummary[user.id] = {
             'user': user,
-            'totalRecords': userTotal,
+            'totalRecords': userExpectedTotal,
             'presentCount': userPresent,
-            'absentCount': userRecords
-                .where((a) => a.status == StatusPresensi.alpha)
-                .length,
-            'sickCount': userRecords
-                .where((a) => a.status == StatusPresensi.sakit)
-                .length,
-            'excusedCount': userRecords
-                .where((a) => a.status == StatusPresensi.izin)
-                .length,
-            'attendanceRate': userTotal > 0
-                ? (userPresent / userTotal * 100)
-                : 0.0,
+            'absentCount': userAbsent,
+            'sickCount': userSick,
+            'excusedCount': userExcused,
+            'attendanceRate': userAttendanceRate,
           };
         }
 
@@ -135,7 +152,7 @@ final attendanceReportProvider =
           'attendanceRecords': attendanceRecords,
           'users': users,
           'statistics': {
-            'totalRecords': totalRecords,
+            'totalRecords': totalExpectedAttendance,
             'presentCount': presentCount,
             'absentCount': absentCount,
             'sickCount': sickCount,
@@ -180,9 +197,8 @@ class AttendanceReportFilter {
 
 /// State provider untuk filter
 final attendanceFilterProvider = StateProvider<AttendanceReportFilter>((ref) {
-  final now = DateTime.now();
-  final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-  return AttendanceReportFilter(startDate: startOfWeek, endDate: now);
+  // For debugging: remove date filters to see all data
+  return const AttendanceReportFilter();
 });
 
 /// Halaman Laporan Presensi
@@ -246,14 +262,31 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
           _buildSummaryTab(reportAsync),
           // Tab 2: Detail records
           _buildDetailTab(reportAsync),
-          // Tab 3: Per user summary
+          // Tab 3: Per Santri
           _buildUserSummaryTab(reportAsync),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _exportReport(reportAsync.value),
-        icon: const Icon(Icons.file_download),
-        label: const Text('Export'),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // Test export button (for debugging)
+          FloatingActionButton(
+            heroTag: "test_export",
+            onPressed: () => _testFileCreation(),
+            child: const Icon(Icons.bug_report),
+            backgroundColor: Colors.orange,
+            mini: true,
+          ),
+          const SizedBox(height: 8),
+          // Main export button
+          FloatingActionButton.extended(
+            heroTag: "main_export",
+            onPressed: () => _exportToExcel(),
+            icon: const Icon(Icons.file_download),
+            label: const Text('Export Excel'),
+            backgroundColor: Colors.blue,
+          ),
+        ],
       ),
     );
   }
@@ -297,17 +330,26 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
         final users = data['users'] as List<UserModel>;
 
         if (records.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inbox, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  'Tidak ada data presensi',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(attendanceReportProvider);
+            },
+            child: const SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      'Tidak ada data presensi',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         }
@@ -515,6 +557,13 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       );
     }
 
+    // Ensure all values are non-negative
+    final safeTotal = total.abs();
+    final safePresent = present.clamp(0, safeTotal);
+    final safeAbsent = absent.clamp(0, safeTotal);
+    final safeSick = sick.clamp(0, safeTotal);
+    final safeExcused = excused.clamp(0, safeTotal);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -526,13 +575,13 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildStatusBar('Hadir', present, total, Colors.green),
+            _buildStatusBar('Hadir', safePresent, safeTotal, Colors.green),
             const SizedBox(height: 8),
-            _buildStatusBar('Alpha', absent, total, Colors.red),
+            _buildStatusBar('Alpha', safeAbsent, safeTotal, Colors.red),
             const SizedBox(height: 8),
-            _buildStatusBar('Sakit', sick, total, Colors.orange),
+            _buildStatusBar('Sakit', safeSick, safeTotal, Colors.orange),
             const SizedBox(height: 8),
-            _buildStatusBar('Izin', excused, total, Colors.blue),
+            _buildStatusBar('Izin', safeExcused, safeTotal, Colors.blue),
           ],
         ),
       ),
@@ -541,6 +590,9 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
 
   Widget _buildStatusBar(String label, int count, int total, Color color) {
     final percentage = total > 0 ? (count / total) : 0.0;
+
+    // Ensure percentage is between 0.0 and 1.0
+    final safePercentage = percentage.clamp(0.0, 1.0);
 
     return Row(
       children: [
@@ -560,7 +612,7 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
             ),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
-              widthFactor: percentage,
+              widthFactor: safePercentage,
               child: Container(
                 decoration: BoxDecoration(
                   color: color,
@@ -803,19 +855,693 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
     showDialog(context: context, builder: (context) => const _FilterDialog());
   }
 
-  void _exportReport(Map<String, dynamic>? data) {
-    if (data == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak ada data untuk diekspor')),
+  Future<void> _testFileCreation() async {
+    try {
+      print('Testing file creation...');
+
+      // Request permissions
+      if (Platform.isAndroid) {
+        final storageStatus = await Permission.storage.status;
+        print('Storage permission status: $storageStatus');
+
+        if (!storageStatus.isGranted) {
+          final result = await Permission.storage.request();
+          print('Storage permission request result: $result');
+        }
+      }
+
+      // Try different directories (prioritizing Downloads)
+      final directories = <String, Directory?>{};
+
+      // Priority 1: Downloads directory
+      try {
+        directories['Downloads (Primary)'] = await getDownloadsDirectory();
+      } catch (e) {
+        print('Downloads error: $e');
+      }
+
+      // Priority 2: Public Downloads folder
+      try {
+        final publicDownloads = Directory('/storage/emulated/0/Download');
+        if (await publicDownloads.exists()) {
+          directories['Public Downloads'] = publicDownloads;
+        }
+      } catch (e) {
+        print('Public Downloads error: $e');
+      }
+
+      // Priority 3: External Storage
+      try {
+        directories['External Storage'] = await getExternalStorageDirectory();
+      } catch (e) {
+        print('External storage error: $e');
+      }
+
+      // Fallback: App Documents
+      directories['App Documents'] = await getApplicationDocumentsDirectory();
+
+      // Test creating a simple text file in each directory
+      final testContent = 'Test file created at ${DateTime.now()}';
+      final testFileName = 'test_${DateTime.now().millisecondsSinceEpoch}.txt';
+
+      String results = 'Directory Test Results (Downloads Priority):\n\n';
+
+      for (final entry in directories.entries) {
+        final dirName = entry.key;
+        final dir = entry.value;
+
+        if (dir == null) {
+          results += '$dirName: ❌ Not available\n';
+          continue;
+        }
+
+        try {
+          // Ensure directory exists
+          await dir.create(recursive: true);
+
+          // Create test file
+          final testFile = File('${dir.path}/$testFileName');
+          await testFile.writeAsString(testContent);
+
+          // Verify file exists
+          if (await testFile.exists()) {
+            final size = await testFile.length();
+            final isRecommended = dirName.toLowerCase().contains('downloads');
+            final status = isRecommended
+                ? '✅ SUCCESS (RECOMMENDED)'
+                : '✅ Success';
+            results += '$dirName: $status (${size} bytes)\n';
+            results += '  Path: ${testFile.path}\n';
+
+            // Clean up test file
+            await testFile.delete();
+          } else {
+            results += '$dirName: ❌ File not created\n';
+          }
+        } catch (e) {
+          results += '$dirName: ❌ Error - $e\n';
+        }
+
+        results += '\n';
+      }
+
+      results += '\nNote: Downloads folders are prioritized for export.\n';
+      results +=
+          'If Downloads is not available, app will use fallback directories.';
+
+      // Show results
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('File Creation Test'),
+            content: SingleChildScrollView(
+              child: Text(
+                results,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+
+      print('Test results:\n$results');
+    } catch (e) {
+      print('Test error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Test failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportToExcel() async {
+    try {
+      // Request storage permissions first (especially for Downloads access)
+      print('Requesting storage permissions...');
+
+      if (Platform.isAndroid) {
+        // Check and request storage permissions
+        final storageStatus = await Permission.storage.status;
+        print('Storage permission status: $storageStatus');
+
+        if (!storageStatus.isGranted) {
+          final result = await Permission.storage.request();
+          print('Storage permission request result: $result');
+
+          if (!result.isGranted) {
+            print('Storage permission denied, will use app-specific directory');
+          }
+        }
+
+        // For Android 11+ (API 30+), might need MANAGE_EXTERNAL_STORAGE for Downloads
+        try {
+          final manageStorageStatus =
+              await Permission.manageExternalStorage.status;
+          print(
+            'Manage external storage permission status: $manageStorageStatus',
+          );
+
+          if (!manageStorageStatus.isGranted) {
+            // Show info to user before requesting this sensitive permission
+            if (mounted) {
+              final shouldRequest = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Storage Access'),
+                  content: const Text(
+                    'To save files directly to Downloads folder, the app needs access to manage external storage. This is optional - files can still be saved to app folder.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Skip'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Grant Access'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldRequest == true) {
+                final manageResult = await Permission.manageExternalStorage
+                    .request();
+                print(
+                  'Manage external storage permission result: $manageResult',
+                );
+              }
+            }
+          }
+        } catch (e) {
+          print('Manage external storage permission error: $e');
+        }
+      }
+
+      // Debug: Check if we have data first
+      final filter = ref.read(attendanceFilterProvider);
+      final reportData = await ref.read(
+        attendanceReportProvider(filter).future,
       );
-      return;
+
+      print('Starting Excel export...');
+      print('Target: Save to Downloads folder');
+      print(
+        'Filter: startDate=${filter.startDate}, endDate=${filter.endDate}, status=${filter.status}',
+      );
+
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Exporting to Excel...'),
+            ],
+          ),
+        ),
+      );
+
+      final attendanceRecords =
+          reportData['attendanceRecords'] as List<PresensiModel>;
+      final users = reportData['users'] as List<UserModel>;
+      final statistics = reportData['statistics'] as Map<String, dynamic>;
+      final userSummary = reportData['userSummary'] as Map<String, dynamic>;
+
+      print(
+        'Data loaded: ${attendanceRecords.length} records, ${users.length} users',
+      );
+
+      // Create Excel workbook
+      final excel = excel_lib.Excel.createExcel();
+      print('Excel workbook created');
+
+      // Remove default sheet
+      excel.delete('Sheet1');
+
+      // Create Summary sheet
+      final summarySheet = excel['Ringkasan'];
+      _createSummarySheet(summarySheet, statistics, filter);
+      print('Summary sheet created');
+
+      // Create Detail Records sheet
+      final detailSheet = excel['Detail Presensi'];
+      _createDetailSheet(detailSheet, attendanceRecords, users);
+      print('Detail sheet created');
+
+      // Create Per Santri summary sheet
+      final santriSheet = excel['Per Santri'];
+      _createSantriSummarySheet(santriSheet, userSummary);
+      print('Santri summary sheet created');
+
+      // Save file to /storage/emulated/0/Download (public folder) if available
+      Directory? directory;
+      String directoryType = '';
+
+      if (Platform.isAndroid) {
+        final publicDownloads = Directory('/storage/emulated/0/Download');
+        if (await publicDownloads.exists()) {
+          directory = publicDownloads;
+          directoryType = 'Public Downloads';
+          print('Using public Downloads directory: ${directory.path}');
+        } else {
+          // Fallback: app-specific downloads folder
+          directory = await getExternalStorageDirectory();
+          if (directory != null) {
+            directory = Directory('${directory.path}/Downloads');
+            directoryType = 'App External Storage/Downloads';
+            print('Using app external storage Downloads: ${directory.path}');
+          }
+        }
+      } else {
+        // For iOS and other platforms
+        directory = await getApplicationDocumentsDirectory();
+        directoryType = 'App Documents';
+        print('Using Application Documents directory: ${directory.path}');
+      }
+
+      final fileName = _generateFileName(filter);
+      final filePath = directory != null
+          ? '${directory.path}/$fileName'
+          : fileName;
+      print('Target file path: $filePath');
+      print('Directory type: $directoryType');
+
+      final fileBytes = excel.save();
+      if (fileBytes != null) {
+        print('Excel bytes generated: ${fileBytes.length} bytes');
+
+        final file = File(filePath);
+
+        // Ensure the directory exists
+        await file.parent.create(recursive: true);
+        print('Directory created/verified');
+
+        // Write the file
+        await file.writeAsBytes(fileBytes);
+        print('File written to disk');
+
+        // Verify file was created
+        if (await file.exists()) {
+          final fileSize = await file.length();
+          print('File saved successfully: $filePath (${fileSize} bytes)');
+        } else {
+          throw Exception('File was not created after writing');
+        }
+      } else {
+        throw Exception('Failed to generate Excel file bytes');
+      }
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Show success message with emphasis on Downloads location
+      if (mounted) {
+        final isDownloadsFolder = directoryType.toLowerCase().contains(
+          'downloads',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isDownloadsFolder
+                  ? '✅ Excel berhasil disimpan!\n📁 Lokasi: $directoryType\n📄 File: $fileName\n\n${attendanceRecords.length} records exported'
+                  : '✅ Exported ${attendanceRecords.length} records\nSaved to: $directoryType\nFile: $fileName',
+            ),
+            backgroundColor: isDownloadsFolder ? Colors.green : Colors.blue,
+            duration: const Duration(seconds: 7),
+            action: SnackBarAction(
+              label: isDownloadsFolder ? 'Buka File' : 'Open File',
+              onPressed: () => _openExportedFile(filePath),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Log the error for debugging
+      print('Export error: $e');
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Export failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Details',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Export Error Details'),
+                    content: SingleChildScrollView(child: Text(e.toString())),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _createSummarySheet(
+    excel_lib.Sheet sheet,
+    Map<String, dynamic> stats,
+    AttendanceReportFilter filter,
+  ) {
+    // Title
+    sheet.cell(excel_lib.CellIndex.indexByString('A1')).value =
+        excel_lib.TextCellValue('LAPORAN RINGKASAN PRESENSI');
+    sheet.merge(
+      excel_lib.CellIndex.indexByString('A1'),
+      excel_lib.CellIndex.indexByString('D1'),
+    );
+
+    // Filter information
+    int row = 3;
+    if (filter.startDate != null && filter.endDate != null) {
+      sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+          excel_lib.TextCellValue('Periode:');
+      sheet
+          .cell(excel_lib.CellIndex.indexByString('B$row'))
+          .value = excel_lib.TextCellValue(
+        '${DateFormat('dd/MM/yyyy').format(filter.startDate!)} - ${DateFormat('dd/MM/yyyy').format(filter.endDate!)}',
+      );
+      row++;
     }
 
-    // TODO: Implement actual export functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fitur ekspor akan segera tersedia'),
-        duration: Duration(seconds: 2),
+    if (filter.status != null) {
+      sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+          excel_lib.TextCellValue('Filter Status:');
+      sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+          excel_lib.TextCellValue(filter.status!);
+      row++;
+    }
+
+    row++; // Empty row
+
+    // Statistics
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('STATISTIK');
+    row++;
+
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('Total Presensi:');
+    sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+        excel_lib.IntCellValue(stats['totalRecords']);
+    row++;
+
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('Hadir:');
+    sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+        excel_lib.IntCellValue(stats['presentCount']);
+    row++;
+
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('Alpha:');
+    sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+        excel_lib.IntCellValue(stats['absentCount']);
+    row++;
+
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('Sakit:');
+    sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+        excel_lib.IntCellValue(stats['sickCount']);
+    row++;
+
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('Izin:');
+    sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+        excel_lib.IntCellValue(stats['excusedCount']);
+    row++;
+
+    sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+        excel_lib.TextCellValue('Tingkat Kehadiran:');
+    sheet
+        .cell(excel_lib.CellIndex.indexByString('B$row'))
+        .value = excel_lib.TextCellValue(
+      '${stats['attendanceRate'].toStringAsFixed(1)}%',
+    );
+  }
+
+  void _createDetailSheet(
+    excel_lib.Sheet sheet,
+    List<PresensiModel> records,
+    List<UserModel> users,
+  ) {
+    // Headers
+    sheet.cell(excel_lib.CellIndex.indexByString('A1')).value =
+        excel_lib.TextCellValue('No');
+    sheet.cell(excel_lib.CellIndex.indexByString('B1')).value =
+        excel_lib.TextCellValue('Nama Santri');
+    sheet.cell(excel_lib.CellIndex.indexByString('C1')).value =
+        excel_lib.TextCellValue('Tanggal');
+    sheet.cell(excel_lib.CellIndex.indexByString('D1')).value =
+        excel_lib.TextCellValue('Waktu');
+    sheet.cell(excel_lib.CellIndex.indexByString('E1')).value =
+        excel_lib.TextCellValue('Status');
+    sheet.cell(excel_lib.CellIndex.indexByString('F1')).value =
+        excel_lib.TextCellValue('Keterangan');
+
+    // Data
+    for (int i = 0; i < records.length; i++) {
+      final record = records[i];
+      final user = users.firstWhere(
+        (u) => u.id == record.userId,
+        orElse: () => UserModel(
+          id: record.userId,
+          nama: 'Unknown User',
+          email: '',
+          role: 'santri',
+        ),
+      );
+
+      final row = i + 2;
+      sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+          excel_lib.IntCellValue(i + 1);
+      sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+          excel_lib.TextCellValue(user.nama);
+      sheet
+          .cell(excel_lib.CellIndex.indexByString('C$row'))
+          .value = excel_lib.TextCellValue(
+        DateFormat('dd/MM/yyyy').format(record.tanggal),
+      );
+      sheet.cell(excel_lib.CellIndex.indexByString('D$row')).value =
+          excel_lib.TextCellValue(DateFormat('HH:mm').format(record.tanggal));
+      sheet.cell(excel_lib.CellIndex.indexByString('E$row')).value =
+          excel_lib.TextCellValue(record.status.label);
+      sheet.cell(excel_lib.CellIndex.indexByString('F$row')).value =
+          excel_lib.TextCellValue(record.keterangan ?? '');
+    }
+  }
+
+  void _createSantriSummarySheet(
+    excel_lib.Sheet sheet,
+    Map<String, dynamic> userSummary,
+  ) {
+    // Headers
+    sheet.cell(excel_lib.CellIndex.indexByString('A1')).value =
+        excel_lib.TextCellValue('No');
+    sheet.cell(excel_lib.CellIndex.indexByString('B1')).value =
+        excel_lib.TextCellValue('Nama Santri');
+    sheet.cell(excel_lib.CellIndex.indexByString('C1')).value =
+        excel_lib.TextCellValue('Total Kegiatan');
+    sheet.cell(excel_lib.CellIndex.indexByString('D1')).value =
+        excel_lib.TextCellValue('Hadir');
+    sheet.cell(excel_lib.CellIndex.indexByString('E1')).value =
+        excel_lib.TextCellValue('Alpha');
+    sheet.cell(excel_lib.CellIndex.indexByString('F1')).value =
+        excel_lib.TextCellValue('Sakit');
+    sheet.cell(excel_lib.CellIndex.indexByString('G1')).value =
+        excel_lib.TextCellValue('Izin');
+    sheet.cell(excel_lib.CellIndex.indexByString('H1')).value =
+        excel_lib.TextCellValue('Tingkat Kehadiran (%)');
+
+    // Sort by attendance rate
+    final sortedEntries = userSummary.entries.toList()
+      ..sort(
+        (a, b) => (b.value['attendanceRate'] as double).compareTo(
+          a.value['attendanceRate'] as double,
+        ),
+      );
+
+    // Data
+    for (int i = 0; i < sortedEntries.length; i++) {
+      final entry = sortedEntries[i];
+      final data = entry.value;
+      final user = data['user'] as UserModel;
+
+      final row = i + 2;
+      sheet.cell(excel_lib.CellIndex.indexByString('A$row')).value =
+          excel_lib.IntCellValue(i + 1);
+      sheet.cell(excel_lib.CellIndex.indexByString('B$row')).value =
+          excel_lib.TextCellValue(user.nama);
+      sheet.cell(excel_lib.CellIndex.indexByString('C$row')).value =
+          excel_lib.IntCellValue(data['totalRecords']);
+      sheet.cell(excel_lib.CellIndex.indexByString('D$row')).value =
+          excel_lib.IntCellValue(data['presentCount']);
+      sheet.cell(excel_lib.CellIndex.indexByString('E$row')).value =
+          excel_lib.IntCellValue(data['absentCount']);
+      sheet.cell(excel_lib.CellIndex.indexByString('F$row')).value =
+          excel_lib.IntCellValue(data['sickCount']);
+      sheet.cell(excel_lib.CellIndex.indexByString('G$row')).value =
+          excel_lib.IntCellValue(data['excusedCount']);
+      sheet.cell(excel_lib.CellIndex.indexByString('H$row')).value =
+          excel_lib.TextCellValue(data['attendanceRate'].toStringAsFixed(1));
+    }
+  }
+
+  String _generateFileName(AttendanceReportFilter filter) {
+    final now = DateTime.now();
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(now);
+
+    String prefix = 'Laporan_Presensi';
+
+    if (filter.startDate != null && filter.endDate != null) {
+      final startStr = DateFormat('ddMMyyyy').format(filter.startDate!);
+      final endStr = DateFormat('ddMMyyyy').format(filter.endDate!);
+      prefix += '_${startStr}_${endStr}';
+    }
+
+    if (filter.status != null) {
+      prefix += '_${filter.status}';
+    }
+
+    return '${prefix}_$timestamp.xlsx';
+  }
+
+  Future<void> _openExportedFile(String filePath) async {
+    try {
+      // Check if file exists
+      final file = File(filePath);
+      if (!await file.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ File not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Try to open the file
+      final result = await OpenFile.open(filePath);
+
+      if (mounted) {
+        if (result.type == ResultType.done) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('📂 File opened successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (result.type == ResultType.noAppToOpen) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('❌ No app available to open Excel files'),
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'Show Path',
+                onPressed: () {
+                  _showFilePath(filePath);
+                },
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Failed to open file: ${result.message}'),
+              backgroundColor: Colors.red,
+              action: SnackBarAction(
+                label: 'Show Path',
+                onPressed: () {
+                  _showFilePath(filePath);
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error opening file: $e'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Show Path',
+              onPressed: () {
+                _showFilePath(filePath);
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showFilePath(String filePath) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('File Location'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('File saved at:'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: SelectableText(
+                filePath,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'You can manually navigate to this location using a file manager app.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -917,14 +1643,23 @@ class _FilterDialogState extends ConsumerState<_FilterDialog> {
             // Reset filter
             setState(() {
               final now = DateTime.now();
-              final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+              final startOfMonth = DateTime(now.year, now.month, 1);
               _tempFilter = AttendanceReportFilter(
-                startDate: startOfWeek,
+                startDate: startOfMonth,
                 endDate: now,
               );
             });
           },
           child: const Text('Reset'),
+        ),
+        TextButton(
+          onPressed: () {
+            // Show all data (no date filter)
+            setState(() {
+              _tempFilter = const AttendanceReportFilter();
+            });
+          },
+          child: const Text('Tampilkan Semua'),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sisantri/features/admin/presentation/materi_management_page.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/models/user_model.dart';
@@ -308,12 +309,8 @@ class AdminDashboardPage extends ConsumerWidget {
               Icons.book,
               Colors.blueGrey,
               () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Halaman Manajemen Materi sedang dalam pengembangan',
-                    ),
-                  ),
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => MateriManagementPage()),
                 );
               },
             ),
