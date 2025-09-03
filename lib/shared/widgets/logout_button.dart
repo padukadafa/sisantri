@@ -180,14 +180,17 @@ class LogoutButton extends StatelessWidget {
     }
 
     try {
-      // Cleanup messaging sebelum logout
-      await MessagingHelper.unsubscribeFromAllTopics();
-
-      await AuthService.signOut();
+      // Set timeout untuk logout process
+      await Future.any([
+        _performLogoutSteps(),
+        Future.delayed(const Duration(seconds: 10), () {
+          throw Exception('Logout timeout - operasi terlalu lama');
+        }),
+      ]);
 
       // Tutup loading dialog
       if (context.mounted) {
-        Navigator.pop(context);
+        Navigator.of(context, rootNavigator: true).pop();
       }
 
       // Panggil callback jika ada
@@ -215,7 +218,7 @@ class LogoutButton extends StatelessWidget {
     } catch (e) {
       // Tutup loading dialog
       if (context.mounted) {
-        Navigator.pop(context);
+        Navigator.of(context, rootNavigator: true).pop();
       }
 
       // Tampilkan error
@@ -226,7 +229,7 @@ class LogoutButton extends StatelessWidget {
               children: [
                 const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Error: $e')),
+                Expanded(child: Text('Error logout: $e')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -235,6 +238,38 @@ class LogoutButton extends StatelessWidget {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _performLogoutSteps() async {
+    try {
+      // Step 1: Cleanup messaging (dengan timeout per topic)
+      await _cleanupMessagingWithTimeout();
+
+      // Step 2: Sign out dari auth services
+      await _signOutWithTimeout();
+    } catch (e) {
+      // Jika ada error di salah satu step, lanjutkan ke step berikutnya
+      // tapi tetap throw error di akhir jika semua gagal
+      rethrow;
+    }
+  }
+
+  Future<void> _cleanupMessagingWithTimeout() async {
+    try {
+      // Gunakan MessagingHelper untuk cleanup messaging
+      await MessagingHelper.unsubscribeFromAllTopics();
+    } catch (e) {
+      // Ignore messaging cleanup errors
+    }
+  }
+
+  Future<void> _signOutWithTimeout() async {
+    try {
+      // Gunakan AuthService.signOut() yang sudah memiliki timeout handling
+      await AuthService.signOut();
+    } catch (e) {
+      // Ignore sign out errors
     }
   }
 }

@@ -113,7 +113,7 @@ class AppUtils {
         return DateTime.fromMillisecondsSinceEpoch(timestamp);
       }
     } catch (e) {
-      print('Error converting timestamp: $e');
+      // Error converting timestamp
     }
 
     return null;

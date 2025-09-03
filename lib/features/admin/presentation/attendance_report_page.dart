@@ -266,27 +266,12 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
           _buildUserSummaryTab(reportAsync),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          // Test export button (for debugging)
-          FloatingActionButton(
-            heroTag: "test_export",
-            onPressed: () => _testFileCreation(),
-            child: const Icon(Icons.bug_report),
-            backgroundColor: Colors.orange,
-            mini: true,
-          ),
-          const SizedBox(height: 8),
-          // Main export button
-          FloatingActionButton.extended(
-            heroTag: "main_export",
-            onPressed: () => _exportToExcel(),
-            icon: const Icon(Icons.file_download),
-            label: const Text('Export Excel'),
-            backgroundColor: Colors.blue,
-          ),
-        ],
+      floatingActionButton: FloatingActionButton(
+        heroTag: "main_export",
+        onPressed: () => _exportToExcel(),
+        child: const Icon(Icons.file_download),
+        backgroundColor: Colors.blue,
+        tooltip: 'Export Excel',
       ),
     );
   }
@@ -855,152 +840,19 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
     showDialog(context: context, builder: (context) => const _FilterDialog());
   }
 
-  Future<void> _testFileCreation() async {
-    try {
-      print('Testing file creation...');
-
-      // Request permissions
-      if (Platform.isAndroid) {
-        final storageStatus = await Permission.storage.status;
-        print('Storage permission status: $storageStatus');
-
-        if (!storageStatus.isGranted) {
-          final result = await Permission.storage.request();
-          print('Storage permission request result: $result');
-        }
-      }
-
-      // Try different directories (prioritizing Downloads)
-      final directories = <String, Directory?>{};
-
-      // Priority 1: Downloads directory
-      try {
-        directories['Downloads (Primary)'] = await getDownloadsDirectory();
-      } catch (e) {
-        print('Downloads error: $e');
-      }
-
-      // Priority 2: Public Downloads folder
-      try {
-        final publicDownloads = Directory('/storage/emulated/0/Download');
-        if (await publicDownloads.exists()) {
-          directories['Public Downloads'] = publicDownloads;
-        }
-      } catch (e) {
-        print('Public Downloads error: $e');
-      }
-
-      // Priority 3: External Storage
-      try {
-        directories['External Storage'] = await getExternalStorageDirectory();
-      } catch (e) {
-        print('External storage error: $e');
-      }
-
-      // Fallback: App Documents
-      directories['App Documents'] = await getApplicationDocumentsDirectory();
-
-      // Test creating a simple text file in each directory
-      final testContent = 'Test file created at ${DateTime.now()}';
-      final testFileName = 'test_${DateTime.now().millisecondsSinceEpoch}.txt';
-
-      String results = 'Directory Test Results (Downloads Priority):\n\n';
-
-      for (final entry in directories.entries) {
-        final dirName = entry.key;
-        final dir = entry.value;
-
-        if (dir == null) {
-          results += '$dirName: ❌ Not available\n';
-          continue;
-        }
-
-        try {
-          // Ensure directory exists
-          await dir.create(recursive: true);
-
-          // Create test file
-          final testFile = File('${dir.path}/$testFileName');
-          await testFile.writeAsString(testContent);
-
-          // Verify file exists
-          if (await testFile.exists()) {
-            final size = await testFile.length();
-            final isRecommended = dirName.toLowerCase().contains('downloads');
-            final status = isRecommended
-                ? '✅ SUCCESS (RECOMMENDED)'
-                : '✅ Success';
-            results += '$dirName: $status (${size} bytes)\n';
-            results += '  Path: ${testFile.path}\n';
-
-            // Clean up test file
-            await testFile.delete();
-          } else {
-            results += '$dirName: ❌ File not created\n';
-          }
-        } catch (e) {
-          results += '$dirName: ❌ Error - $e\n';
-        }
-
-        results += '\n';
-      }
-
-      results += '\nNote: Downloads folders are prioritized for export.\n';
-      results +=
-          'If Downloads is not available, app will use fallback directories.';
-
-      // Show results
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('File Creation Test'),
-            content: SingleChildScrollView(
-              child: Text(
-                results,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-
-      print('Test results:\n$results');
-    } catch (e) {
-      print('Test error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Test failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   Future<void> _exportToExcel() async {
     try {
       // Request storage permissions first (especially for Downloads access)
-      print('Requesting storage permissions...');
 
       if (Platform.isAndroid) {
         // Check and request storage permissions
         final storageStatus = await Permission.storage.status;
-        print('Storage permission status: $storageStatus');
 
         if (!storageStatus.isGranted) {
           final result = await Permission.storage.request();
-          print('Storage permission request result: $result');
 
           if (!result.isGranted) {
-            print('Storage permission denied, will use app-specific directory');
+            // Storage permission denied, will use app-specific directory
           }
         }
 
@@ -1008,9 +860,6 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
         try {
           final manageStorageStatus =
               await Permission.manageExternalStorage.status;
-          print(
-            'Manage external storage permission status: $manageStorageStatus',
-          );
 
           if (!manageStorageStatus.isGranted) {
             // Show info to user before requesting this sensitive permission
@@ -1036,16 +885,12 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
               );
 
               if (shouldRequest == true) {
-                final manageResult = await Permission.manageExternalStorage
-                    .request();
-                print(
-                  'Manage external storage permission result: $manageResult',
-                );
+                await Permission.manageExternalStorage.request();
               }
             }
           }
         } catch (e) {
-          print('Manage external storage permission error: $e');
+          // Manage external storage permission error
         }
       }
 
@@ -1053,12 +898,6 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       final filter = ref.read(attendanceFilterProvider);
       final reportData = await ref.read(
         attendanceReportProvider(filter).future,
-      );
-
-      print('Starting Excel export...');
-      print('Target: Save to Downloads folder');
-      print(
-        'Filter: startDate=${filter.startDate}, endDate=${filter.endDate}, status=${filter.status}',
       );
 
       // Show loading
@@ -1082,13 +921,8 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       final statistics = reportData['statistics'] as Map<String, dynamic>;
       final userSummary = reportData['userSummary'] as Map<String, dynamic>;
 
-      print(
-        'Data loaded: ${attendanceRecords.length} records, ${users.length} users',
-      );
-
       // Create Excel workbook
       final excel = excel_lib.Excel.createExcel();
-      print('Excel workbook created');
 
       // Remove default sheet
       excel.delete('Sheet1');
@@ -1096,17 +930,14 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       // Create Summary sheet
       final summarySheet = excel['Ringkasan'];
       _createSummarySheet(summarySheet, statistics, filter);
-      print('Summary sheet created');
 
       // Create Detail Records sheet
       final detailSheet = excel['Detail Presensi'];
       _createDetailSheet(detailSheet, attendanceRecords, users);
-      print('Detail sheet created');
 
       // Create Per Santri summary sheet
       final santriSheet = excel['Per Santri'];
       _createSantriSummarySheet(santriSheet, userSummary);
-      print('Santri summary sheet created');
 
       // Save file to /storage/emulated/0/Download (public folder) if available
       Directory? directory;
@@ -1117,48 +948,38 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
         if (await publicDownloads.exists()) {
           directory = publicDownloads;
           directoryType = 'Public Downloads';
-          print('Using public Downloads directory: ${directory.path}');
         } else {
           // Fallback: app-specific downloads folder
           directory = await getExternalStorageDirectory();
           if (directory != null) {
             directory = Directory('${directory.path}/Downloads');
             directoryType = 'App External Storage/Downloads';
-            print('Using app external storage Downloads: ${directory.path}');
           }
         }
       } else {
         // For iOS and other platforms
         directory = await getApplicationDocumentsDirectory();
         directoryType = 'App Documents';
-        print('Using Application Documents directory: ${directory.path}');
       }
 
       final fileName = _generateFileName(filter);
       final filePath = directory != null
           ? '${directory.path}/$fileName'
           : fileName;
-      print('Target file path: $filePath');
-      print('Directory type: $directoryType');
 
       final fileBytes = excel.save();
       if (fileBytes != null) {
-        print('Excel bytes generated: ${fileBytes.length} bytes');
-
         final file = File(filePath);
 
         // Ensure the directory exists
         await file.parent.create(recursive: true);
-        print('Directory created/verified');
 
         // Write the file
         await file.writeAsBytes(fileBytes);
-        print('File written to disk');
 
         // Verify file was created
         if (await file.exists()) {
-          final fileSize = await file.length();
-          print('File saved successfully: $filePath (${fileSize} bytes)');
+          await file.length();
         } else {
           throw Exception('File was not created after writing');
         }
@@ -1193,9 +1014,6 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
     } catch (e) {
       // Close loading dialog
       if (mounted) Navigator.pop(context);
-
-      // Log the error for debugging
-      print('Export error: $e');
 
       // Show error message
       if (mounted) {

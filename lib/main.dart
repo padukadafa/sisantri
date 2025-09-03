@@ -11,13 +11,9 @@ import 'firebase_options.dart';
 
 /// Background message handler untuk Firebase Messaging
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  try {
-    await Firebase.initializeApp();
-    print('Handling a background message: ${message.messageId}');
-  } catch (e) {
-    print('Background message handler error: $e');
-    // Jangan throw error, biarkan aplikasi tetap berjalan
-  }
+  // Ensure Firebase is initialized
+  await Firebase.initializeApp();
+  // Handling a background message
 }
 
 /// Flutter Local Notifications plugin instance
@@ -31,27 +27,24 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('✅ Firebase Core berhasil diinisialisasi');
 
     // Initialize Firebase Messaging background handler dengan error handling
     try {
       FirebaseMessaging.onBackgroundMessage(
         _firebaseMessagingBackgroundHandler,
       );
-      print('✅ Firebase Messaging background handler berhasil diatur');
     } catch (e) {
-      print('⚠️ Firebase Messaging error (akan diabaikan): $e');
+      // Firebase Messaging error (akan diabaikan)
     }
 
     // Initialize local notifications
     try {
       await NotificationService.initialize();
-      print('✅ Local notifications berhasil diinisialisasi');
     } catch (e) {
-      print('⚠️ Local notifications error (akan diabaikan): $e');
+      // Local notifications error (akan diabaikan)
     }
   } catch (e) {
-    print('❌ Firebase initialization error: $e');
+    // Firebase initialization error
     // Lanjutkan saja meskipun ada error Firebase
   }
 

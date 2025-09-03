@@ -776,7 +776,7 @@ class _AnnouncementManagementPageState
         await _sendPengumumanNotification(pengumuman);
       }
     } catch (e) {
-      print('Error adding pengumuman: $e');
+      // Error adding pengumuman
     }
   }
 
@@ -791,7 +791,7 @@ class _AnnouncementManagementPageState
           .doc(id)
           .update(pengumuman.toJson());
     } catch (e) {
-      print('Error updating pengumuman: $e');
+      // Error updating pengumuman
     }
   }
 
@@ -808,7 +808,7 @@ class _AnnouncementManagementPageState
         await _sendPengumumanNotification(pengumuman);
       }
     } catch (e) {
-      print('Error toggling active status: $e');
+      // Error toggling active status
     }
   }
 
@@ -868,7 +868,7 @@ class _AnnouncementManagementPageState
             .doc(pengumuman.id)
             .delete();
       } catch (e) {
-        print('Error deleting pengumuman: $e');
+        // Error deleting pengumuman
       }
     }
   }
@@ -877,7 +877,7 @@ class _AnnouncementManagementPageState
     try {
       await _sendPengumumanNotification(pengumuman);
     } catch (e) {
-      print('Error resending notification: $e');
+      // Error resending notification
     }
   }
 
@@ -899,7 +899,7 @@ class _AnnouncementManagementPageState
         );
       }
     } catch (e) {
-      print('Error sending pengumuman notification: $e');
+      // Error sending pengumuman notification
     }
   }
 }

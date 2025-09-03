@@ -17,7 +17,7 @@ final currentUserDataProvider = StreamProvider<UserModel?>((ref) {
     try {
       return await AuthService.getUserData(user.uid);
     } catch (e) {
-      debugPrint('Error loading user data: $e');
+      // Error loading user data
       return null;
     }
   });
@@ -66,7 +66,7 @@ class RoleBasedNavigation extends ConsumerWidget {
                   try {
                     await AuthService.signOut();
                   } catch (e) {
-                    debugPrint('Error signing out: $e');
+                    // Error signing out
                   }
                 },
                 child: const Text('Logout'),
@@ -134,7 +134,7 @@ class RoleBasedNavigation extends ConsumerWidget {
                       try {
                         await AuthService.signOut();
                       } catch (e) {
-                        debugPrint('Error signing out: $e');
+                        // Error signing out
                       }
                     },
                     child: const Text('Logout'),

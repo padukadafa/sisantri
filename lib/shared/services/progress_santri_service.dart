@@ -366,9 +366,7 @@ class ProgressSantriService {
       }
       await sesiBatch.commit();
 
-      print(
-        '✅ Dummy progress berhasil dibuat: ${dummyProgress.length} progress, ${dummySesi.length} sesi',
-      );
+      // Dummy progress created successfully
     } catch (e) {
       throw Exception('Gagal membuat dummy progress: $e');
     }

@@ -19,32 +19,32 @@ void main(List<String> args) async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    print('🚀 Firebase berhasil diinisialisasi');
-    print('📅 Membuat dummy jadwal data...\n');
+    // Firebase initialized successfully
+    // Creating dummy jadwal data
 
     if (args.contains('--recreate')) {
-      print('🔄 Mode: Recreate jadwal data');
+      // Mode: Recreate jadwal data
       await DummyDataService.recreateJadwalData();
     } else if (args.contains('--all')) {
-      print('📋 Mode: Buat semua dummy data');
+      // Mode: Create all dummy data
       await DummyDataService.createAllDummyData();
     } else {
-      print('📅 Mode: Buat jadwal data saja');
+      // Mode: Create jadwal data only
       await DummyDataService.createDummyJadwal();
     }
 
-    print('\n✅ Script selesai dijalankan!');
-    print('\n📊 Data yang dibuat:');
-    print('   • 2 jadwal kajian (Tafsir & Akhlak)');
-    print('   • 2 jadwal kajian/pengajian');
-    print('   • 2 jadwal tahfidz');
-    print('   • 1 jadwal kerja bakti');
-    print('   • 2 jadwal olahraga');
-    print('   • 1 jadwal kegiatan umum');
-    print('   • 1 jadwal tidak aktif (untuk testing)');
-    print('\n🎯 Total: 11 jadwal berhasil dibuat');
+    // Script completed successfully
+    // Data created summary:
+    //   • 2 jadwal kajian (Tafsir & Akhlak)
+    //   • 2 jadwal kajian/pengajian
+    //   • 2 jadwal tahfidz
+    //   • 1 jadwal kerja bakti
+    //   • 2 jadwal olahraga
+    //   • 1 jadwal kegiatan umum
+    //   • 1 jadwal tidak aktif (untuk testing)
+    // Total: 11 jadwal berhasil dibuat
   } catch (e) {
-    print('❌ Error: $e');
+    // Error occurred
     exit(1);
   }
 

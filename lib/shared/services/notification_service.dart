@@ -33,7 +33,7 @@ class NotificationService {
     await Permission.notification.request();
 
     // Request permission untuk Firebase messaging
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+    await _firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -43,7 +43,7 @@ class NotificationService {
       sound: true,
     );
 
-    print('User granted permission: ${settings.authorizationStatus}');
+    // User granted permission
   }
 
   /// Inisialisasi local notifications
@@ -72,7 +72,7 @@ class NotificationService {
 
   /// Handler untuk ketika notifikasi di-tap
   static void _onDidReceiveNotificationResponse(NotificationResponse response) {
-    print('Notification tapped: ${response.payload}');
+    // Notification tapped
     // TODO: Navigate to specific screen based on payload
   }
 
@@ -80,20 +80,20 @@ class NotificationService {
   static Future<void> _initializeFirebaseMessaging() async {
     // Get FCM token
     String? token = await _firebaseMessaging.getToken();
-    print('FCM Token: $token');
+    // FCM Token retrieved
 
     if (token != null) {
       // Update token di Firestore melalui AuthService
       try {
         await _updateTokenInFirestore(token);
       } catch (e) {
-        print('Error updating token in Firestore: $e');
+        // Error updating token in Firestore
       }
     }
 
     // Listen to token refresh
     _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      print('FCM Token refreshed: $newToken');
+      // FCM Token refreshed
       _updateTokenInFirestore(newToken);
     });
   }
@@ -103,18 +103,18 @@ class NotificationService {
     try {
       await AuthService.updateDeviceToken(token);
     } catch (e) {
-      print('Error updating token in Firestore: $e');
+      // Error updating token in Firestore
     }
   }
 
   /// Setup handler untuk foreground messages
   static void _setupForegroundMessageHandler() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
+      // Got a message whilst in the foreground
+      // Message data received
 
       if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
+        // Message also contained a notification
         _showLocalNotification(message);
       }
     });
@@ -210,11 +210,8 @@ class NotificationService {
   }) async {
     // Implementasi ini memerlukan Firebase Functions atau backend server
     // Untuk sekarang, kita bisa log saja sebagai placeholder
-    print('Sending notification to ${tokens.length} devices:');
-    print('Title: $title');
-    print('Body: $body');
-    print('Tokens: $tokens');
-    print('Data: $data');
+    // Sending notification to devices
+    // Title, Body, Tokens, and Data prepared
 
     // TODO: Implementasi dengan Firebase Functions atau backend API
     // Example call to backend:
@@ -247,7 +244,7 @@ class NotificationService {
         );
       }
     } catch (e) {
-      print('Error sending notification to all santri: $e');
+      // Error sending notification to all santri
     }
   }
 
@@ -268,7 +265,7 @@ class NotificationService {
         );
       }
     } catch (e) {
-      print('Error sending notification to all dewa guru: $e');
+      // Error sending notification to all dewa guru
     }
   }
 }

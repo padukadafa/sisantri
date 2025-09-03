@@ -33,7 +33,6 @@ final dewaGuruUserProvider = StreamProvider<UserModel?>((ref) {
       }
     } catch (e) {
       // Log error dan return null untuk fallback
-      debugPrint('Error loading dewan guru data: $e');
       return null;
     }
   });
@@ -380,6 +379,5 @@ class DewaGuruNavigation extends ConsumerWidget {
     }
 
     // TODO: Implementasi bottom sheet untuk notifikasi
-    debugPrint('Notifications: ${notifications.length}');
   }
 }

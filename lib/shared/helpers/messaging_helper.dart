@@ -18,7 +18,7 @@ class MessagingHelper {
         await _subscribeToRoleBasedTopics(currentUser);
       }
     } catch (e) {
-      print('Error initializing messaging after login: $e');
+      // Error initializing messaging after login
     }
   }
 
@@ -61,29 +61,37 @@ class MessagingHelper {
           break;
       }
 
-      print('Successfully subscribed to topics for role: ${user.role}');
+      // Successfully subscribed to topics
     } catch (e) {
-      print('Error subscribing to topics: $e');
+      // Error subscribing to topics
     }
   }
 
-  /// Unsubscribe dari semua topics saat logout
+  /// Unsubscribe dari semua topics saat logout dengan timeout dan error handling
   static Future<void> unsubscribeFromAllTopics() async {
     try {
       // Daftar semua topics yang mungkin
       final topics = ['all_users', 'santri', 'dewan_guru', 'admin', 'staff'];
 
-      for (final topic in topics) {
+      // Unsubscribe dari semua topics secara paralel dengan timeout per topic
+      final unsubscribeFutures = topics.map((topic) async {
         try {
-          await NotificationService.unsubscribeFromTopic(topic);
+          // Timeout 2 detik per topic
+          await Future.any([
+            NotificationService.unsubscribeFromTopic(topic),
+            Future.delayed(const Duration(seconds: 2)),
+          ]);
         } catch (e) {
-          print('Warning: Failed to unsubscribe from $topic: $e');
+          // Ignore error per topic, lanjutkan ke topic berikutnya
         }
-      }
+      });
 
-      print('Unsubscribed from all topics');
+      // Tunggu semua unsubscribe selesai (maksimal 10 detik total)
+      await Future.wait(
+        unsubscribeFutures,
+      ).timeout(const Duration(seconds: 10));
     } catch (e) {
-      print('Error unsubscribing from topics: $e');
+      // Ignore semua error dalam messaging cleanup
     }
   }
 
@@ -102,7 +110,7 @@ class MessagingHelper {
         },
       );
     } catch (e) {
-      print('Error sending pengumuman to santri: $e');
+      // Error sending pengumuman to santri
       rethrow;
     }
   }
@@ -122,7 +130,7 @@ class MessagingHelper {
         },
       );
     } catch (e) {
-      print('Error sending pengumuman to dewan guru: $e');
+      // Error sending pengumuman to dewan guru
       rethrow;
     }
   }
@@ -146,7 +154,7 @@ class MessagingHelper {
         },
       );
     } catch (e) {
-      print('Error sending presensi notification to guru: $e');
+      // Error sending presensi notification to guru
       rethrow;
     }
   }
@@ -170,7 +178,7 @@ class MessagingHelper {
         },
       );
     } catch (e) {
-      print('Error sending kegiatan reminder: $e');
+      // Error sending kegiatan reminder
       rethrow;
     }
   }
@@ -203,7 +211,7 @@ class MessagingHelper {
         ),
       ]);
     } catch (e) {
-      print('Error sending emergency notification: $e');
+      // Error sending emergency notification
       rethrow;
     }
   }
@@ -225,7 +233,7 @@ class MessagingHelper {
         'total': santriTokens.length + guruTokens.length + adminTokens.length,
       };
     } catch (e) {
-      print('Error getting device token statistics: $e');
+      // Error getting device token statistics
       return {'santri': 0, 'dewan_guru': 0, 'admin': 0, 'total': 0};
     }
   }

@@ -10,9 +10,9 @@ class DummyDataService {
       await createDummyUsers();
       await createDummyJadwal(); // Jadwal terpadu baru
       await createDummyPengumuman();
-      print('✅ Semua dummy data berhasil dibuat');
+      // All dummy data created successfully
     } catch (e) {
-      print('❌ Error membuat dummy data: $e');
+      // Error creating dummy data
     }
   }
 
@@ -87,7 +87,7 @@ class DummyDataService {
       await _firestore.collection('users').add(user);
     }
 
-    print('✅ Dummy users created');
+    // Dummy users created
   }
 
   /// Buat dummy jadwal pengajian
@@ -140,7 +140,7 @@ class DummyDataService {
       await _firestore.collection('jadwal_pengajian').add(jadwal);
     }
 
-    print('✅ Dummy jadwal pengajian created');
+    // Dummy jadwal pengajian created
   }
 
   /// Buat dummy jadwal kegiatan
@@ -194,7 +194,7 @@ class DummyDataService {
       await _firestore.collection('jadwal_kegiatan').add(kegiatan);
     }
 
-    print('✅ Dummy jadwal kegiatan created');
+    // Dummy jadwal kegiatan created
   }
 
   /// Buat dummy pengumuman
@@ -255,7 +255,7 @@ class DummyDataService {
       await _firestore.collection('pengumuman').add(pengumuman);
     }
 
-    print('✅ Dummy pengumuman created');
+    // Dummy pengumuman created
   }
 
   /// Buat dummy jadwal terpadu (menggunakan JadwalModel)
@@ -405,7 +405,7 @@ class DummyDataService {
     }
 
     await batch.commit();
-    print('✅ Dummy jadwal berhasil dibuat (${jadwalData.length} jadwal)');
+    // Dummy jadwal created successfully
   }
 
   /// Buat ulang semua jadwal (hapus lama, buat baru)
@@ -420,13 +420,13 @@ class DummyDataService {
       }
 
       await batch.commit();
-      print('✅ Jadwal lama berhasil dihapus');
+      // Old jadwal deleted successfully
 
       // Buat jadwal baru
       await createDummyJadwal();
-      print('✅ Jadwal baru berhasil dibuat');
+      // New jadwal created successfully
     } catch (e) {
-      print('❌ Error recreate jadwal data: $e');
+      // Error recreating jadwal data
     }
   }
 
@@ -475,9 +475,9 @@ class DummyDataService {
         await doc.reference.delete();
       }
 
-      print('✅ Semua dummy data berhasil dihapus');
+      // All dummy data deleted successfully
     } catch (e) {
-      print('❌ Error menghapus dummy data: $e');
+      // Error deleting dummy data
     }
   }
 
@@ -487,7 +487,7 @@ class DummyDataService {
       final usersSnapshot = await _firestore.collection('users').limit(1).get();
       return usersSnapshot.docs.isNotEmpty;
     } catch (e) {
-      print('❌ Error mengecek existing data: $e');
+      // Error checking existing data
       return false;
     }
   }

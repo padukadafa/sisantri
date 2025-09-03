@@ -813,15 +813,11 @@ class ScheduleManagementPage extends ConsumerWidget {
       // Step 2: Generate default attendance records for all active santri
       // Only generate for non-libur activities
       if (jadwal.kategori != TipeJadwal.libur) {
-        print('🔄 Generating default attendance for new jadwal: ${docRef.id}');
         await AttendanceService.generateDefaultAttendanceForJadwal(
           jadwalId: docRef.id,
           createdBy: 'admin', // TODO: get from current user
           createdByName: 'Admin', // TODO: get from current user
         );
-        print('✅ Default attendance records generated successfully');
-      } else {
-        print('ℹ️  Skipping attendance generation for libur activity');
       }
 
       // Step 3: Send notification about new schedule
@@ -831,7 +827,7 @@ class ScheduleManagementPage extends ConsumerWidget {
             '${jadwal.nama} - ${_formatDate(jadwal.tanggal)} ${_formatTime(jadwal.waktuMulai)} di ${jadwal.tempat}',
       );
     } catch (e) {
-      print('Error adding jadwal: $e');
+      // Error adding jadwal
     }
   }
 
@@ -846,7 +842,7 @@ class ScheduleManagementPage extends ConsumerWidget {
           .doc(id)
           .update(jadwal.toJson());
     } catch (e) {
-      print('Error updating jadwal: $e');
+      // Error updating jadwal
     }
   }
 
@@ -861,7 +857,7 @@ class ScheduleManagementPage extends ConsumerWidget {
           .doc(jadwal.id)
           .update({'isAktif': isAktif});
     } catch (e) {
-      print('Error toggling active status: $e');
+      // Error toggling active status
     }
   }
 
@@ -923,7 +919,7 @@ class ScheduleManagementPage extends ConsumerWidget {
             .doc(jadwal.id)
             .delete();
       } catch (e) {
-        print('Error deleting jadwal: $e');
+        // Error deleting jadwal
       }
     }
   }
@@ -1034,7 +1030,7 @@ class ScheduleManagementPage extends ConsumerWidget {
           );
         }
       } catch (e) {
-        print('Error converting to libur: $e');
+        // Error converting to libur
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1160,17 +1156,13 @@ class ScheduleManagementPage extends ConsumerWidget {
 
         // Generate default attendance for restored activity
         try {
-          print(
-            '🔄 Generating default attendance for restored activity: ${jadwal.id}',
-          );
           await AttendanceService.generateDefaultAttendanceForJadwal(
             jadwalId: jadwal.id,
             createdBy: 'admin', // TODO: get from current user
             createdByName: 'Admin', // TODO: get from current user
           );
-          print('✅ Default attendance records generated for restored activity');
         } catch (e) {
-          print('⚠️  Error generating attendance for restored activity: $e');
+          // Error generating attendance for restored activity
         }
 
         // Send restoration notification
@@ -1191,7 +1183,7 @@ class ScheduleManagementPage extends ConsumerWidget {
         }
       }
     } catch (e) {
-      print('Error restoring from libur: $e');
+      // Error restoring from libur
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1213,7 +1205,7 @@ class ScheduleManagementPage extends ConsumerWidget {
         tempat: jadwal.tempat,
       );
     } catch (e) {
-      print('Error sending notification: $e');
+      // Error sending notification
     }
   }
 
@@ -1595,9 +1587,6 @@ class _JadwalFormDialogState extends ConsumerState<_JadwalFormDialog> {
 
                       return materiAsync.when(
                         data: (materiList) {
-                          print(
-                            'DEBUG: Materi loaded: ${materiList.length} items',
-                          );
                           if (materiList.isEmpty) {
                             return Column(
                               children: [

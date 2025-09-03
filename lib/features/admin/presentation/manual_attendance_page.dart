@@ -54,7 +54,7 @@ final attendanceStatusProvider =
 
         return statusMap;
       } catch (e) {
-        print('Error loading attendance status: $e');
+        // Error loading attendance status
         return {};
       }
     });
@@ -109,7 +109,7 @@ final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
         return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
       }).toList();
     } catch (e2) {
-      print('Error loading activities: $e2');
+      // Error loading activities
       return [];
     }
   }
@@ -804,7 +804,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             status: 'Alpha',
           );
         } catch (e) {
-          print('Error sending notification: $e');
+          // Error sending notification
         }
       }
     } catch (e) {

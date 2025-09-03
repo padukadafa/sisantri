@@ -198,7 +198,7 @@ class MateriService {
       }
 
       await batch.commit();
-      print('✅ Dummy materi berhasil dibuat: ${dummyMateri.length} materi');
+      // Dummy materi created successfully
     } catch (e) {
       throw Exception('Gagal membuat dummy materi: $e');
     }

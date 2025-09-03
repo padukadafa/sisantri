@@ -107,7 +107,7 @@ class AuthWrapper extends ConsumerWidget {
                     // Initialize messaging setelah user data berhasil dimuat
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       MessagingHelper.initializeAfterLogin().catchError((e) {
-                        print('Error initializing messaging: $e');
+                        // Error initializing messaging
                       });
                     });
 

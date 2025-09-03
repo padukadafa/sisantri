@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../shared/helpers/messaging_helper.dart';
 import '../../../shared/providers/materi_provider.dart';
 import '../../../shared/services/materi_service.dart';
@@ -369,9 +368,6 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
 
                     return materiAsync.when(
                       data: (materiList) {
-                        print(
-                          'DEBUG: Materi loaded: ${materiList.length} items',
-                        );
                         if (materiList.isEmpty) {
                           return Column(
                             children: [
@@ -782,15 +778,11 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
     // Step 2: Generate default attendance records for all active santri
     // Only generate for non-libur activities
     if (jadwal.kategori != TipeJadwal.libur) {
-      print('🔄 Generating default attendance for new jadwal: ${docRef.id}');
       await AttendanceService.generateDefaultAttendanceForJadwal(
         jadwalId: docRef.id,
         createdBy: 'admin', // TODO: get from current user
         createdByName: 'Admin', // TODO: get from current user
       );
-      print('✅ Default attendance records generated successfully');
-    } else {
-      print('ℹ️  Skipping attendance generation for libur activity');
     }
 
     // Step 3: Send notification about new schedule

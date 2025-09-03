@@ -122,18 +122,56 @@ class AuthService {
     }
   }
 
-  /// Logout
+  /// Logout dengan timeout dan error handling yang lebih baik
   static Future<void> signOut() async {
     try {
-      // Hapus device token sebelum logout
+      // Step 1: Hapus device token dengan timeout (3 detik)
+      await Future.any([
+        _safeRemoveDeviceToken(),
+        Future.delayed(const Duration(seconds: 3)),
+      ]).catchError((_) {
+        // Ignore timeout errors untuk device token removal
+      });
+
+      // Step 2: Sign out dengan timeout (5 detik)
+      await Future.any([
+        Future.wait([_auth.signOut(), _googleSignIn.signOut()]),
+        Future.delayed(const Duration(seconds: 5)),
+      ]).catchError((_) {
+        // Jika timeout, coba sign out satu per satu
+        _forceSignOut();
+      });
+    } catch (e) {
+      // Jika semua gagal, coba force sign out
+      await _forceSignOut();
+      throw Exception('Error saat logout: $e');
+    }
+  }
+
+  /// Helper method untuk safe device token removal
+  static Future<void> _safeRemoveDeviceToken() async {
+    try {
       final token = await _getDeviceToken();
       if (token != null) {
         await removeDeviceToken(token);
       }
-
-      await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
     } catch (e) {
-      throw Exception('Error saat logout: $e');
+      // Ignore device token removal errors
+    }
+  }
+
+  /// Force sign out tanpa timeout
+  static Future<void> _forceSignOut() async {
+    try {
+      await _auth.signOut();
+    } catch (_) {
+      // Ignore auth sign out errors
+    }
+
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Ignore google sign out errors
     }
   }
 
@@ -418,8 +456,7 @@ class AuthService {
         await updateDeviceToken(token);
       }
     } catch (e) {
-      // Log error tapi tidak throw, agar login tetap berhasil meski gagal update token
-      print('Warning: Failed to update device token after login: $e');
+      // Warning: Failed to update device token after login
     }
   }
 
@@ -430,7 +467,7 @@ class AuthService {
       final messaging = FirebaseMessaging.instance;
       return await messaging.getToken();
     } catch (e) {
-      print('Error getting device token: $e');
+      // Error getting device token
       return null;
     }
   }

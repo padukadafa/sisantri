@@ -78,7 +78,7 @@ class PresensiModel {
 
   /// Factory constructor untuk membuat PresensiModel dari JSON
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
-    print('DEBUG PresensiModel: Parsing JSON: $json');
+    // Parsing JSON data
 
     DateTime tanggalParsed;
     try {
@@ -92,14 +92,12 @@ class PresensiModel {
       } else if (dateField is int) {
         tanggalParsed = DateTime.fromMillisecondsSinceEpoch(dateField);
       } else {
-        print(
-          'DEBUG PresensiModel: Unknown date format: ${dateField?.runtimeType}',
-        );
-        print('DEBUG PresensiModel: Available fields: ${json.keys.toList()}');
+        // Unknown date format
+        // Available fields
         tanggalParsed = DateTime.now();
       }
     } catch (e) {
-      print('DEBUG PresensiModel: Error parsing date: $e');
+      // Error parsing date
       tanggalParsed = DateTime.now();
     }
 
@@ -117,7 +115,7 @@ class PresensiModel {
         }
       }
     } catch (e) {
-      print('DEBUG PresensiModel: Error parsing createdAt: $e');
+      // Error parsing createdAt
     }
 
     final result = PresensiModel(
@@ -130,7 +128,7 @@ class PresensiModel {
       createdAt: createdAtParsed,
     );
 
-    print('DEBUG PresensiModel: Successfully parsed: $result');
+    // Successfully parsed PresensiModel
     return result;
   }
 
