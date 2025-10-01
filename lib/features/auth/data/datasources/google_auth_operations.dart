@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import '../../../../core/error/auth_error_mapper.dart';
 
 /// Google Sign-In operations
 class GoogleAuthOperations {
@@ -22,7 +23,9 @@ class GoogleAuthOperations {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        throw Exception('Google sign in cancelled');
+        throw Exception(
+          AuthErrorMapper.mapFirebaseAuthError('sign_in_canceled'),
+        );
       }
 
       final GoogleSignInAuthentication googleAuth =
@@ -38,7 +41,7 @@ class GoogleAuthOperations {
       );
 
       if (userCredential.user == null) {
-        throw Exception('Google sign in failed');
+        throw Exception(AuthErrorMapper.mapFirebaseAuthError('sign_in_failed'));
       }
 
       final firebaseUser = userCredential.user!;
@@ -54,7 +57,7 @@ class GoogleAuthOperations {
         // Create new user dengan role default 'santri'
         user = UserModel(
           id: firebaseUser.uid,
-          nama: firebaseUser.displayName ?? 'Unknown',
+          nama: firebaseUser.displayName ?? 'User Google',
           email: firebaseUser.email!,
           role: 'santri',
           createdAt: DateTime.now(),
@@ -68,9 +71,13 @@ class GoogleAuthOperations {
 
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw Exception('Google Auth Error: ${e.message}');
+      // Map Firebase error code ke pesan Indonesia
+      final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
+      throw Exception(errorMessage);
     } catch (e) {
-      throw Exception('Google sign in error: $e');
+      // Handle generic errors termasuk Google Sign-In errors
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 }

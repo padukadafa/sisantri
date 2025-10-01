@@ -30,11 +30,6 @@ class AuthWrapper extends ConsumerWidget {
       }
     });
 
-    // Show loading while checking auth
-    if (authState.isLoading) {
-      return const SplashScreen();
-    }
-
     // Show error if any
     if (authState.error != null) {
       return Scaffold(

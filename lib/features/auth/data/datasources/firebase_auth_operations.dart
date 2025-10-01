@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
+import '../../../../core/error/auth_error_mapper.dart';
 
 /// Firebase Auth operations untuk login dan register
 class FirebaseAuthOperations {
@@ -25,7 +26,7 @@ class FirebaseAuthOperations {
       );
 
       if (credential.user == null) {
-        throw Exception('Login failed');
+        throw Exception(AuthErrorMapper.mapFirebaseAuthError('null-user'));
       }
 
       // Get user data dari Firestore
@@ -35,7 +36,9 @@ class FirebaseAuthOperations {
           .get();
 
       if (!userDoc.exists) {
-        throw Exception('User data not found');
+        throw Exception(
+          AuthErrorMapper.mapFirebaseAuthError('user-data-not-found'),
+        );
       }
 
       return UserModel.fromJson({
@@ -43,9 +46,13 @@ class FirebaseAuthOperations {
         ...userDoc.data()!,
       });
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw Exception('Firebase Auth Error: ${e.message}');
+      // Map Firebase error code ke pesan Indonesia
+      final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
+      throw Exception(errorMessage);
     } catch (e) {
-      throw Exception('Login error: $e');
+      // Handle generic errors
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 
@@ -57,13 +64,29 @@ class FirebaseAuthOperations {
     required String role,
   }) async {
     try {
+      // Validasi input sebelum proses registrasi
+      final emailError = AuthErrorMapper.validateEmailFormat(email);
+      if (emailError != null) {
+        throw Exception(emailError);
+      }
+
+      final passwordError = AuthErrorMapper.validatePasswordFormat(password);
+      if (passwordError != null) {
+        throw Exception(passwordError);
+      }
+
+      final namaError = AuthErrorMapper.validateNamaLengkap(nama);
+      if (namaError != null) {
+        throw Exception(namaError);
+      }
+
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       if (credential.user == null) {
-        throw Exception('Registration failed');
+        throw Exception(AuthErrorMapper.mapFirebaseAuthError('null-user'));
       }
 
       final user = UserModel(
@@ -83,9 +106,13 @@ class FirebaseAuthOperations {
 
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw Exception('Firebase Auth Error: ${e.message}');
+      // Map Firebase error code ke pesan Indonesia
+      final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
+      throw Exception(errorMessage);
     } catch (e) {
-      throw Exception('Registration error: $e');
+      // Handle generic errors
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 
@@ -94,7 +121,9 @@ class FirebaseAuthOperations {
     try {
       await _firebaseAuth.signOut();
     } catch (e) {
-      throw Exception('Logout error: $e');
+      // Handle logout errors dengan pesan Indonesia
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 
@@ -109,11 +138,18 @@ class FirebaseAuthOperations {
           .doc(firebaseUser.uid)
           .get();
 
-      if (!userDoc.exists) return null;
+      if (!userDoc.exists) {
+        // User ada di Firebase Auth tapi tidak ada di Firestore
+        throw Exception(
+          AuthErrorMapper.mapFirebaseAuthError('user-data-not-found'),
+        );
+      }
 
       return UserModel.fromJson({'id': firebaseUser.uid, ...userDoc.data()!});
     } catch (e) {
-      throw Exception('Get current user error: $e');
+      // Handle errors dengan pesan Indonesia
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 }

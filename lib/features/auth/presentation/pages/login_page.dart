@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../bloc/auth_provider.dart';
+import '../../../../core/error/auth_error_mapper.dart';
 
 /// Login Page dengan Clean Architecture dan UI yang Diperbaiki
 class LoginPage extends ConsumerStatefulWidget {
@@ -112,15 +113,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     fillColor: Colors.white,
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email tidak boleh kosong';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Format email tidak valid';
-                    }
-                    return null;
+                    return AuthErrorMapper.validateEmailFormat(value);
                   },
                 ),
                 const SizedBox(height: 16),
@@ -164,13 +157,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     fillColor: Colors.white,
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Password tidak boleh kosong';
-                    }
-                    if (value.length < 6) {
-                      return 'Password minimal 6 karakter';
-                    }
-                    return null;
+                    return AuthErrorMapper.validatePasswordFormat(value);
                   },
                 ),
                 const SizedBox(height: 32),
@@ -262,15 +249,51 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _showErrorDialog(String error) {
+    // Ekstrak error code untuk menentukan severity
+    final errorCode = AuthErrorMapper.extractErrorCode(error);
+    final severity = AuthErrorMapper.getErrorSeverity(errorCode);
+
+    // Pilih warna dan ikon berdasarkan severity
+    Color iconColor;
+    IconData iconData;
+    String title;
+
+    switch (severity) {
+      case ErrorSeverity.info:
+        iconColor = Colors.blue;
+        iconData = Icons.info_outline;
+        title = 'Informasi';
+        break;
+      case ErrorSeverity.warning:
+        iconColor = Colors.orange;
+        iconData = Icons.warning_outlined;
+        title = 'Login Gagal';
+        break;
+      case ErrorSeverity.error:
+        iconColor = Colors.red;
+        iconData = Icons.error_outline;
+        title = 'Kesalahan';
+        break;
+      case ErrorSeverity.critical:
+        iconColor = Colors.red[800]!;
+        iconData = Icons.dangerous_outlined;
+        title = 'Kesalahan Sistem';
+        break;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
-        title: const Text(
-          'Login Gagal',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        icon: Icon(iconData, color: iconColor, size: 48),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            color: iconColor,
+          ),
         ),
         content: Text(
           error,

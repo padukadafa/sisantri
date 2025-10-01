@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import '../../../../core/error/auth_error_mapper.dart';
 
 /// Auth utility operations (email verification, password reset)
 class AuthUtilityOperations {
@@ -10,11 +11,21 @@ class AuthUtilityOperations {
   /// Reset password
   Future<void> resetPassword(String email) async {
     try {
+      // Validasi format email terlebih dahulu
+      final emailError = AuthErrorMapper.validateEmailFormat(email);
+      if (emailError != null) {
+        throw Exception(emailError);
+      }
+
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on firebase_auth.FirebaseAuthException catch (e) {
-      throw Exception('Password reset error: ${e.message}');
+      // Map Firebase error code ke pesan Indonesia
+      final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
+      throw Exception(errorMessage);
     } catch (e) {
-      throw Exception('Password reset error: $e');
+      // Handle generic errors
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 
@@ -22,11 +33,21 @@ class AuthUtilityOperations {
   Future<void> sendEmailVerification() async {
     try {
       final user = _firebaseAuth.currentUser;
-      if (user != null && !user.emailVerified) {
+      if (user == null) {
+        throw Exception(AuthErrorMapper.mapFirebaseAuthError('null-user'));
+      }
+
+      if (!user.emailVerified) {
         await user.sendEmailVerification();
       }
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      // Map Firebase error code ke pesan Indonesia
+      final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
+      throw Exception(errorMessage);
     } catch (e) {
-      throw Exception('Send email verification error: $e');
+      // Handle generic errors
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 
@@ -34,13 +55,20 @@ class AuthUtilityOperations {
   Future<bool> isEmailVerified() async {
     try {
       final user = _firebaseAuth.currentUser;
-      if (user != null) {
-        await user.reload();
-        return user.emailVerified;
+      if (user == null) {
+        throw Exception(AuthErrorMapper.mapFirebaseAuthError('null-user'));
       }
-      return false;
+
+      await user.reload();
+      return user.emailVerified;
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      // Map Firebase error code ke pesan Indonesia
+      final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
+      throw Exception(errorMessage);
     } catch (e) {
-      throw Exception('Check email verification error: $e');
+      // Handle generic errors
+      final errorMessage = AuthErrorMapper.getErrorMessage(e);
+      throw Exception(errorMessage);
     }
   }
 }
