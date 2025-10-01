@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sisantri/features/presensi/presentation/pages/presensi_page.dart';
 
 import '../../../core/theme/app_theme.dart';
 import 'dashboard_page.dart';
 import '../../jadwal/presentation/jadwal_page.dart';
-import '../../presensi/presentation/presensi_page.dart';
 import '../../leaderboard/presentation/leaderboard_page.dart';
 import '../../profile/presentation/profile_page.dart';
 

@@ -5,7 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/auth_wrapper.dart';
+import 'features/auth/presentation/pages/auth_wrapper_clean.dart';
 import 'shared/services/notification_service.dart';
 import 'firebase_options.dart';
 
