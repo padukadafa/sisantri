@@ -891,6 +891,544 @@ EXTERNAL SYSTEM INTERACTIONS:
 - PSPEC: P7.8
 ```
 
+### 3.3.8 DFD Level 2 - Proses Jadwal (4.0)
+
+```
+                    [ADMIN]
+                      |
+            kegiatan data + settings
+                      |
+                      v
+            ┌─────────────────┐
+            │       4.1       │
+            │ VALIDASI        │
+            │ JADWAL          │
+            └─────────────────┘
+                      |
+               validated data
+                      |
+                      v
+            ┌─────────────────┐      check      ┌─────────────┐
+            │       4.2       │ ────────────→   │     D4      │
+            │ CEK KONFLIK     │                 │   Jadwal    │
+            │ JADWAL          │ ←────────────   │             │
+            └─────────────────┘   existing events └─────────────┘
+                      |
+               conflict check result
+                      |
+                      v
+            ┌─────────────────┐      save       ┌─────────────┐
+            │       4.3       │ ────────────→   │     D4      │
+            │ SIMPAN          │                 │   Jadwal    │
+            │ JADWAL          │                 │             │
+            └─────────────────┘                 └─────────────┘
+                      |
+               save confirmation
+                      |
+                      v
+            ┌─────────────────┐      query      ┌─────────────┐
+            │       4.4       │ ────────────→   │     D1      │
+            │ GET TARGET      │                 │   Users     │
+            │ PARTICIPANTS    │ ←────────────   │             │
+            └─────────────────┘   user list     └─────────────┘
+                      |
+               participant list
+                      |
+                      v
+            ┌─────────────────┐      create     ┌─────────────┐
+            │       4.5       │ ────────────→   │     D5      │
+            │ GENERATE        │                 │Notifications│
+            │ REMINDER        │                 │             │
+            └─────────────────┘                 └─────────────┘
+                      |
+               reminders created
+                      |
+                      v
+            ┌─────────────────┐      sync       [Calendar Service]
+            │       4.6       │ ────────────→
+            │ SYNC CALENDAR   │
+            │                 │ ←────────────
+            └─────────────────┘   sync confirmed
+                      |
+            calendar synced
+                      |
+                      v
+                [ALL PARTICIPANTS]
+
+                    [SANTRI]
+                      |
+               request jadwal
+                      |
+                      v
+            ┌─────────────────┐      query      ┌─────────────┐
+            │       4.7       │ ────────────→   │     D4      │
+            │ GET JADWAL      │                 │   Jadwal    │
+            │ KEGIATAN        │ ←────────────   │             │
+            └─────────────────┘   event list    └─────────────┘
+                      |
+               formatted calendar
+                      |
+                      v
+                   [SANTRI]
+
+4.1 VALIDASI JADWAL
+- Input: nama kegiatan, tanggal, waktu, tempat, max participants
+- Process: validate required fields, check date format, capacity limits
+- Output: validated jadwal data
+- PSPEC: P4.1
+
+4.2 CEK KONFLIK JADWAL
+- Input: tanggal, waktu mulai, waktu selesai, tempat
+- Process: check overlapping events, venue availability
+- Output: conflict check result
+- PSPEC: P4.2
+
+4.3 SIMPAN JADWAL
+- Input: validated jadwal data
+- Process: save to Firestore with metadata
+- Output: save confirmation with event ID
+- PSPEC: P4.3
+
+4.4 GET TARGET PARTICIPANTS
+- Input: event scope, role filters, manual selection
+- Process: query users based on criteria
+- Output: target participant list
+- PSPEC: P4.4
+
+4.5 GENERATE REMINDER
+- Input: event data, participant list, reminder schedule
+- Process: create reminder notifications with scheduling
+- Output: scheduled reminders created
+- PSPEC: P4.5
+
+4.6 SYNC CALENDAR
+- Input: event data, calendar integration settings
+- Process: sync with external calendar services
+- Output: calendar sync confirmation
+- PSPEC: P4.6
+
+4.7 GET JADWAL KEGIATAN
+- Input: user request, date range, filter criteria
+- Process: query active events, format for calendar display
+- Output: formatted calendar data
+- PSPEC: P4.7
+```
+
+### 3.3.9 DFD Level 2 - Proses Dashboard (6.0)
+
+```
+                [SANTRI/ADMIN/DEWAN GURU]
+                      |
+            dashboard request + preferences
+                      |
+                      v
+            ┌─────────────────┐
+            │       6.1       │
+            │ AUTHENTICATE    │
+            │ & AUTHORIZE     │
+            └─────────────────┘
+                      |
+               auth success
+                      |
+                      v
+            ┌─────────────────┐      query      ┌─────────────┐
+            │       6.2       │ ────────────→   │     D1      │
+            │ LOAD USER       │                 │   Users     │
+            │ PROFILE         │ ←────────────   │             │
+            └─────────────────┘   user data     └─────────────┘
+                      |
+               user profile loaded
+                      |
+                      v
+                    Parallel{Load Dashboard Components}
+                      |
+        ┌─────────────┼─────────────┼─────────────┼─────────────┐
+        │             │             │             │             │
+        ▼             ▼             ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│     6.3     │ │     6.4     │ │     6.5     │ │     6.6     │ │     6.7     │
+│LOAD PRESENSI│ │LOAD KEGIATAN│ │LOAD PENGUMU-│ │LOAD NOTIFI- │ │LOAD GAMIFI- │
+│ STATISTICS  │ │  MENDATANG  │ │    MAN      │ │   KASI      │ │   KASI      │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+        │             │             │             │             │
+        ▼             ▼             ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│     D2      │ │     D4      │ │     D3      │ │     D5      │ │D6,D7,D8,D9  │
+│  Presensi   │ │   Jadwal    │ │ Pengumuman  │ │Notifications│ │Gamification │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+        │             │             │             │             │
+        └─────────────┼─────────────┼─────────────┼─────────────┘
+                      │             │             │
+                      ▼             ▼             ▼
+            ┌─────────────────┐
+            │       6.8       │
+            │ AGGREGATE &     │
+            │ FORMAT DATA     │
+            └─────────────────┘
+                      |
+               formatted dashboard data
+                      |
+                      v
+            ┌─────────────────┐
+            │       6.9       │
+            │ GENERATE        │
+            │ WIDGETS         │
+            └─────────────────┘
+                      |
+               dashboard widgets
+                      |
+                      v
+            ┌─────────────────┐      create     [Real-time Listeners]
+            │       6.10      │ ────────────→
+            │ SETUP REAL-TIME │
+            │ LISTENERS       │
+            └─────────────────┘
+                      |
+            dashboard ready
+                      |
+                      v
+              [USER DASHBOARD]
+
+6.1 AUTHENTICATE & AUTHORIZE
+- Input: user request, session token
+- Process: validate authentication, check role permissions
+- Output: authorization result
+- PSPEC: P6.1
+
+6.2 LOAD USER PROFILE
+- Input: authenticated user ID
+- Process: fetch user profile, preferences, settings
+- Output: complete user profile data
+- PSPEC: P6.2
+
+6.3 LOAD PRESENSI STATISTICS
+- Input: user ID, date range
+- Process: calculate attendance stats, trends, streaks
+- Output: presensi summary and charts data
+- PSPEC: P6.3
+
+6.4 LOAD KEGIATAN MENDATANG
+- Input: user ID, role, date filter
+- Process: query upcoming events, participant status
+- Output: upcoming events list
+- PSPEC: P6.4
+
+6.5 LOAD PENGUMUMAN
+- Input: user role, importance filter
+- Process: query recent announcements, mark as read
+- Output: announcement list with read status
+- PSPEC: P6.5
+
+6.6 LOAD NOTIFIKASI
+- Input: user ID, unread filter
+- Process: fetch recent notifications, update read status
+- Output: notification list with metadata
+- PSPEC: P6.6
+
+6.7 LOAD GAMIFIKASI
+- Input: user ID, leaderboard period
+- Process: fetch points, level, achievements, rankings
+- Output: gamification summary data
+- PSPEC: P6.7
+
+6.8 AGGREGATE & FORMAT DATA
+- Input: all loaded component data
+- Process: combine data, apply user preferences, format for display
+- Output: structured dashboard data
+- PSPEC: P6.8
+
+6.9 GENERATE WIDGETS
+- Input: formatted dashboard data, user role
+- Process: create role-based widgets, apply responsive layout
+- Output: dashboard widget configuration
+- PSPEC: P6.9
+
+6.10 SETUP REAL-TIME LISTENERS
+- Input: user ID, dashboard components
+- Process: establish WebSocket connections, set up data sync
+- Output: real-time dashboard with live updates
+- PSPEC: P6.10
+```
+
+### 3.3.10 DFD Level 2 - Proses Manajemen User (8.0)
+
+```
+                    [ADMIN/DEWAN GURU]
+                      |
+            user management request
+                      |
+                      v
+            ┌─────────────────┐
+            │       8.1       │
+            │ VALIDASI        │
+            │ PERMISSION      │
+            └─────────────────┘
+                      |
+               permission granted
+                      |
+                      v
+            Decision{Operation Type}
+                      |
+        ┌─────────────┼─────────────┼─────────────┐
+        │             │             │             │
+        ▼             ▼             ▼             ▼
+   [ADD USER]    [EDIT USER]   [DELETE USER]  [VIEW USERS]
+        │             │             │             │
+        ▼             ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│     8.2     │ │     8.4     │ │     8.6     │ │     8.8     │
+│ VALIDASI    │ │ LOAD USER   │ │ CONFIRM     │ │ QUERY USER  │
+│ USER BARU   │ │ DATA        │ │ DELETE      │ │ LIST        │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+        │             │             │             │
+        ▼             ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│     8.3     │ │     8.5     │ │     8.7     │ │     D1      │
+│ CREATE USER │ │ UPDATE USER │ │ SOFT DELETE │ │   Users     │
+│ ACCOUNT     │ │ PROFILE     │ │ USER        │ │             │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+        │             │             │             │
+        └─────────────┼─────────────┼─────────────┘
+                      │             │
+                      ▼             ▼
+            ┌─────────────────┐      save       ┌─────────────┐
+            │       8.9       │ ────────────→   │     D1      │
+            │ LOG USER        │                 │   Users     │
+            │ ACTIVITY        │                 │             │
+            └─────────────────┘                 └─────────────┘
+                      |
+               activity logged
+                      |
+                      v
+            ┌─────────────────┐      send       [Email Service]
+            │       8.10      │ ────────────→
+            │ SEND USER       │
+            │ NOTIFICATION    │
+            └─────────────────┘
+                      |
+            notification sent
+                      |
+                      v
+                [ADMIN/DEWAN GURU]
+
+8.1 VALIDASI PERMISSION
+- Input: admin request, operation type, target user
+- Process: check admin role, validate permissions for operation
+- Output: permission validation result
+- PSPEC: P8.1
+
+8.2 VALIDASI USER BARU
+- Input: nama, email, role, RFID card (optional)
+- Process: validate email format, check duplicates, role validation
+- Output: validated user data
+- PSPEC: P8.2
+
+8.3 CREATE USER ACCOUNT
+- Input: validated user data
+- Process: create Firebase Auth account, generate initial profile
+- Output: new user account with credentials
+- PSPEC: P8.3
+
+8.4 LOAD USER DATA
+- Input: user ID to edit
+- Process: fetch complete user profile and metadata
+- Output: editable user data
+- PSPEC: P8.4
+
+8.5 UPDATE USER PROFILE
+- Input: modified user data, change tracking
+- Process: validate changes, update profile, handle role changes
+- Output: updated user profile
+- PSPEC: P8.5
+
+8.6 CONFIRM DELETE
+- Input: user ID to delete, confirmation flag
+- Process: check delete permissions, validate dependencies
+- Output: delete confirmation result
+- PSPEC: P8.6
+
+8.7 SOFT DELETE USER
+- Input: confirmed user ID, deletion reason
+- Process: deactivate account, preserve data for audit
+- Output: user deactivation confirmation
+- PSPEC: P8.7
+
+8.8 QUERY USER LIST
+- Input: filter criteria, pagination, sorting
+- Process: query users with filters, format for display
+- Output: paginated user list with metadata
+- PSPEC: P8.8
+
+8.9 LOG USER ACTIVITY
+- Input: operation type, admin ID, target user, timestamp
+- Process: create audit log entry for user management
+- Output: audit log confirmation
+- PSPEC: P8.9
+
+8.10 SEND USER NOTIFICATION
+- Input: operation result, user data, notification type
+- Process: send welcome/update/deactivation emails
+- Output: notification delivery confirmation
+- PSPEC: P8.10
+```
+
+### 3.3.11 DFD Level 2 - Proses Notifikasi (9.0)
+
+```
+                [SYSTEM EVENTS]
+                      |
+            notification triggers
+                      |
+                      v
+            ┌─────────────────┐
+            │       9.1       │
+            │ DETECT EVENT    │
+            │ TYPE            │
+            └─────────────────┘
+                      |
+               event categorized
+                      |
+                      v
+            ┌─────────────────┐      query      ┌─────────────┐
+            │       9.2       │ ────────────→   │     D1      │
+            │ GET TARGET      │                 │   Users     │
+            │ RECIPIENTS      │ ←────────────   │             │
+            └─────────────────┘   user list     └─────────────┘
+                      |
+               recipient list
+                      |
+                      v
+            ┌─────────────────┐
+            │       9.3       │
+            │ GENERATE        │
+            │ MESSAGE         │
+            └─────────────────┘
+                      |
+               notification message
+                      |
+                      v
+            ┌─────────────────┐
+            │       9.4       │
+            │ APPLY USER      │
+            │ PREFERENCES     │
+            └─────────────────┘
+                      |
+               filtered notifications
+                      |
+                      v
+            ┌─────────────────┐      save       ┌─────────────┐
+            │       9.5       │ ────────────→   │     D5      │
+            │ SAVE            │                 │Notifications│
+            │ NOTIFICATION    │                 │             │
+            └─────────────────┘                 └─────────────┘
+                      |
+               notification saved
+                      |
+                      v
+                    Parallel{Send Multiple Channels}
+                      |
+        ┌─────────────┼─────────────┼─────────────┐
+        │             │             │             │
+        ▼             ▼             ▼             ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│     9.6     │ │     9.7     │ │     9.8     │ │     9.9     │
+│ SEND PUSH   │ │ SEND EMAIL  │ │ SEND IN-APP │ │ SEND SMS    │
+│NOTIFICATION │ │NOTIFICATION │ │NOTIFICATION │ │(OPTIONAL)   │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+        │             │             │             │
+        ▼             ▼             ▼             ▼
+ [FCM Service]  [Email Service] [WebSocket]   [SMS Service]
+        │             │             │             │
+        └─────────────┼─────────────┼─────────────┘
+                      │             │
+                      ▼             ▼
+            ┌─────────────────┐
+            │       9.10      │
+            │ TRACK DELIVERY  │
+            │ STATUS          │
+            └─────────────────┘
+                      |
+               delivery tracking
+                      |
+                      v
+            ┌─────────────────┐      update     ┌─────────────┐
+            │       9.11      │ ────────────→   │     D5      │
+            │ UPDATE          │                 │Notifications│
+            │ READ STATUS     │                 │             │
+            └─────────────────┘                 └─────────────┘
+                      |
+            status updated
+                      |
+                      v
+                   [RECIPIENTS]
+
+9.1 DETECT EVENT TYPE
+- Input: system event (presensi, pengumuman, achievement, etc.)
+- Process: categorize event, determine notification priority
+- Output: event type with notification metadata
+- PSPEC: P9.1
+
+9.2 GET TARGET RECIPIENTS
+- Input: event type, scope, role filters
+- Process: query users based on notification scope and preferences
+- Output: filtered recipient list
+- PSPEC: P9.2
+
+9.3 GENERATE MESSAGE
+- Input: event data, notification template, recipient info
+- Process: create personalized notification content
+- Output: formatted notification message
+- PSPEC: P9.3
+
+9.4 APPLY USER PREFERENCES
+- Input: notification message, recipient preferences
+- Process: filter by user notification settings, quiet hours
+- Output: preference-filtered notifications
+- PSPEC: P9.4
+
+9.5 SAVE NOTIFICATION
+- Input: final notification data, recipient list
+- Process: create notification records in database
+- Output: notification IDs and save confirmation
+- PSPEC: P9.5
+
+9.6 SEND PUSH NOTIFICATION
+- Input: notification data, FCM tokens
+- Process: send via Firebase Cloud Messaging
+- Output: push delivery confirmation
+- PSPEC: P9.6
+
+9.7 SEND EMAIL NOTIFICATION
+- Input: notification data, email addresses
+- Process: format HTML email, send via email service
+- Output: email delivery confirmation
+- PSPEC: P9.7
+
+9.8 SEND IN-APP NOTIFICATION
+- Input: notification data, active user sessions
+- Process: send real-time notification via WebSocket
+- Output: in-app delivery confirmation
+- PSPEC: P9.8
+
+9.9 SEND SMS (OPTIONAL)
+- Input: critical notifications, phone numbers
+- Process: send SMS for urgent notifications only
+- Output: SMS delivery confirmation
+- PSPEC: P9.9
+
+9.10 TRACK DELIVERY STATUS
+- Input: delivery confirmations from all channels
+- Process: aggregate delivery status, track failures
+- Output: comprehensive delivery report
+- PSPEC: P9.10
+
+9.11 UPDATE READ STATUS
+- Input: user interaction, notification ID
+- Process: mark notifications as read, update timestamps
+- Output: read status update confirmation
+- PSPEC: P9.11
+```
+
 ## 3.4 Process Specification (PSPEC)
 
 ### PSPEC P2.1 - Scan RFID
