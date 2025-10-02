@@ -1434,242 +1434,242 @@ EXTERNAL SYSTEM INTERACTIONS:
 ### PSPEC P3.1 - Validasi Pengumuman
 
 ```
-Process Name: Validate Announcement Data
-Input: Judul, isi, tanggal, isPenting, attachments, author data
-Output: Validated announcement data or validation errors
-Data Store: None (validation only)
-External: File Validation Service
+Nama Proses: Validasi Data Pengumuman
+Masukan: Judul, isi, tanggal, isPenting, lampiran, data pembuat
+Keluaran: Data pengumuman yang valid atau pesan kesalahan validasi
+Penyimpanan Data: Tidak ada (hanya validasi)
+Eksternal: Layanan Validasi File
 
-Logic:
-1. Validate required fields (judul, isi, tanggal)
-2. Check judul length (max 200 characters)
-3. Validate content format and length
-4. Check tanggal format and validity
-5. Validate attachment files (type, size, virus scan)
-6. Check author permissions
-7. Sanitize input content
+Logika:
+1. Validasi field wajib (judul, isi, tanggal)
+2. Periksa panjang judul (maksimal 200 karakter)
+3. Validasi format dan panjang konten
+4. Periksa format dan validitas tanggal
+5. Validasi file lampiran (tipe, ukuran, scan virus)
+6. Periksa izin pembuat
+7. Bersihkan konten masukan
 
-Error Handling:
-- MISSING_REQUIRED_FIELD: "Field wajib tidak boleh kosong"
-- TITLE_TOO_LONG: "Judul terlalu panjang (max 200 karakter)"
-- INVALID_DATE: "Format tanggal tidak valid"
-- FILE_TOO_LARGE: "Ukuran file terlalu besar (max 10MB)"
-- INVALID_FILE_TYPE: "Tipe file tidak didukung"
+Penanganan Error:
+- FIELD_WAJIB_KOSONG: "Field wajib tidak boleh kosong"
+- JUDUL_TERLALU_PANJANG: "Judul terlalu panjang (maksimal 200 karakter)"
+- FORMAT_TANGGAL_SALAH: "Format tanggal tidak valid"
+- FILE_TERLALU_BESAR: "Ukuran file terlalu besar (maksimal 10MB)"
+- TIPE_FILE_TIDAK_DIDUKUNG: "Tipe file tidak didukung"
 
-Business Rules:
+Aturan Bisnis:
 - Judul maksimal 200 karakter
 - Isi pengumuman maksimal 5000 karakter
-- Maksimal 5 attachment per pengumuman
-- File attachment maksimal 10MB
+- Maksimal 5 lampiran per pengumuman
+- File lampiran maksimal 10MB
 - Hanya admin yang bisa membuat pengumuman penting
 ```
 
-### PSPEC P3.2 - Upload Attachment
+### PSPEC P3.2 - Unggah Lampiran
 
 ```
-Process Name: Upload Announcement Attachments
-Input: File attachments, announcement ID, user permissions
-Output: Attachment URLs, upload confirmation
-Data Store: None (files stored externally)
-External: Firebase Storage
+Nama Proses: Unggah Lampiran Pengumuman
+Masukan: File lampiran, ID pengumuman, izin pengguna
+Keluaran: URL lampiran, konfirmasi unggahan
+Penyimpanan Data: Tidak ada (file disimpan eksternal)
+Eksternal: Firebase Storage
 
-Logic:
-1. Validate file permissions and size limits
-2. Generate unique file names with UUID
-3. Create folder structure by date and announcement ID
-4. Upload files to Firebase Storage
-5. Generate secure download URLs
-6. Create file metadata records
-7. Return attachment URLs for database storage
+Logika:
+1. Validasi izin file dan batas ukuran
+2. Buat nama file unik dengan UUID
+3. Buat struktur folder berdasarkan tanggal dan ID pengumuman
+4. Unggah file ke Firebase Storage
+5. Buat URL unduhan yang aman
+6. Buat catatan metadata file
+7. Kembalikan URL lampiran untuk penyimpanan database
 
-Error Handling:
-- UPLOAD_FAILED: "Gagal mengupload file"
-- STORAGE_QUOTA_EXCEEDED: "Kuota penyimpanan penuh"
-- NETWORK_ERROR: "Koneksi internet bermasalah"
-- PERMISSION_DENIED: "Tidak memiliki izin upload"
+Penanganan Error:
+- GAGAL_UNGGAH: "Gagal mengupload file"
+- KUOTA_PENYIMPANAN_PENUH: "Kuota penyimpanan penuh"
+- ERROR_JARINGAN: "Koneksi internet bermasalah"
+- IZIN_DITOLAK: "Tidak memiliki izin upload"
 
-Business Rules:
-- Files stored in hierarchical structure: /pengumuman/YYYY/MM/announcementId/
-- Generate secure URLs with expiration
-- Virus scanning for all uploaded files
-- Automatic thumbnail generation for images
+Aturan Bisnis:
+- File disimpan dalam struktur hierarki: /pengumuman/YYYY/MM/idPengumuman/
+- Buat URL aman dengan waktu kedaluwarsa
+- Pemindaian virus untuk semua file yang diunggah
+- Pembuatan thumbnail otomatis untuk gambar
 ```
 
 ### PSPEC P3.3 - Simpan Pengumuman
 
 ```
-Process Name: Save Announcement to Database
-Input: Validated announcement data, attachment URLs, author ID
-Output: Save confirmation with announcement ID
-Data Store: D3 Pengumuman (for announcement records)
-External: None
+Nama Proses: Simpan Pengumuman ke Database
+Masukan: Data pengumuman yang valid, URL lampiran, ID pembuat
+Keluaran: Konfirmasi penyimpanan dengan ID pengumuman
+Penyimpanan Data: D3 Pengumuman (untuk catatan pengumuman)
+Eksternal: Tidak ada
 
-Logic:
-1. Generate unique announcement ID
-2. Create announcement document structure
-3. Include attachment URLs and metadata
-4. Set creation and update timestamps
-5. Save to Firestore collection
-6. Create search index for announcement content
-7. Return confirmation with generated ID
+Logika:
+1. Buat ID pengumuman yang unik
+2. Buat struktur dokumen pengumuman
+3. Sertakan URL lampiran dan metadata
+4. Atur timestamp pembuatan dan pembaruan
+5. Simpan ke koleksi Firestore
+6. Buat indeks pencarian untuk konten pengumuman
+7. Kembalikan konfirmasi dengan ID yang dibuat
 
-Error Handling:
-- DATABASE_SAVE_FAILED: "Gagal menyimpan pengumuman"
-- DUPLICATE_TITLE: "Judul pengumuman sudah ada"
-- FIRESTORE_ERROR: "Error database"
+Penanganan Error:
+- GAGAL_SIMPAN_DATABASE: "Gagal menyimpan pengumuman"
+- JUDUL_DUPLIKAT: "Judul pengumuman sudah ada"
+- ERROR_FIRESTORE: "Error database"
 
-Business Rules:
-- Auto-generate unique IDs
-- Store creation and modification timestamps
-- Index title and content for search
-- Maintain version history for edits
+Aturan Bisnis:
+- Otomatis membuat ID unik
+- Simpan timestamp pembuatan dan modifikasi
+- Indeks judul dan konten untuk pencarian
+- Pertahankan riwayat versi untuk pengeditan
 ```
 
-### PSPEC P3.4 - Get Target Users
+### PSPEC P3.4 - Dapatkan Pengguna Target
 
 ```
-Process Name: Get Notification Target Users
-Input: Notification scope, role filters, manual selection
-Output: Target user list with notification tokens
-Data Store: D1 Users (for user data and tokens)
-External: None
+Nama Proses: Dapatkan Pengguna Target Notifikasi
+Masukan: Cakupan notifikasi, filter peran, pilihan manual
+Keluaran: Daftar pengguna target dengan token notifikasi
+Penyimpanan Data: D1 Users (untuk data pengguna dan token)
+Eksternal: Tidak ada
 
-Logic:
-1. Determine notification scope (all users, specific roles, manual)
-2. Query users based on scope criteria
-3. Filter active users only
-4. Get device tokens for push notifications
-5. Apply user notification preferences
-6. Exclude users who opted out
-7. Return filtered user list with tokens
+Logika:
+1. Tentukan cakupan notifikasi (semua pengguna, peran tertentu, manual)
+2. Query pengguna berdasarkan kriteria cakupan
+3. Filter hanya pengguna aktif
+4. Dapatkan token perangkat untuk push notification
+5. Terapkan preferensi notifikasi pengguna
+6. Kecualikan pengguna yang tidak ingin menerima
+7. Kembalikan daftar pengguna yang difilter dengan token
 
-Error Handling:
-- USER_QUERY_FAILED: "Gagal mengambil data pengguna"
-- NO_VALID_TOKENS: "Tidak ada token notifikasi valid"
+Penanganan Error:
+- GAGAL_QUERY_PENGGUNA: "Gagal mengambil data pengguna"
+- TIDAK_ADA_TOKEN_VALID: "Tidak ada token notifikasi valid"
 
-Business Rules:
-- Respect user notification preferences
-- Include only active accounts
-- Filter by quiet hours settings
-- Maximum 1000 recipients per batch
+Aturan Bisnis:
+- Hormati preferensi notifikasi pengguna
+- Sertakan hanya akun aktif
+- Filter berdasarkan pengaturan jam tenang
+- Maksimal 1000 penerima per batch
 ```
 
-### PSPEC P3.5 - Generate Notifikasi
+### PSPEC P3.5 - Buat Notifikasi
 
 ```
-Process Name: Generate Notification Records
-Input: Pengumuman data, target users, notification template
-Output: Notification batch created
-Data Store: D5 Notifications (for notification records)
-External: None
+Nama Proses: Buat Catatan Notifikasi
+Masukan: Data pengumuman, pengguna target, template notifikasi
+Keluaran: Batch notifikasi yang dibuat
+Penyimpanan Data: D5 Notifications (untuk catatan notifikasi)
+Eksternal: Tidak ada
 
-Logic:
-1. Create notification template with announcement data
-2. Personalize notifications for each target user
-3. Set notification priority based on isPenting flag
-4. Create notification records in database
-5. Set delivery scheduling if needed
-6. Generate notification IDs for tracking
-7. Mark notifications as pending delivery
+Logika:
+1. Buat template notifikasi dengan data pengumuman
+2. Personalisasi notifikasi untuk setiap pengguna target
+3. Atur prioritas notifikasi berdasarkan flag isPenting
+4. Buat catatan notifikasi dalam database
+5. Atur penjadwalan pengiriman jika diperlukan
+6. Buat ID notifikasi untuk pelacakan
+7. Tandai notifikasi sebagai menunggu pengiriman
 
-Error Handling:
-- NOTIFICATION_CREATE_FAILED: "Gagal membuat notifikasi"
-- TEMPLATE_ERROR: "Error template notifikasi"
+Penanganan Error:
+- GAGAL_BUAT_NOTIFIKASI: "Gagal membuat notifikasi"
+- ERROR_TEMPLATE: "Error template notifikasi"
 
-Business Rules:
-- Important announcements get high priority
-- Notifications scheduled for optimal delivery time
-- Include announcement summary in notification
-- Track notification creation timestamps
+Aturan Bisnis:
+- Pengumuman penting mendapat prioritas tinggi
+- Notifikasi dijadwalkan untuk waktu pengiriman optimal
+- Sertakan ringkasan pengumuman dalam notifikasi
+- Lacak timestamp pembuatan notifikasi
 ```
 
 ### PSPEC P3.6 - Kirim Push Notification
 
 ```
-Process Name: Send Push Notifications
-Input: Notification data, user device tokens, delivery schedule
-Output: Delivery confirmation and status
-Data Store: D5 Notifications (for delivery status updates)
-External: FCM Service (Firebase Cloud Messaging)
+Nama Proses: Kirim Push Notification
+Masukan: Data notifikasi, token perangkat pengguna, jadwal pengiriman
+Keluaran: Konfirmasi pengiriman dan status
+Penyimpanan Data: D5 Notifications (untuk pembaruan status pengiriman)
+Eksternal: Layanan FCM (Firebase Cloud Messaging)
 
-Logic:
-1. Format notification payload for FCM
-2. Include deep linking for announcement details
-3. Set notification priority and TTL
-4. Send batch notifications via FCM
-5. Handle delivery confirmations
-6. Update notification status in database
-7. Retry failed deliveries
+Logika:
+1. Format payload notifikasi untuk FCM
+2. Sertakan deep linking untuk detail pengumuman
+3. Atur prioritas notifikasi dan TTL
+4. Kirim notifikasi batch melalui FCM
+5. Tangani konfirmasi pengiriman
+6. Perbarui status notifikasi dalam database
+7. Coba ulang pengiriman yang gagal
 
-Error Handling:
-- FCM_SEND_FAILED: "Gagal mengirim push notification"
-- INVALID_TOKEN: "Token perangkat tidak valid"
-- QUOTA_EXCEEDED: "Kuota FCM terlampaui"
+Penanganan Error:
+- GAGAL_KIRIM_FCM: "Gagal mengirim push notification"
+- TOKEN_TIDAK_VALID: "Token perangkat tidak valid"
+- KUOTA_TERLAMPAUI: "Kuota FCM terlampaui"
 
-Business Rules:
-- Batch notifications for efficiency
-- Include action buttons for important announcements
-- Set appropriate TTL for notifications
-- Retry failed deliveries up to 3 times
+Aturan Bisnis:
+- Batch notifikasi untuk efisiensi
+- Sertakan tombol aksi untuk pengumuman penting
+- Atur TTL yang sesuai untuk notifikasi
+- Coba ulang pengiriman yang gagal hingga 3 kali
 ```
 
-### PSPEC P3.7 - Get Pengumuman
+### PSPEC P3.7 - Dapatkan Pengumuman
 
 ```
-Process Name: Retrieve Announcements List
-Input: User request, filter criteria, pagination parameters
-Output: Filtered announcement list with metadata
-Data Store: D3 Pengumuman (for announcement data)
-External: None
+Nama Proses: Ambil Daftar Pengumuman
+Masukan: Permintaan pengguna, kriteria filter, parameter paginasi
+Keluaran: Daftar pengumuman yang difilter dengan metadata
+Penyimpanan Data: D3 Pengumuman (untuk data pengumuman)
+Eksternal: Tidak ada
 
-Logic:
-1. Apply user role-based filtering
-2. Sort announcements by date (newest first)
-3. Apply pagination parameters
-4. Include read status for each user
-5. Format announcement data for display
-6. Include attachment metadata
-7. Return paginated results
+Logika:
+1. Terapkan filter berdasarkan peran pengguna
+2. Urutkan pengumuman berdasarkan tanggal (terbaru dulu)
+3. Terapkan parameter paginasi
+4. Sertakan status baca untuk setiap pengguna
+5. Format data pengumuman untuk tampilan
+6. Sertakan metadata lampiran
+7. Kembalikan hasil yang dipaginasi
 
-Error Handling:
-- QUERY_FAILED: "Gagal mengambil data pengumuman"
-- INVALID_FILTER: "Filter tidak valid"
+Penanganan Error:
+- GAGAL_QUERY: "Gagal mengambil data pengumuman"
+- FILTER_TIDAK_VALID: "Filter tidak valid"
 
-Business Rules:
-- Show active announcements only
-- Important announcements appear first
-- Include read/unread status
-- Paginate results for performance
+Aturan Bisnis:
+- Tampilkan hanya pengumuman aktif
+- Pengumuman penting muncul terlebih dahulu
+- Sertakan status baca/belum baca
+- Paginasi hasil untuk performa
 ```
 
 ### PSPEC P4.1 - Validasi Jadwal
 
 ```
-Process Name: Validate Schedule Data
-Input: Nama kegiatan, tanggal, waktu, tempat, max participants, creator permissions
-Output: Validated schedule data or validation errors
-Data Store: None (validation only)
-External: Calendar Validation Service
+Nama Proses: Validasi Data Jadwal
+Masukan: Nama kegiatan, tanggal, waktu, tempat, maksimal peserta, izin pembuat
+Keluaran: Data jadwal yang valid atau pesan kesalahan validasi
+Penyimpanan Data: Tidak ada (hanya validasi)
+Eksternal: Layanan Validasi Kalender
 
-Logic:
-1. Validate required fields (nama, tanggal, waktu)
-2. Check nama kegiatan length and format
-3. Validate date format and ensure future date
-4. Validate time format and logical sequence (start < end)
-5. Check tempat availability and format
-6. Validate max participants limit
-7. Check creator permissions for event creation
+Logika:
+1. Validasi field wajib (nama, tanggal, waktu)
+2. Periksa panjang dan format nama kegiatan
+3. Validasi format tanggal dan pastikan tanggal masa depan
+4. Validasi format waktu dan urutan logis (mulai < selesai)
+5. Periksa ketersediaan dan format tempat
+6. Validasi batas maksimal peserta
+7. Periksa izin pembuat untuk pembuatan event
 
-Error Handling:
-- MISSING_REQUIRED_FIELD: "Field wajib tidak boleh kosong"
-- INVALID_DATE_FORMAT: "Format tanggal tidak valid"
-- PAST_DATE_ERROR: "Tanggal tidak boleh masa lalu"
-- INVALID_TIME_SEQUENCE: "Waktu mulai harus sebelum waktu selesai"
-- VENUE_FORMAT_ERROR: "Format tempat tidak valid"
-- PARTICIPANT_LIMIT_EXCEEDED: "Jumlah peserta melebihi batas maksimal"
+Penanganan Error:
+- FIELD_WAJIB_KOSONG: "Field wajib tidak boleh kosong"
+- FORMAT_TANGGAL_SALAH: "Format tanggal tidak valid"
+- ERROR_TANGGAL_LAMPAU: "Tanggal tidak boleh masa lalu"
+- URUTAN_WAKTU_SALAH: "Waktu mulai harus sebelum waktu selesai"
+- FORMAT_TEMPAT_SALAH: "Format tempat tidak valid"
+- BATAS_PESERTA_TERLAMPAUI: "Jumlah peserta melebihi batas maksimal"
 
-Business Rules:
-- Event name maksimal 200 karakter
+Aturan Bisnis:
+- Nama kegiatan maksimal 200 karakter
 - Tanggal kegiatan minimal H+1 dari sekarang
 - Durasi kegiatan minimal 30 menit, maksimal 12 jam
 - Maksimal 500 peserta per kegiatan
@@ -1679,63 +1679,63 @@ Business Rules:
 ### PSPEC P4.2 - Cek Konflik Jadwal
 
 ```
-Process Name: Check Schedule Conflicts
-Input: Tanggal, waktu mulai, waktu selesai, tempat, creator ID
-Output: Conflict check result with details
-Data Store: D4 Jadwal (for existing events), D1 Users (for user schedules)
-External: None
+Nama Proses: Periksa Konflik Jadwal
+Masukan: Tanggal, waktu mulai, waktu selesai, tempat, ID pembuat
+Keluaran: Hasil pemeriksaan konflik dengan detail
+Penyimpanan Data: D4 Jadwal (untuk event yang ada), D1 Users (untuk jadwal pengguna)
+Eksternal: Tidak ada
 
-Logic:
-1. Query existing events for the same date
-2. Check time overlap with existing events
-3. Check venue availability for the time slot
-4. Check creator's existing commitments
-5. Validate resource conflicts (equipment, personnel)
-6. Check holiday and special event conflicts
-7. Return conflict details if any found
+Logika:
+1. Query event yang ada untuk tanggal yang sama
+2. Periksa tumpang tindih waktu dengan event yang ada
+3. Periksa ketersediaan tempat untuk slot waktu tersebut
+4. Periksa komitmen yang ada dari pembuat
+5. Validasi konflik sumber daya (peralatan, personil)
+6. Periksa konflik hari libur dan acara khusus
+7. Kembalikan detail konflik jika ditemukan
 
-Error Handling:
-- QUERY_FAILED: "Gagal memeriksa konflik jadwal"
-- VENUE_CONFLICT: "Tempat sudah digunakan pada waktu tersebut"
-- TIME_OVERLAP: "Waktu bertabrakan dengan kegiatan lain"
-- CREATOR_CONFLICT: "Pembuat sudah memiliki kegiatan pada waktu tersebut"
+Penanganan Error:
+- GAGAL_QUERY: "Gagal memeriksa konflik jadwal"
+- KONFLIK_TEMPAT: "Tempat sudah digunakan pada waktu tersebut"
+- TUMPANG_TINDIH_WAKTU: "Waktu bertabrakan dengan kegiatan lain"
+- KONFLIK_PEMBUAT: "Pembuat sudah memiliki kegiatan pada waktu tersebut"
 
-Business Rules:
-- Same venue cannot host multiple events simultaneously
-- 30-minute buffer between events in same venue
-- Check for national holidays and special events
-- Admin can override conflicts with justification
+Aturan Bisnis:
+- Tempat yang sama tidak dapat menyelenggarakan beberapa event bersamaan
+- Buffer 30 menit antara event di tempat yang sama
+- Periksa hari libur nasional dan acara khusus
+- Admin dapat mengesampingkan konflik dengan justifikasi
 ```
 
 ### PSPEC P4.3 - Simpan Jadwal
 
 ```
-Process Name: Save Schedule to Database
-Input: Validated schedule data, conflict check results
-Output: Save confirmation with event ID
-Data Store: D4 Jadwal (for schedule records)
-External: None
+Nama Proses: Simpan Jadwal ke Database
+Masukan: Data jadwal yang valid, hasil pemeriksaan konflik
+Keluaran: Konfirmasi penyimpanan dengan ID event
+Penyimpanan Data: D4 Jadwal (untuk catatan jadwal)
+Eksternal: Tidak ada
 
-Logic:
-1. Generate unique event ID
-2. Create schedule document structure
-3. Set creation and update timestamps
-4. Initialize participant list (empty initially)
-5. Set default event status (active)
-6. Save to Firestore collection
-7. Create calendar index entry
-8. Return confirmation with generated ID
+Logika:
+1. Buat ID event yang unik
+2. Buat struktur dokumen jadwal
+3. Atur timestamp pembuatan dan pembaruan
+4. Inisialisasi daftar peserta (kosong awalnya)
+5. Atur status event default (aktif)
+6. Simpan ke koleksi Firestore
+7. Buat entri indeks kalender
+8. Kembalikan konfirmasi dengan ID yang dibuat
 
-Error Handling:
-- DATABASE_SAVE_FAILED: "Gagal menyimpan jadwal"
-- FIRESTORE_ERROR: "Error database"
-- INDEX_UPDATE_FAILED: "Gagal mengupdate indeks kalender"
+Penanganan Error:
+- GAGAL_SIMPAN_DATABASE: "Gagal menyimpan jadwal"
+- ERROR_FIRESTORE: "Error database"
+- GAGAL_UPDATE_INDEKS: "Gagal mengupdate indeks kalender"
 
-Business Rules:
-- Auto-generate unique event IDs
-- Store creation and modification timestamps
-- Initialize with zero participants
-- Index by date for efficient querying
+Aturan Bisnis:
+- Otomatis membuat ID event unik
+- Simpan timestamp pembuatan dan modifikasi
+- Inisialisasi dengan nol peserta
+- Indeks berdasarkan tanggal untuk query yang efisien
 ```
 
 ### PSPEC P4.4 - Get Target Participants
@@ -1861,148 +1861,231 @@ Business Rules:
 - Filter by user permissions and roles
 ```
 
-### PSPEC P2.1 - Scan RFID
+### PSPEC P2.1 - Pindai RFID
 
 ```
-Process Name: Scan RFID
-Input: RFID card data
-Output: Scan status
-Logic:
-1. Baca data RFID dari kartu
-2. Validasi format RFID
-3. Cek apakah kartu terdaftar
-4. Return status (valid/invalid)
+Nama Proses: Pindai Kartu RFID
+Masukan: Data kartu RFID, konteks pemindaian
+Keluaran: Status pemindaian dan data validasi
+Penyimpanan Data: D1 Users (untuk validasi kartu terdaftar)
+Eksternal: Pembaca RFID/NFC
+
+Logika:
+1. Baca data RFID dari kartu yang didekatkan
+2. Validasi format dan integritas data RFID
+3. Periksa apakah kartu terdaftar dalam sistem
+4. Verifikasi status aktif kartu
+5. Ambil data pengguna yang terkait dengan kartu
+6. Validasi waktu dan konteks pemindaian
+7. Kembalikan status pemindaian dengan data pengguna
+
+Penanganan Error:
+- KARTU_TIDAK_TERDETEKSI: "Kartu RFID tidak terdeteksi"
+- FORMAT_RFID_SALAH: "Format data RFID tidak valid"
+- KARTU_TIDAK_TERDAFTAR: "Kartu RFID tidak terdaftar dalam sistem"
+- KARTU_TIDAK_AKTIF: "Kartu RFID tidak aktif"
+- ERROR_PEMBACA: "Error pembaca RFID"
+
+Aturan Bisnis:
+- Kartu harus terdaftar dan aktif untuk valid
+- Setiap kartu hanya terkait dengan satu pengguna
+- Pemindaian timeout setelah 10 detik
+- Log semua aktivitas pemindaian
 ```
 
 ### PSPEC P2.2 - Validasi Presensi
 
 ```
-Process Name: Validasi Presensi
-Input: User ID, timestamp, RFID
-Output: Presensi record
-Logic:
-1. Cek apakah user sudah presensi hari ini
-2. Tentukan status berdasarkan waktu:
+Nama Proses: Validasi Data Presensi
+Masukan: ID pengguna, timestamp, data RFID, lokasi GPS
+Keluaran: Catatan presensi dengan status
+Penyimpanan Data: D2 Presensi (untuk pengecekan duplikasi)
+Eksternal: Layanan Waktu Sistem
+
+Logika:
+1. Periksa apakah pengguna sudah presensi hari ini
+2. Validasi waktu presensi terhadap jadwal yang berlaku
+3. Tentukan status presensi berdasarkan waktu:
    - Hadir: sebelum jam 08:00
    - Terlambat: 08:00 - 10:00
-   - Alpha: tidak presensi
-3. Generate record presensi
+   - Alpha: tidak presensi sama sekali
+4. Validasi lokasi jika GPS tersedia
+5. Periksa izin khusus atau pengecualian
+6. Buat catatan presensi dengan metadata lengkap
+7. Kembalikan catatan presensi yang valid
+
+Penanganan Error:
+- SUDAH_PRESENSI: "Pengguna sudah melakukan presensi hari ini"
+- WAKTU_TIDAK_VALID: "Waktu presensi di luar jam yang diizinkan"
+- LOKASI_TIDAK_VALID: "Lokasi presensi tidak sesuai"
+- ERROR_VALIDASI: "Gagal validasi data presensi"
+
+Aturan Bisnis:
+- Hanya satu presensi per hari per pengguna
+- Presensi hanya valid dalam jam kerja/sekolah
+- Status terlambat maksimal hingga jam 10:00
+- Lokasi harus dalam radius yang ditentukan (jika GPS aktif)
 ```
 
 ### PSPEC P2.3 - Simpan Presensi
 
 ```
-Process Name: Simpan Presensi
-Input: Validated presensi data
-Output: Save confirmation
-Logic:
-1. Insert data ke collection 'presensi'
-2. Update user points
-3. Log activity
-4. Return success/error status
+Nama Proses: Simpan Data Presensi
+Masukan: Data presensi yang telah divalidasi
+Keluaran: Konfirmasi penyimpanan
+Penyimpanan Data: D2 Presensi (untuk catatan presensi)
+Eksternal: Tidak ada
+
+Logika:
+1. Buat ID unik untuk catatan presensi
+2. Masukkan data ke koleksi 'presensi'
+3. Atur timestamp penyimpanan
+4. Simpan metadata tambahan (metode, lokasi)
+5. Update statistik presensi pengguna
+6. Buat log aktivitas untuk audit
+7. Kembalikan konfirmasi penyimpanan
+
+Penanganan Error:
+- GAGAL_SIMPAN: "Gagal menyimpan data presensi"
+- ERROR_DATABASE: "Error koneksi database"
+- DATA_KORUP: "Data presensi tidak lengkap"
+- GAGAL_LOG: "Gagal membuat log aktivitas"
+
+Aturan Bisnis:
+- Setiap catatan presensi harus memiliki ID unik
+- Simpan timestamp presisi hingga detik
+- Sertakan metadata untuk audit trail
+- Backup otomatis setiap penyimpanan
 ```
 
-### PSPEC P2.4 - Update Poin
+### PSPEC P2.4 - Perbarui Poin
 
 ```
-Process Name: Update User Points
-Input: Presensi success data, user ID, attendance status
-Output: Points calculation result, updated user profile
-Data Store: D1 Users (for point updates), D9 PointHistory (for transactions)
-External: Gamification Engine
+Nama Proses: Perbarui Poin Pengguna
+Masukan: Data presensi berhasil, ID pengguna, status kehadiran
+Keluaran: Hasil perhitungan poin, profil pengguna yang diperbarui
+Penyimpanan Data: D1 Users (untuk pembaruan poin), D9 PointHistory (untuk transaksi)
+Eksternal: Mesin Gamifikasi
 
-Logic:
-1. Determine point value based on attendance status:
-   - Hadir: +10 points
-   - Terlambat: +5 points
-   - Alpha: -5 points penalty
-2. Calculate bonus points for streaks
-3. Check for special event bonuses
-4. Create point transaction record
-5. Update user total points
-6. Check for level progression
-7. Update user statistics
+Logika:
+1. Tentukan nilai poin berdasarkan status kehadiran:
+   - Hadir: +10 poin
+   - Terlambat: +5 poin
+   - Alpha: -5 poin penalti
+2. Hitung poin bonus untuk streak
+3. Periksa bonus acara khusus
+4. Buat catatan transaksi poin
+5. Perbarui total poin pengguna
+6. Periksa progres level
+7. Perbarui statistik pengguna
 
-Error Handling:
-- POINT_CALCULATION_ERROR: "Gagal menghitung poin"
-- DATABASE_UPDATE_FAILED: "Gagal mengupdate poin pengguna"
-- TRANSACTION_FAILED: "Gagal mencatat transaksi poin"
+Penanganan Error:
+- ERROR_HITUNG_POIN: "Gagal menghitung poin"
+- GAGAL_UPDATE_DATABASE: "Gagal mengupdate poin pengguna"
+- GAGAL_TRANSAKSI: "Gagal mencatat transaksi poin"
 
-Business Rules:
-- Points awarded immediately after valid attendance
-- Bonus points for consecutive attendance (streak)
-- Penalty points for absence without excuse
-- Maximum 50 bonus points per day
+Aturan Bisnis:
+- Poin diberikan segera setelah presensi valid
+- Poin bonus untuk kehadiran berturut-turut (streak)
+- Poin penalti untuk ketidakhadiran tanpa izin
+- Maksimal 50 poin bonus per hari
 ```
 
 ### PSPEC P2.5 - Kirim Notifikasi
 
 ```
-Process Name: Send Attendance Notification
-Input: Presensi record, points earned, user data
-Output: Notification delivery confirmation
-Data Store: D5 Notifications (for notification records)
-External: FCM Service (for push notifications)
+Nama Proses: Kirim Notifikasi Presensi
+Masukan: Catatan presensi, poin yang diperoleh, data pengguna
+Keluaran: Konfirmasi pengiriman notifikasi
+Penyimpanan Data: D5 Notifications (untuk catatan notifikasi)
+Eksternal: Layanan FCM (untuk push notification)
 
-Logic:
-1. Generate personalized notification message
-2. Include attendance status and points earned
-3. Create notification record in database
-4. Send push notification via FCM
-5. Send in-app notification for active users
-6. Update notification delivery status
-7. Log notification activity
+Logika:
+1. Buat pesan notifikasi yang dipersonalisasi
+2. Sertakan status kehadiran dan poin yang diperoleh
+3. Buat catatan notifikasi dalam database
+4. Kirim push notification melalui FCM
+5. Kirim notifikasi in-app untuk pengguna aktif
+6. Perbarui status pengiriman notifikasi
+7. Catat aktivitas notifikasi
 
-Error Handling:
-- NOTIFICATION_GENERATION_FAILED: "Gagal membuat notifikasi"
-- PUSH_DELIVERY_FAILED: "Gagal mengirim push notification"
-- DATABASE_SAVE_FAILED: "Gagal menyimpan notifikasi"
+Penanganan Error:
+- GAGAL_BUAT_NOTIFIKASI: "Gagal membuat notifikasi"
+- GAGAL_KIRIM_PUSH: "Gagal mengirim push notification"
+- GAGAL_SIMPAN_DATABASE: "Gagal menyimpan notifikasi"
 
-Business Rules:
-- Notifications sent immediately after attendance
-- Include motivational messages for achievements
-- Reminder notifications for missed attendance
-- Respect user notification preferences
+Aturan Bisnis:
+- Notifikasi dikirim segera setelah presensi
+- Sertakan pesan motivasi untuk pencapaian
+- Notifikasi pengingat untuk ketidakhadiran
+- Hormati preferensi notifikasi pengguna
 ```
 
 ### PSPEC P1.1 - Proses Login Google
 
 ```
-Process Name: Google Authentication Login
-Input: Google Account Credentials
-Output: Authentication Result + Error Details
-Logic:
-1. Inisialisasi Google Sign In
-2. Request Google Authentication
-3. Validasi response dari Google
-4. Jika berhasil: ambil user profile
-5. Jika gagal: return error dengan keterangan:
-   - NETWORK_ERROR: "Tidak ada koneksi internet"
-   - SIGN_IN_CANCELLED: "Login dibatalkan oleh pengguna"
-   - SIGN_IN_FAILED: "Gagal login dengan Google"
-   - ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL: "Akun sudah terdaftar dengan metode login lain"
-   - INVALID_CREDENTIAL: "Kredensial tidak valid"
-   - USER_DISABLED: "Akun pengguna telah dinonaktifkan"
-   - OPERATION_NOT_ALLOWED: "Metode login tidak diizinkan"
+Nama Proses: Autentikasi Login Google
+Masukan: Kredensial Akun Google, konteks aplikasi
+Keluaran: Hasil autentikasi dengan detail error jika ada
+Penyimpanan Data: Tidak ada (proses autentikasi)
+Eksternal: Layanan Google Auth, Google API
+
+Logika:
+1. Inisialisasi Google Sign In dengan konfigurasi aplikasi
+2. Kirim permintaan autentikasi ke Google
+3. Tangani respons dari layanan Google
+4. Jika berhasil: ambil profil pengguna dan token
+5. Validasi token dan kredensial yang diterima
+6. Jika gagal: kembalikan error dengan keterangan detail
+7. Lakukan pembersihan sesi jika diperlukan
+
+Penanganan Error:
+- ERROR_JARINGAN: "Tidak ada koneksi internet"
+- LOGIN_DIBATALKAN: "Login dibatalkan oleh pengguna"
+- GAGAL_LOGIN: "Gagal login dengan Google"
+- AKUN_SUDAH_ADA: "Akun sudah terdaftar dengan metode login lain"
+- KREDENSIAL_TIDAK_VALID: "Kredensial tidak valid"
+- PENGGUNA_DINONAKTIFKAN: "Akun pengguna telah dinonaktifkan"
+- OPERASI_TIDAK_DIIZINKAN: "Metode login tidak diizinkan"
+
+Aturan Bisnis:
+- Hanya akun Google yang valid dapat login
+- Sesi login berlaku selama 24 jam
+- Otomatis logout jika token expired
+- Log semua aktivitas login untuk keamanan
 ```
 
-### PSPEC P1.2 - Validasi Role Pengguna
+### PSPEC P1.2 - Validasi Peran Pengguna
 
 ```
-Process Name: User Role Validation
-Input: User Profile Data
-Output: Access Permission + Error Details
-Logic:
-1. Cek apakah user terdaftar dalam database
-2. Validasi role pengguna (santri/admin/dewan_guru)
-3. Cek status aktif akun
-4. Jika berhasil: grant access
-5. Jika gagal: return error dengan keterangan:
-   - USER_NOT_FOUND: "Pengguna tidak terdaftar dalam sistem"
-   - ACCOUNT_INACTIVE: "Akun Anda telah dinonaktifkan"
-   - INVALID_ROLE: "Role pengguna tidak valid"
-   - PENDING_APPROVAL: "Akun menunggu persetujuan admin"
-   - ACCESS_DENIED: "Akses ditolak"
+Nama Proses: Validasi Peran Pengguna
+Masukan: Data profil pengguna, token autentikasi
+Keluaran: Izin akses dengan detail error jika ada
+Penyimpanan Data: D1 Users (untuk validasi pengguna dan peran)
+Eksternal: Tidak ada
+
+Logika:
+1. Periksa apakah pengguna terdaftar dalam database
+2. Validasi peran pengguna (santri/admin/dewan_guru)
+3. Periksa status aktif akun pengguna
+4. Validasi izin akses berdasarkan peran
+5. Periksa pembatasan akses khusus
+6. Jika berhasil: berikan izin akses dengan level yang sesuai
+7. Jika gagal: kembalikan error dengan keterangan detail
+
+Penanganan Error:
+- PENGGUNA_TIDAK_DITEMUKAN: "Pengguna tidak terdaftar dalam sistem"
+- AKUN_TIDAK_AKTIF: "Akun Anda telah dinonaktifkan"
+- PERAN_TIDAK_VALID: "Peran pengguna tidak valid"
+- MENUNGGU_PERSETUJUAN: "Akun menunggu persetujuan admin"
+- AKSES_DITOLAK: "Akses ditolak"
+
+Aturan Bisnis:
+- Hanya pengguna terdaftar yang dapat mengakses sistem
+- Setiap peran memiliki tingkat akses yang berbeda
+- Admin memiliki akses penuh ke semua fitur
+- Dewan guru memiliki akses terbatas ke fitur manajemen
+- Santri hanya memiliki akses ke fitur dasar
 ```
 
 ```
@@ -2139,64 +2222,64 @@ Business Rules:
 - Format numbers with Indonesian locale
 ```
 
-### PSPEC P5.5 - Generate Excel/PDF
+### PSPEC P5.5 - Buat Excel/PDF
 
 ```
-Process Name: Generate Export File
-Input: Formatted data, export format, file preferences
-Output: Downloadable file with attendance data
-Data Store: None (file generation only)
-External: File System, Excel Library, PDF Library
+Nama Proses: Buat File Export
+Masukan: Data yang diformat, format export, preferensi file
+Keluaran: File yang dapat diunduh dengan data presensi
+Penyimpanan Data: Tidak ada (hanya pembuatan file)
+Eksternal: Sistem File, Library Excel, Library PDF
 
-Logic:
-1. Initialize document based on format (Excel/PDF)
-2. Create document structure with headers
-3. Insert attendance data into document
-4. Add charts and visualizations
-5. Apply styling and formatting
-6. Add summary page with statistics
-7. Save file to temporary location
-8. Return file download URL
+Logika:
+1. Inisialisasi dokumen berdasarkan format (Excel/PDF)
+2. Buat struktur dokumen dengan header
+3. Masukkan data presensi ke dalam dokumen
+4. Tambahkan grafik dan visualisasi
+5. Terapkan styling dan formatting
+6. Tambahkan halaman ringkasan dengan statistik
+7. Simpan file ke lokasi sementara
+8. Kembalikan URL unduhan file
 
-Error Handling:
-- FILE_GENERATION_FAILED: "Gagal membuat file export"
-- DISK_SPACE_ERROR: "Ruang penyimpanan tidak cukup"
-- LIBRARY_ERROR: "Error library export"
+Penanganan Error:
+- GAGAL_BUAT_FILE: "Gagal membuat file export"
+- ERROR_RUANG_DISK: "Ruang penyimpanan tidak cukup"
+- ERROR_LIBRARY: "Error library export"
 
-Business Rules:
-- Excel files include multiple worksheets (data, summary, charts)
-- PDF files include professional formatting
-- Files are automatically deleted after 24 hours
-- Maximum file size 50MB
+Aturan Bisnis:
+- File Excel menyertakan beberapa worksheet (data, ringkasan, grafik)
+- File PDF menyertakan format profesional
+- File otomatis dihapus setelah 24 jam
+- Ukuran file maksimal 50MB
 ```
 
-### PSPEC P5.6 - Log Export Activity
+### PSPEC P5.6 - Catat Aktivitas Export
 
 ```
-Process Name: Log Export Activity
-Input: Export details, admin ID, timestamp, file info
-Output: Audit log entry
-Data Store: System Logs (for audit trail)
-External: None
+Nama Proses: Catat Aktivitas Export
+Masukan: Detail export, ID admin, timestamp, info file
+Keluaran: Entri log audit
+Penyimpanan Data: Log Sistem (untuk jejak audit)
+Eksternal: Tidak ada
 
-Logic:
-1. Create export activity log entry
-2. Include user ID, timestamp, filters used
-3. Record file format and size
-4. Log export success/failure status
-5. Include IP address and user agent
-6. Store for audit and compliance
-7. Update export statistics
+Logika:
+1. Buat entri log aktivitas export
+2. Sertakan ID pengguna, timestamp, filter yang digunakan
+3. Catat format file dan ukuran
+4. Log status sukses/gagal export
+5. Sertakan alamat IP dan user agent
+6. Simpan untuk audit dan kepatuhan
+7. Perbarui statistik export
 
-Error Handling:
-- LOG_FAILED: "Gagal mencatat aktivitas export"
-- STORAGE_ERROR: "Gagal menyimpan log audit"
+Penanganan Error:
+- GAGAL_LOG: "Gagal mencatat aktivitas export"
+- ERROR_PENYIMPANAN: "Gagal menyimpan log audit"
 
-Business Rules:
-- All export activities must be logged
-- Logs retained for 2 years minimum
-- Include sensitive data access tracking
-- Generate monthly export reports for admin
+Aturan Bisnis:
+- Semua aktivitas export harus dicatat
+- Log disimpan minimal 2 tahun
+- Sertakan pelacakan akses data sensitif
+- Buat laporan export bulanan untuk admin
 ```
 
 ## 3.5 Object Oriented Design
