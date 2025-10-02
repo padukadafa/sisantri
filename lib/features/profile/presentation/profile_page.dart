@@ -6,7 +6,7 @@ import '../../../shared/services/auth_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/logout_button.dart';
 
-import '../../admin/presentation/dewa_guru_dashboard_page.dart';
+import '../../admin/presentation/dewan_guru_dashboard_page.dart';
 import 'edit_profile_page.dart';
 import 'security_settings_page.dart';
 

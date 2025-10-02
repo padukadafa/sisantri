@@ -1,17 +1,17 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sisantri/features/auth/presentation/pages/register_page.dart';
 import '../bloc/auth_provider.dart';
-import '../../../../core/error/auth_error_mapper.dart';
 
-/// Login Page dengan Clean Architecture dan UI yang Diperbaiki
-class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+/// Login Page dengan Clean Architecture
+class LoginPageClean extends ConsumerStatefulWidget {
+  const LoginPageClean({super.key});
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPageClean> createState() => _LoginPageCleanState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -28,41 +28,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Listen to auth state changes for better UX
+    // Listen to auth state changes
     ref.listen<AuthState>(authProvider, (previous, current) {
       if (current.error != null) {
-        // Show error in a more user-friendly way
-        _showErrorDialog(current.error!);
-
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(current.error!), backgroundColor: Colors.red),
+        );
         // Clear error after showing
-        Future.delayed(const Duration(milliseconds: 100), () {
+        Future.delayed(const Duration(seconds: 3), () {
           ref.read(authProvider.notifier).clearError();
         });
-      }
-
-      // Show success feedback when login is successful
-      if (previous?.isLoading == true &&
-          current.isLoading == false &&
-          current.error == null &&
-          current.user != null) {
-        _showSuccessSnackBar();
       }
     });
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
-
-                // Logo dan Header
+                // Logo atau judul aplikasi
                 const Icon(Icons.mosque, size: 80, color: Colors.green),
                 const SizedBox(height: 24),
                 const Text(
@@ -77,11 +66,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 const SizedBox(height: 8),
                 const Text(
                   'Silakan login untuk melanjutkan',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -89,31 +74,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 // Email Field
                 TextFormField(
                   controller: _emailController,
-                  enabled: !authState.isLoading,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Email',
-                    hintText: 'Masukkan email Anda',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.green,
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
+                    prefixIcon: Icon(Icons.email),
+                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    return AuthErrorMapper.validateEmailFormat(value);
+                    if (value == null || value.isEmpty) {
+                      return 'Email tidak boleh kosong';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Format email tidak valid';
+                    }
+                    return null;
                   },
                 ),
                 const SizedBox(height: 16),
@@ -121,17 +95,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 // Password Field
                 TextFormField(
                   controller: _passwordController,
-                  enabled: !authState.isLoading,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    hintText: 'Masukkan password Anda',
-                    prefixIcon: const Icon(Icons.lock_outlined),
+                    prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -139,94 +111,64 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Colors.green,
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    return AuthErrorMapper.validatePasswordFormat(value);
+                    if (value == null || value.isEmpty) {
+                      return 'Password tidak boleh kosong';
+                    }
+                    if (value.length < 6) {
+                      return 'Password minimal 6 karakter';
+                    }
+                    return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
-                // Login Button dengan Loading yang Diperbaiki
-                SizedBox(
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: authState.isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.green.withOpacity(0.6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                      shadowColor: Colors.green.withOpacity(0.3),
+                // Login Button
+                ElevatedButton(
+                  onPressed: authState.isLoading ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: authState.isLoading
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white.withOpacity(0.9),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Sedang Login...',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          )
-                        : const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                  ),
+                  child: authState.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
                             ),
                           ),
-                  ),
+                        )
+                      : const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Register Link
                 TextButton(
                   onPressed: authState.isLoading
                       ? null
                       : () {
-                          // Navigate to register page
-                          // Navigator.push(context, ...);
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => RegisterPage()),
+                          );
                         },
                   child: const Text(
                     'Belum punya akun? Daftar di sini',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: Colors.green),
                   ),
                 ),
               ],
@@ -246,95 +188,5 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             password: _passwordController.text,
           );
     }
-  }
-
-  void _showErrorDialog(String error) {
-    // Ekstrak error code untuk menentukan severity
-    final errorCode = AuthErrorMapper.extractErrorCode(error);
-    final severity = AuthErrorMapper.getErrorSeverity(errorCode);
-
-    // Pilih warna dan ikon berdasarkan severity
-    Color iconColor;
-    IconData iconData;
-    String title;
-
-    switch (severity) {
-      case ErrorSeverity.info:
-        iconColor = Colors.blue;
-        iconData = Icons.info_outline;
-        title = 'Informasi';
-        break;
-      case ErrorSeverity.warning:
-        iconColor = Colors.orange;
-        iconData = Icons.warning_outlined;
-        title = 'Login Gagal';
-        break;
-      case ErrorSeverity.error:
-        iconColor = Colors.red;
-        iconData = Icons.error_outline;
-        title = 'Kesalahan';
-        break;
-      case ErrorSeverity.critical:
-        iconColor = Colors.red[800]!;
-        iconData = Icons.dangerous_outlined;
-        title = 'Kesalahan Sistem';
-        break;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: Icon(iconData, color: iconColor, size: 48),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: iconColor,
-          ),
-        ),
-        content: Text(
-          error,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text(
-              'Tutup',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSuccessSnackBar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'Login berhasil!',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 }

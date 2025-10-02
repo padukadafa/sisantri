@@ -7,7 +7,7 @@ import '../../../shared/services/auth_service.dart';
 import '../../../shared/widgets/splash_screen.dart';
 import 'main_navigation.dart';
 import 'admin_navigation.dart';
-import 'dewa_guru_navigation.dart';
+import 'dewan_guru_navigation.dart';
 
 /// Provider untuk mendapatkan data user saat ini dengan real-time updates
 final currentUserDataProvider = StreamProvider<UserModel?>((ref) {

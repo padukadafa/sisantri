@@ -125,26 +125,28 @@ class AuthService {
   /// Logout dengan timeout dan error handling yang lebih baik
   static Future<void> signOut() async {
     try {
-      // Step 1: Hapus device token dengan timeout (3 detik)
+      // Step 1: Hapus device token dengan timeout singkat (2 detik)
       await Future.any([
         _safeRemoveDeviceToken(),
-        Future.delayed(const Duration(seconds: 3)),
+        Future.delayed(const Duration(seconds: 2)),
       ]).catchError((_) {
         // Ignore timeout errors untuk device token removal
       });
 
-      // Step 2: Sign out dengan timeout (5 detik)
+      // Step 2: Sign out dengan timeout yang lebih pendek (3 detik)
       await Future.any([
         Future.wait([_auth.signOut(), _googleSignIn.signOut()]),
-        Future.delayed(const Duration(seconds: 5)),
+        Future.delayed(const Duration(seconds: 3)),
       ]).catchError((_) {
-        // Jika timeout, coba sign out satu per satu
-        _forceSignOut();
+        // Jika timeout, langsung force sign out
+        return _forceSignOut();
       });
     } catch (e) {
-      // Jika semua gagal, coba force sign out
-      await _forceSignOut();
-      throw Exception('Error saat logout: $e');
+      // Jika semua gagal, tetap coba force sign out dan jangan throw error
+      await _forceSignOut().catchError((_) {
+        // Ignore force sign out errors
+      });
+      // Don't throw exception - let logout complete
     }
   }
 
@@ -172,6 +174,16 @@ class AuthService {
       await _googleSignIn.signOut();
     } catch (_) {
       // Ignore google sign out errors
+    }
+  }
+
+  /// Simple logout untuk emergency cases
+  static Future<void> simpleSignOut() async {
+    try {
+      await _auth.signOut();
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Ignore all errors
     }
   }
 

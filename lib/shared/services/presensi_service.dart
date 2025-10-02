@@ -264,7 +264,7 @@ class PresensiService {
     try {
       final snapshot = await _firestore
           .collection('users')
-          .where('role', whereIn: ['santri', 'dewa_guru'])
+          .where('role', whereIn: ['santri', 'dewan_guru'])
           .where('statusAktif', isEqualTo: true)
           .get();
 

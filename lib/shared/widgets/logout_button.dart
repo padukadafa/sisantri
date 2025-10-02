@@ -179,18 +179,21 @@ class LogoutButton extends StatelessWidget {
       );
     }
 
+    bool dialogClosed = false;
+
     try {
-      // Set timeout untuk logout process
+      // Set timeout yang lebih pendek untuk logout process
       await Future.any([
         _performLogoutSteps(),
-        Future.delayed(const Duration(seconds: 10), () {
+        Future.delayed(const Duration(seconds: 8), () {
           throw Exception('Logout timeout - operasi terlalu lama');
         }),
       ]);
 
       // Tutup loading dialog
-      if (context.mounted) {
+      if (context.mounted && !dialogClosed) {
         Navigator.of(context, rootNavigator: true).pop();
+        dialogClosed = true;
       }
 
       // Panggil callback jika ada
@@ -216,41 +219,66 @@ class LogoutButton extends StatelessWidget {
         );
       }
     } catch (e) {
-      // Tutup loading dialog
-      if (context.mounted) {
+      // Tutup loading dialog jika belum ditutup
+      if (context.mounted && !dialogClosed) {
         Navigator.of(context, rootNavigator: true).pop();
+        dialogClosed = true;
       }
 
-      // Tampilkan error
+      // Force logout bahkan jika ada error
+      try {
+        await AuthService.signOut();
+      } catch (_) {
+        // Ignore final errors
+      }
+
+      // Tampilkan pesan (sukses karena tetap berhasil logout)
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Error logout: $e')),
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Logout berhasil'),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
+            duration: Duration(seconds: 2),
           ),
         );
+      }
+
+      // Panggil callback jika ada
+      if (onLogoutSuccess != null) {
+        onLogoutSuccess!();
       }
     }
   }
 
   Future<void> _performLogoutSteps() async {
     try {
-      // Step 1: Cleanup messaging (dengan timeout per topic)
-      await _cleanupMessagingWithTimeout();
+      // Step 1: Cleanup messaging (dengan timeout singkat)
+      await Future.any([
+        _cleanupMessagingWithTimeout(),
+        Future.delayed(const Duration(seconds: 2)),
+      ]).catchError((_) {
+        // Ignore messaging cleanup errors
+      });
 
-      // Step 2: Sign out dari auth services
-      await _signOutWithTimeout();
+      // Step 2: Sign out dengan timeout yang lebih pendek
+      await Future.any([
+        _signOutWithTimeout(),
+        Future.delayed(const Duration(seconds: 5)),
+      ]);
     } catch (e) {
-      // Jika ada error di salah satu step, lanjutkan ke step berikutnya
-      // tapi tetap throw error di akhir jika semua gagal
+      // Jika ada error, tetep lanjut dengan force sign out
+      try {
+        await AuthService.signOut();
+      } catch (_) {
+        // Ignore final sign out errors
+      }
       rethrow;
     }
   }

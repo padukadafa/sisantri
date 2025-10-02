@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../bloc/auth_provider.dart';
-import '../../../../shared/widgets/splash_screen.dart';
-import 'login_page_clean.dart';
+import 'login_page.dart';
 import 'rfid_setup_required_page.dart';
 import '../../../dashboard/presentation/role_based_navigation.dart';
 

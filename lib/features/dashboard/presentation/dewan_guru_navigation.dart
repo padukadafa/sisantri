@@ -10,7 +10,7 @@ import '../../jadwal/presentation/jadwal_page.dart';
 import '../../presensi/presentation/pages/presensi_summary_page.dart';
 import '../../leaderboard/presentation/leaderboard_page.dart';
 import '../../profile/presentation/profile_page.dart';
-import '../../admin/presentation/dewa_guru_dashboard_page.dart';
+import '../../admin/presentation/dewan_guru_dashboard_page.dart';
 
 /// Provider untuk current tab index khusus dewan guru
 final dewaGuruTabProvider = StateProvider<int>((ref) => 0);
