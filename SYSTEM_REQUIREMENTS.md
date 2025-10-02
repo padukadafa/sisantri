@@ -1738,127 +1738,127 @@ Aturan Bisnis:
 - Indeks berdasarkan tanggal untuk query yang efisien
 ```
 
-### PSPEC P4.4 - Get Target Participants
+### PSPEC P4.4 - Dapatkan Peserta Target
 
 ```
-Process Name: Get Event Target Participants
-Input: Event scope, role filters, manual selection, event capacity
-Output: Target participant list
-Data Store: D1 Users (for user data and preferences)
-External: None
+Nama Proses: Dapatkan Peserta Target Event
+Masukan: Cakupan event, filter peran, pilihan manual, kapasitas event
+Keluaran: Daftar peserta target
+Penyimpanan Data: D1 Users (untuk data pengguna dan preferensi)
+Eksternal: Tidak ada
 
-Logic:
-1. Determine participant scope (all users, specific roles, manual)
-2. Query users based on scope criteria
-3. Filter active and eligible users
-4. Apply user event preferences
-5. Check user availability for event time
-6. Exclude users who opt-out of events
-7. Limit to event capacity if specified
-8. Return filtered participant list
+Logika:
+1. Tentukan cakupan peserta (semua pengguna, peran tertentu, manual)
+2. Query pengguna berdasarkan kriteria cakupan
+3. Filter pengguna aktif dan memenuhi syarat
+4. Terapkan preferensi event pengguna
+5. Periksa ketersediaan pengguna untuk waktu event
+6. Kecualikan pengguna yang tidak ingin mengikuti event
+7. Batasi sesuai kapasitas event jika ditentukan
+8. Kembalikan daftar peserta yang difilter
 
-Error Handling:
-- USER_QUERY_FAILED: "Gagal mengambil data peserta"
-- CAPACITY_EXCEEDED: "Jumlah peserta melebihi kapasitas"
-- NO_ELIGIBLE_PARTICIPANTS: "Tidak ada peserta yang memenuhi kriteria"
+Penanganan Error:
+- GAGAL_QUERY_PENGGUNA: "Gagal mengambil data peserta"
+- KAPASITAS_TERLAMPAUI: "Jumlah peserta melebihi kapasitas"
+- TIDAK_ADA_PESERTA_MEMENUHI: "Tidak ada peserta yang memenuhi kriteria"
 
-Business Rules:
-- Respect user event notification preferences
-- Check user availability conflicts
-- First-come-first-served for limited capacity events
-- Include only active accounts
+Aturan Bisnis:
+- Hormati preferensi notifikasi event pengguna
+- Periksa konflik ketersediaan pengguna
+- Siapa cepat dia dapat untuk event dengan kapasitas terbatas
+- Sertakan hanya akun aktif
 ```
 
-### PSPEC P4.5 - Generate Reminder
+### PSPEC P4.5 - Buat Pengingat
 
 ```
-Process Name: Generate Event Reminders
-Input: Event data, participant list, reminder schedule settings
-Output: Scheduled reminders created
-Data Store: D5 Notifications (for reminder records)
-External: Scheduling Service
+Nama Proses: Buat Pengingat Event
+Masukan: Data event, daftar peserta, pengaturan jadwal pengingat
+Keluaran: Pengingat terjadwal yang dibuat
+Penyimpanan Data: D5 Notifications (untuk catatan pengingat)
+Eksternal: Layanan Penjadwalan
 
-Logic:
-1. Calculate reminder times (24h, 2h, 30min before event)
-2. Create reminder notification templates
-3. Personalize reminders for each participant
-4. Schedule reminders with appropriate timing
-5. Set reminder priorities and channels
-6. Create reminder records in database
-7. Set up reminder delivery tracking
+Logika:
+1. Hitung waktu pengingat (24j, 2j, 30m sebelum event)
+2. Buat template notifikasi pengingat
+3. Personalisasi pengingat untuk setiap peserta
+4. Jadwalkan pengingat dengan waktu yang tepat
+5. Atur prioritas dan saluran pengingat
+6. Buat catatan pengingat dalam database
+7. Siapkan pelacakan pengiriman pengingat
 
-Error Handling:
-- REMINDER_SCHEDULE_FAILED: "Gagal menjadwalkan reminder"
-- TEMPLATE_ERROR: "Error template reminder"
-- NOTIFICATION_CREATE_FAILED: "Gagal membuat notifikasi reminder"
+Penanganan Error:
+- GAGAL_JADWAL_PENGINGAT: "Gagal menjadwalkan reminder"
+- ERROR_TEMPLATE: "Error template reminder"
+- GAGAL_BUAT_NOTIFIKASI: "Gagal membuat notifikasi reminder"
 
-Business Rules:
-- Send reminders 24 hours, 2 hours, and 30 minutes before event
-- Include event details and location in reminders
-- Allow users to customize reminder preferences
-- Important events get additional reminder channels
+Aturan Bisnis:
+- Kirim pengingat 24 jam, 2 jam, dan 30 menit sebelum event
+- Sertakan detail event dan lokasi dalam pengingat
+- Izinkan pengguna menyesuaikan preferensi pengingat
+- Event penting mendapat saluran pengingat tambahan
 ```
 
-### PSPEC P4.6 - Sync Calendar
+### PSPEC P4.6 - Sinkronisasi Kalender
 
 ```
-Process Name: Sync with External Calendars
-Input: Event data, calendar integration settings, user preferences
-Output: Calendar sync confirmation
-Data Store: None (external calendar storage)
-External: Google Calendar API, Outlook Calendar API
+Nama Proses: Sinkronisasi dengan Kalender Eksternal
+Masukan: Data event, pengaturan integrasi kalender, preferensi pengguna
+Keluaran: Konfirmasi sinkronisasi kalender
+Penyimpanan Data: Tidak ada (penyimpanan kalender eksternal)
+Eksternal: Google Calendar API, Outlook Calendar API
 
-Logic:
-1. Check user calendar integration preferences
-2. Format event data for external calendar format
-3. Create calendar event with appropriate details
-4. Set event reminders in external calendar
-5. Handle calendar permissions and authentication
-6. Sync event updates and cancellations
-7. Return sync status and external event ID
+Logika:
+1. Periksa preferensi integrasi kalender pengguna
+2. Format data event untuk format kalender eksternal
+3. Buat event kalender dengan detail yang sesuai
+4. Atur pengingat event dalam kalender eksternal
+5. Tangani izin kalender dan autentikasi
+6. Sinkronkan pembaruan dan pembatalan event
+7. Kembalikan status sinkronisasi dan ID event eksternal
 
-Error Handling:
-- CALENDAR_AUTH_FAILED: "Gagal autentikasi kalender eksternal"
-- SYNC_FAILED: "Gagal sinkronisasi dengan kalender"
-- PERMISSION_DENIED: "Tidak memiliki izin akses kalender"
-- EXTERNAL_API_ERROR: "Error API kalender eksternal"
+Penanganan Error:
+- GAGAL_AUTH_KALENDER: "Gagal autentikasi kalender eksternal"
+- GAGAL_SINKRONISASI: "Gagal sinkronisasi dengan kalender"
+- IZIN_DITOLAK: "Tidak memiliki izin akses kalender"
+- ERROR_API_EKSTERNAL: "Error API kalender eksternal"
 
-Business Rules:
-- Sync only for users who enabled calendar integration
-- Include all event details and location
-- Handle timezone conversions appropriately
-- Respect external calendar privacy settings
+Aturan Bisnis:
+- Sinkronisasi hanya untuk pengguna yang mengaktifkan integrasi kalender
+- Sertakan semua detail event dan lokasi
+- Tangani konversi zona waktu dengan tepat
+- Hormati pengaturan privasi kalender eksternal
 ```
 
-### PSPEC P4.7 - Get Jadwal Kegiatan
+### PSPEC P4.7 - Dapatkan Jadwal Kegiatan
 
 ```
-Process Name: Retrieve Event Schedule
-Input: User request, date range, filter criteria, view type (calendar/list)
-Output: Formatted schedule data for display
-Data Store: D4 Jadwal (for event data)
-External: None
+Nama Proses: Ambil Jadwal Event
+Masukan: Permintaan pengguna, rentang tanggal, kriteria filter, tipe tampilan (kalender/daftar)
+Keluaran: Data jadwal yang diformat untuk tampilan
+Penyimpanan Data: D4 Jadwal (untuk data event)
+Eksternal: Tidak ada
 
-Logic:
-1. Apply user role-based filtering
-2. Filter events by date range
-3. Include user participation status
-4. Sort events by date and time
-5. Format data for requested view type (calendar/list)
-6. Include event capacity and current participants
-7. Add user-specific event actions (join/leave)
-8. Return formatted event data
+Logika:
+1. Terapkan filter berdasarkan peran pengguna
+2. Filter event berdasarkan rentang tanggal
+3. Sertakan status partisipasi pengguna
+4. Urutkan event berdasarkan tanggal dan waktu
+5. Format data untuk tipe tampilan yang diminta (kalender/daftar)
+6. Sertakan kapasitas event dan peserta saat ini
+7. Tambahkan aksi event khusus pengguna (gabung/keluar)
+8. Kembalikan data event yang diformat
 
-Error Handling:
-- QUERY_FAILED: "Gagal mengambil data jadwal"
-- INVALID_DATE_RANGE: "Rentang tanggal tidak valid"
-- FORMAT_ERROR: "Error format data kalender"
+Penanganan Error:
+- GAGAL_QUERY: "Gagal mengambil data jadwal"
+- RENTANG_TANGGAL_SALAH: "Rentang tanggal tidak valid"
+- ERROR_FORMAT: "Error format data kalender"
 
-Business Rules:
-- Show only active events
-- Include past events in history view
-- Show participation status for each user
-- Filter by user permissions and roles
+Aturan Bisnis:
+- Tampilkan hanya event aktif
+- Sertakan event masa lalu dalam tampilan riwayat
+- Tampilkan status partisipasi untuk setiap pengguna
+- Filter berdasarkan izin dan peran pengguna
 ```
 
 ### PSPEC P2.1 - Pindai RFID
@@ -2102,60 +2102,60 @@ Logic:
 ### PSPEC P5.1 - Validasi Filter
 
 ```
-Process Name: Validate Report Filters
-Input: Tanggal mulai/selesai, user filter, status filter, admin permissions
-Output: Validated filter criteria or validation errors
-Data Store: None (validation only)
-External: None
+Nama Proses: Validasi Filter Laporan
+Masukan: Tanggal mulai/selesai, filter pengguna, filter status, izin admin
+Keluaran: Kriteria filter yang divalidasi atau error validasi
+Penyimpanan Data: Tidak ada (hanya validasi)
+Eksternal: Tidak ada
 
-Logic:
-1. Validate date range format and logical sequence
-2. Check date range limits (max 1 year)
-3. Validate user filter permissions
-4. Check status filter values
-5. Verify admin has report access rights
-6. Sanitize filter parameters
-7. Return validated filter object
+Logika:
+1. Validasi format rentang tanggal dan urutan logis
+2. Periksa batas rentang tanggal (maks 1 tahun)
+3. Validasi izin filter pengguna
+4. Periksa nilai filter status
+5. Verifikasi admin memiliki hak akses laporan
+6. Sanitasi parameter filter
+7. Kembalikan objek filter yang divalidasi
 
-Error Handling:
-- INVALID_DATE_FORMAT: "Format tanggal tidak valid"
-- INVALID_DATE_RANGE: "Rentang tanggal tidak valid (max 1 tahun)"
-- PERMISSION_DENIED: "Tidak memiliki izin akses laporan"
-- INVALID_STATUS_FILTER: "Filter status tidak valid"
+Penanganan Error:
+- FORMAT_TANGGAL_SALAH: "Format tanggal tidak valid"
+- RENTANG_TANGGAL_SALAH: "Rentang tanggal tidak valid (max 1 tahun)"
+- IZIN_DITOLAK: "Tidak memiliki izin akses laporan"
+- FILTER_STATUS_SALAH: "Filter status tidak valid"
 
-Business Rules:
-- Maximum date range is 1 year
-- Only admin and dewan_guru can access reports
-- Default filter is current month if not specified
-- All filters are optional except date range
+Aturan Bisnis:
+- Rentang tanggal maksimum adalah 1 tahun
+- Hanya admin dan dewan_guru yang dapat mengakses laporan
+- Filter default adalah bulan saat ini jika tidak ditentukan
+- Semua filter opsional kecuali rentang tanggal
 ```
 
 ### PSPEC P5.2 - Query Data Presensi
 
 ```
-Process Name: Query Attendance Data
-Input: Validated filters, user permissions
-Output: Filtered attendance records with user info
-Data Store: D2 Presensi (for attendance data), D1 Users (for user details)
-External: None
+Nama Proses: Query Data Kehadiran
+Masukan: Filter yang divalidasi, izin pengguna
+Keluaran: Catatan kehadiran yang difilter dengan info pengguna
+Penyimpanan Data: D2 Presensi (untuk data kehadiran), D1 Users (untuk detail pengguna)
+Eksternal: Tidak ada
 
-Logic:
-1. Build query with validated filters
-2. Join presensi data with user information
-3. Apply date range filtering
-4. Filter by user IDs if specified
-5. Filter by attendance status if specified
-6. Sort results by date and user name
-7. Apply pagination for large datasets
-8. Return structured attendance data
+Logika:
+1. Bangun query dengan filter yang divalidasi
+2. Gabungkan data presensi dengan informasi pengguna
+3. Terapkan filter rentang tanggal
+4. Filter berdasarkan ID pengguna jika ditentukan
+5. Filter berdasarkan status kehadiran jika ditentukan
+6. Urutkan hasil berdasarkan tanggal dan nama pengguna
+7. Terapkan paginasi untuk dataset besar
+8. Kembalikan data kehadiran terstruktur
 
-Error Handling:
-- QUERY_FAILED: "Gagal mengambil data presensi"
-- NO_DATA_FOUND: "Tidak ada data presensi untuk filter yang dipilih"
-- DATABASE_ERROR: "Error koneksi database"
+Penanganan Error:
+- GAGAL_QUERY: "Gagal mengambil data presensi"
+- DATA_TIDAK_DITEMUKAN: "Tidak ada data presensi untuk filter yang dipilih"
+- ERROR_DATABASE: "Error koneksi database"
 
-Business Rules:
-- Include user details (nama, role) in results
+Aturan Bisnis:
+- Sertakan detail pengguna (nama, peran) dalam hasil
 - Show only data user has permission to see
 - Paginate results for performance (max 1000 records per page)
 - Include calculated fields (streak, total days)
@@ -2164,29 +2164,29 @@ Business Rules:
 ### PSPEC P5.3 - Generate Statistics
 
 ```
-Process Name: Generate Attendance Statistics
-Input: Attendance data, calculation parameters
-Output: Statistical summary and chart data
-Data Store: None (calculation only)
-External: None
+Nama Proses: Buat Statistik Kehadiran
+Masukan: Data kehadiran, parameter perhitungan
+Keluaran: Ringkasan statistik dan data chart
+Penyimpanan Data: Tidak ada (hanya perhitungan)
+Eksternal: Tidak ada
 
-Logic:
-1. Calculate overall attendance rate
-2. Calculate individual user statistics
-3. Generate attendance trends over time
-4. Calculate late arrival statistics
-5. Identify attendance patterns
-6. Generate comparative analysis
-7. Create chart data for visualization
-8. Return comprehensive statistics object
+Logika:
+1. Hitung tingkat kehadiran keseluruhan
+2. Hitung statistik pengguna individual
+3. Buat tren kehadiran dari waktu ke waktu
+4. Hitung statistik keterlambatan
+5. Identifikasi pola kehadiran
+6. Buat analisis perbandingan
+7. Buat data chart untuk visualisasi
+8. Kembalikan objek statistik komprehensif
 
-Error Handling:
-- CALCULATION_ERROR: "Gagal menghitung statistik"
-- INSUFFICIENT_DATA: "Data tidak cukup untuk analisis"
+Penanganan Error:
+- ERROR_PERHITUNGAN: "Gagal menghitung statistik"
+- DATA_KURANG: "Data tidak cukup untuk analisis"
 
-Business Rules:
-- Attendance rate = (Hadir + Terlambat) / Total Days * 100
-- Exclude weekends and holidays from calculations
+Aturan Bisnis:
+- Tingkat kehadiran = (Hadir + Terlambat) / Total Hari * 100
+- Kecualikan akhir pekan dan hari libur dari perhitungan
 - Include trend analysis for insights
 - Generate both summary and detailed statistics
 ```
@@ -2194,29 +2194,29 @@ Business Rules:
 ### PSPEC P5.4 - Format Data for Export
 
 ```
-Process Name: Format Data for Export
-Input: Raw data + statistics, export format preference
-Output: Formatted data ready for file generation
-Data Store: None (formatting only)
-External: None
+Nama Proses: Format Data untuk Export
+Masukan: Data mentah + statistik, preferensi format export
+Keluaran: Data yang diformat siap untuk pembuatan file
+Penyimpanan Data: Tidak ada (hanya formatting)
+Eksternal: Tidak ada
 
-Logic:
-1. Structure data according to export format
-2. Add headers and metadata
-3. Format dates and numbers appropriately
-4. Include summary statistics section
-5. Add charts and visualizations if supported
-6. Apply localization for Indonesian format
-7. Validate data completeness
-8. Return formatted export data structure
+Logika:
+1. Strukturkan data sesuai format export
+2. Tambahkan header dan metadata
+3. Format tanggal dan angka dengan tepat
+4. Sertakan bagian ringkasan statistik
+5. Tambahkan chart dan visualisasi jika didukung
+6. Terapkan lokalisasi untuk format Indonesia
+7. Validasi kelengkapan data
+8. Kembalikan struktur data export yang diformat
 
-Error Handling:
-- FORMAT_ERROR: "Gagal memformat data untuk export"
-- UNSUPPORTED_FORMAT: "Format export tidak didukung"
-- DATA_CORRUPTION: "Data tidak lengkap atau rusak"
+Penanganan Error:
+- ERROR_FORMAT: "Gagal memformat data untuk export"
+- FORMAT_TIDAK_DIDUKUNG: "Format export tidak didukung"
+- DATA_RUSAK: "Data tidak lengkap atau rusak"
 
-Business Rules:
-- Support Excel (.xlsx) and PDF formats
+Aturan Bisnis:
+- Dukung format Excel (.xlsx) dan PDF
 - Include company/institution branding
 - Add export timestamp and user info
 - Format numbers with Indonesian locale
@@ -2287,119 +2287,119 @@ Aturan Bisnis:
 ### PSPEC P6.1 - Authenticate & Authorize
 
 ```
-Process Name: Dashboard Authentication & Authorization
-Input: User request, session token, requested dashboard components
-Output: Authorization result with permitted components
-Data Store: D1 Users (for user permissions)
-External: Firebase Auth (for token validation)
+Nama Proses: Autentikasi & Otorisasi Dashboard
+Masukan: Permintaan pengguna, token sesi, komponen dashboard yang diminta
+Keluaran: Hasil otorisasi dengan komponen yang diizinkan
+Penyimpanan Data: D1 Users (untuk izin pengguna)
+Eksternal: Firebase Auth (untuk validasi token)
 
-Logic:
-1. Validate session token with Firebase Auth
-2. Retrieve user profile and role information
-3. Check user permissions for dashboard access
-4. Determine allowed dashboard components based on role
-5. Validate component-specific permissions
-6. Create authorized component list
-7. Return authorization result
+Logika:
+1. Validasi token sesi dengan Firebase Auth
+2. Ambil profil pengguna dan informasi peran
+3. Periksa izin pengguna untuk akses dashboard
+4. Tentukan komponen dashboard yang diizinkan berdasarkan peran
+5. Validasi izin khusus komponen
+6. Buat daftar komponen yang diotorisasi
+7. Kembalikan hasil otorisasi
 
-Error Handling:
-- INVALID_TOKEN: "Token tidak valid atau expired"
-- PERMISSION_DENIED: "Tidak memiliki izin akses dashboard"
-- USER_NOT_FOUND: "Data pengguna tidak ditemukan"
+Penanganan Error:
+- TOKEN_SALAH: "Token tidak valid atau expired"
+- IZIN_DITOLAK: "Tidak memiliki izin akses dashboard"
+- PENGGUNA_TIDAK_DITEMUKAN: "Data pengguna tidak ditemukan"
 
-Business Rules:
-- Santri: basic dashboard with personal stats
-- Dewan Guru: extended dashboard with class management
-- Admin: full dashboard with system management
-- Token must be refreshed every 24 hours
+Aturan Bisnis:
+- Santri: dashboard dasar dengan statistik pribadi
+- Dewan Guru: dashboard diperluas dengan manajemen kelas
+- Admin: dashboard penuh dengan manajemen sistem
+- Token harus disegarkan setiap 24 jam
 ```
 
 ### PSPEC P6.2 - Load User Profile
 
 ```
-Process Name: Load User Profile Data
-Input: Authenticated user ID, profile preferences
-Output: Complete user profile data
-Data Store: D1 Users (for profile data)
-External: Firebase Storage (for profile images)
+Nama Proses: Muat Data Profil Pengguna
+Masukan: ID pengguna terautentikasi, preferensi profil
+Keluaran: Data profil pengguna lengkap
+Penyimpanan Data: D1 Users (untuk data profil)
+Eksternal: Firebase Storage (untuk gambar profil)
 
-Logic:
-1. Fetch user profile from database
-2. Load user preferences and settings
-3. Get profile image URL if exists
-4. Calculate user level and progress
-5. Include role-specific profile data
-6. Format profile data for display
-7. Return complete user profile object
+Logika:
+1. Ambil profil pengguna dari database
+2. Muat preferensi dan pengaturan pengguna
+3. Dapatkan URL gambar profil jika ada
+4. Hitung level dan progress pengguna
+5. Sertakan data profil khusus peran
+6. Format data profil untuk tampilan
+7. Kembalikan objek profil pengguna lengkap
 
-Error Handling:
-- PROFILE_LOAD_FAILED: "Gagal memuat profil pengguna"
-- IMAGE_LOAD_FAILED: "Gagal memuat foto profil"
-- DATABASE_ERROR: "Error koneksi database"
+Penanganan Error:
+- GAGAL_MUAT_PROFIL: "Gagal memuat profil pengguna"
+- GAGAL_MUAT_GAMBAR: "Gagal memuat foto profil"
+- ERROR_DATABASE: "Error koneksi database"
 
-Business Rules:
-- Cache profile data for 30 minutes
-- Include user statistics in profile
-- Show achievement badges and level
+Aturan Bisnis:
+- Cache data profil selama 30 menit
+- Sertakan statistik pengguna dalam profil
+- Tampilkan badge prestasi dan level
 - Default avatar if no profile image
 ```
 
 ### PSPEC P6.3 - Load Presensi Statistics
 
 ```
-Process Name: Load Attendance Statistics
-Input: User ID, date range, statistics type
-Output: Attendance summary and chart data
-Data Store: D2 Presensi (for attendance records)
-External: None
+Nama Proses: Muat Statistik Kehadiran
+Masukan: ID pengguna, rentang tanggal, tipe statistik
+Keluaran: Ringkasan kehadiran dan data chart
+Penyimpanan Data: D2 Presensi (untuk catatan kehadiran)
+Eksternal: Tidak ada
 
-Logic:
-1. Query attendance data for specified period
-2. Calculate attendance rate and trends
-3. Identify attendance streaks
-4. Generate weekly/monthly comparisons
-5. Create chart data for visualization
-6. Calculate performance metrics
-7. Return formatted statistics object
+Logika:
+1. Query data kehadiran untuk periode yang ditentukan
+2. Hitung tingkat kehadiran dan tren
+3. Identifikasi streak kehadiran
+4. Buat perbandingan mingguan/bulanan
+5. Buat data chart untuk visualisasi
+6. Hitung metrik performa
+7. Kembalikan objek statistik yang diformat
 
-Error Handling:
-- STATS_CALCULATION_FAILED: "Gagal menghitung statistik presensi"
-- INSUFFICIENT_DATA: "Data presensi tidak mencukupi"
+Penanganan Error:
+- GAGAL_HITUNG_STATISTIK: "Gagal menghitung statistik presensi"
+- DATA_KURANG: "Data presensi tidak mencukupi"
 
-Business Rules:
-- Show last 30 days by default
-- Include streak information
-- Compare with class/system average
-- Highlight improvements or concerns
+Aturan Bisnis:
+- Tampilkan 30 hari terakhir secara default
+- Sertakan informasi streak
+- Bandingkan dengan rata-rata kelas/sistem
+- Sorot perbaikan atau masalah
 ```
 
 ### PSPEC P6.4 - Load Kegiatan Mendatang
 
 ```
-Process Name: Load Upcoming Events
-Input: User ID, role, date filter, limit
-Output: Upcoming events list with participation status
-Data Store: D4 Jadwal (for event data)
-External: None
+Nama Proses: Muat Event Mendatang
+Masukan: ID pengguna, peran, filter tanggal, batas
+Keluaran: Daftar event mendatang dengan status partisipasi
+Penyimpanan Data: D4 Jadwal (untuk data event)
+Eksternal: Tidak ada
 
-Logic:
-1. Query events starting from current date
-2. Filter events by user role and permissions
-3. Check user participation status for each event
-4. Sort events by date and priority
-5. Include event details and requirements
-6. Add participation actions (join/leave)
-7. Return formatted events list
+Logika:
+1. Query event mulai dari tanggal saat ini
+2. Filter event berdasarkan peran dan izin pengguna
+3. Periksa status partisipasi pengguna untuk setiap event
+4. Urutkan event berdasarkan tanggal dan prioritas
+5. Sertakan detail event dan persyaratan
+6. Tambahkan aksi partisipasi (gabung/keluar)
+7. Kembalikan daftar event yang diformat
 
-Error Handling:
-- EVENTS_LOAD_FAILED: "Gagal memuat kegiatan mendatang"
-- PERMISSION_ERROR: "Tidak memiliki izin melihat kegiatan"
+Penanganan Error:
+- GAGAL_MUAT_EVENT: "Gagal memuat kegiatan mendatang"
+- ERROR_IZIN: "Tidak memiliki izin melihat kegiatan"
 
-Business Rules:
-- Show next 7 days by default
-- Include only events user can participate in
-- Show registration deadlines
-- Highlight mandatory events
+Aturan Bisnis:
+- Tampilkan 7 hari ke depan secara default
+- Sertakan hanya event yang dapat diikuti pengguna
+- Tampilkan batas waktu pendaftaran
+- Sorot event wajib
 ```
 
 ### PSPEC P6.5 - Load Pengumuman
