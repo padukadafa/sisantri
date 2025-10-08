@@ -12,16 +12,16 @@ erDiagram
     USERS ||--o{ USER_ACHIEVEMENTS : "meraih"
     USERS ||--o{ AUDIT_LOG : "tercatat_di"
     USERS ||--o{ EVENT_PARTICIPANTS : "berpartisipasi"
-    
+
     JADWAL ||--o{ EVENT_PARTICIPANTS : "memiliki"
     JADWAL ||--o{ EVENT_REMINDERS : "memiliki"
-    
+
     PENGUMUMAN ||--o{ ANNOUNCEMENT_READS : "dibaca_oleh"
-    
+
     ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : "diraih"
-    
+
     LEADERBOARD }o--|| USERS : "menampilkan"
-    
+
     REPORTS }o--|| USERS : "dibuat_oleh"
     REPORTS }o--|| PRESENSI : "berdasarkan"
 
@@ -238,6 +238,7 @@ erDiagram
 ## Deskripsi Relasi
 
 ### 1. USERS (Entitas Utama)
+
 - **One-to-Many** dengan PRESENSI: Satu pengguna dapat memiliki banyak catatan presensi
 - **One-to-Many** dengan PENGUMUMAN: Satu admin/guru dapat membuat banyak pengumuman
 - **One-to-Many** dengan JADWAL: Satu admin/guru dapat mengatur banyak jadwal
@@ -248,19 +249,24 @@ erDiagram
 - **One-to-Many** dengan AUDIT_LOG: Aktivitas satu pengguna tercatat di banyak log
 
 ### 2. JADWAL (Event/Kegiatan)
+
 - **One-to-Many** dengan EVENT_PARTICIPANTS: Satu event dapat memiliki banyak peserta
 - **One-to-Many** dengan EVENT_REMINDERS: Satu event dapat memiliki banyak reminder untuk berbagai peserta
 
 ### 3. PENGUMUMAN
+
 - **One-to-Many** dengan ANNOUNCEMENT_READS: Satu pengumuman dapat dibaca oleh banyak pengguna
 
 ### 4. ACHIEVEMENTS
+
 - **One-to-Many** dengan USER_ACHIEVEMENTS: Satu achievement dapat diraih oleh banyak pengguna
 
 ### 5. LEADERBOARD
+
 - **Many-to-One** dengan USERS: Banyak entry leaderboard terkait dengan users (untuk periode berbeda)
 
 ### 6. REPORTS
+
 - **Many-to-One** dengan USERS: Laporan dibuat oleh pengguna
 - **Many-to-One** dengan PRESENSI: Laporan berdasarkan data presensi
 
@@ -288,27 +294,34 @@ erDiagram
 ## Indeks yang Disarankan
 
 ### USERS
+
 - Index pada: `email`, `rfid_tag_id`, `role`, `is_active`
 
 ### PRESENSI
+
 - Composite index: `(user_id, tanggal)`, `(status, is_verified)`
 
 ### PENGUMUMAN
+
 - Index pada: `kategori`, `is_published`, `created_by`
 - Composite index: `(tanggal_mulai, tanggal_berakhir)`
 
 ### JADWAL
+
 - Composite index: `(tanggal_mulai, tanggal_selesai, status)`
 - Index pada: `jenis`, `created_by`
 
 ### NOTIFIKASI
+
 - Composite index: `(user_id, is_read, created_at)`
 - Index pada: `tipe`, `prioritas`
 
 ### POINT_TRANSACTIONS
+
 - Composite index: `(user_id, created_at)`
 - Index pada: `transaction_type`
 
 ### LEADERBOARD
+
 - Composite index: `(period, rank)`
 - Index pada: `user_id`

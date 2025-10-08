@@ -378,6 +378,7 @@
 ```
 
 **Catatan:**
+
 - Estimasi untuk sekolah dengan ~1000 user (santri + guru)
 - Asumsi presensi 2x sehari, 200 hari/tahun
 - Belum termasuk index dan overhead

@@ -227,52 +227,53 @@ erDiagram
     USERS ||--o{ ANNOUNCEMENT_READS : "membaca"
     USERS ||--o{ LEADERBOARD : "terdaftar_di"
     USERS ||--o{ REPORTS : "membuat"
-    
+
     PRESENSI }o--|| USERS : "milik"
     PRESENSI }o--|| USERS : "diverifikasi_oleh"
-    
+
     JADWAL ||--o{ EVENT_PARTICIPANTS : "memiliki_peserta"
     JADWAL ||--o{ EVENT_REMINDERS : "memiliki_reminder"
     JADWAL }o--|| USERS : "dibuat_oleh"
-    
+
     EVENT_PARTICIPANTS }o--|| JADWAL : "untuk_event"
     EVENT_PARTICIPANTS }o--|| USERS : "peserta"
-    
+
     EVENT_REMINDERS }o--|| JADWAL : "untuk_event"
     EVENT_REMINDERS }o--|| USERS : "untuk_user"
-    
+
     PENGUMUMAN ||--o{ ANNOUNCEMENT_READS : "dibaca"
     PENGUMUMAN }o--|| USERS : "dibuat_oleh"
-    
+
     ANNOUNCEMENT_READS }o--|| PENGUMUMAN : "untuk_pengumuman"
     ANNOUNCEMENT_READS }o--|| USERS : "oleh_user"
-    
+
     ACHIEVEMENTS ||--o{ USER_ACHIEVEMENTS : "diraih"
     USER_ACHIEVEMENTS }o--|| USERS : "oleh_user"
-    
+
     NOTIFIKASI }o--|| USERS : "untuk_user"
-    
+
     POINT_TRANSACTIONS }o--|| USERS : "untuk_user"
-    
+
     LEADERBOARD }o--|| USERS : "untuk_user"
-    
+
     REPORTS }o--|| USERS : "dibuat_oleh"
-    
+
     AUDIT_LOG }o--|| USERS : "oleh_user"
 ```
 
 ## Penjelasan Simbol Kardinalitas
 
-| Simbol | Arti | Keterangan |
-|--------|------|------------|
-| `\|\|--o{` | One to Many | Satu entitas bisa memiliki banyak relasi |
-| `}o--\|\|` | Many to One | Banyak entitas terkait dengan satu entitas |
-| `\|\|--\|\|` | One to One | Satu entitas terkait dengan satu entitas lain |
-| `}o--o{` | Many to Many | Banyak ke banyak (biasanya dengan tabel junction) |
+| Simbol       | Arti         | Keterangan                                        |
+| ------------ | ------------ | ------------------------------------------------- |
+| `\|\|--o{`   | One to Many  | Satu entitas bisa memiliki banyak relasi          |
+| `}o--\|\|`   | Many to One  | Banyak entitas terkait dengan satu entitas        |
+| `\|\|--\|\|` | One to One   | Satu entitas terkait dengan satu entitas lain     |
+| `}o--o{`     | Many to Many | Banyak ke banyak (biasanya dengan tabel junction) |
 
 ## Tabel Lookup/Reference
 
 ### Status Kehadiran (PRESENSI.status)
+
 - `hadir` - Hadir tepat waktu
 - `terlambat` - Hadir terlambat
 - `izin` - Tidak hadir dengan izin
@@ -280,22 +281,26 @@ erDiagram
 - `alpha` - Tidak hadir tanpa keterangan
 
 ### Role Pengguna (USERS.role)
+
 - `santri` - Siswa/Santri
 - `dewan_guru` - Guru/Pengajar
 - `admin` - Administrator sistem
 
 ### Metode Presensi (PRESENSI.metode)
+
 - `rfid` - Menggunakan kartu RFID
 - `manual` - Input manual oleh admin/guru
 - `qr_code` - Scan QR Code
 
 ### Jenis Kegiatan (JADWAL.jenis)
+
 - `pembelajaran` - Kegiatan belajar mengajar
 - `ibadah` - Kegiatan ibadah
 - `ekstrakurikuler` - Kegiatan ekstrakurikuler
 - `acara_khusus` - Acara khusus/event
 
 ### Tipe Notifikasi (NOTIFIKASI.tipe)
+
 - `presensi` - Notifikasi terkait kehadiran
 - `pengumuman` - Notifikasi pengumuman baru
 - `jadwal` - Notifikasi event/kegiatan
@@ -303,12 +308,14 @@ erDiagram
 - `sistem` - Notifikasi sistem
 
 ### Kategori Achievement (ACHIEVEMENTS.kategori)
+
 - `attendance` - Terkait kehadiran
 - `streak` - Terkait konsistensi
 - `participation` - Terkait partisipasi
 - `special` - Achievement khusus
 
 ### Rarity Achievement (ACHIEVEMENTS.rarity)
+
 - `common` - Umum/mudah didapat
 - `rare` - Jarang/cukup sulit
 - `epic` - Epik/sulit
@@ -317,7 +324,9 @@ erDiagram
 ## Aturan Integritas Referensial
 
 ### CASCADE DELETE
+
 Ketika user dihapus (soft delete):
+
 - PRESENSI → Tetap dipertahankan (untuk audit)
 - NOTIFIKASI → Tetap dipertahankan
 - POINT_TRANSACTIONS → Tetap dipertahankan
@@ -325,16 +334,19 @@ Ketika user dihapus (soft delete):
 - AUDIT_LOG → Tetap dipertahankan
 
 ### ON DELETE SET NULL
+
 - PENGUMUMAN.created_by → Set NULL jika creator dihapus
 - JADWAL.created_by → Set NULL jika creator dihapus
 
 ### RESTRICT DELETE
+
 - USER_ACHIEVEMENTS.achievement_id → Tidak bisa hapus achievement jika ada user yang sudah meraihnya
 - ANNOUNCEMENT_READS.announcement_id → Tidak bisa hapus pengumuman jika sudah ada yang membaca
 
 ## Constraint & Validasi
 
 ### USERS
+
 - `email` harus format email valid dan unique
 - `rfid_tag_id` harus unique jika diisi
 - `role` harus salah satu dari enum yang ditentukan
@@ -342,29 +354,34 @@ Ketika user dihapus (soft delete):
 - `level` dimulai dari 1
 
 ### PRESENSI
+
 - `tanggal` tidak boleh di masa depan
 - `waktu_keluar` harus lebih besar dari `waktu_masuk`
 - Tidak boleh ada duplikat `(user_id, tanggal)` untuk metode RFID
 
 ### JADWAL
+
 - `tanggal_selesai` harus >= `tanggal_mulai`
 - `current_participants` tidak boleh > `kapasitas`
 - `registration_deadline` harus < `tanggal_mulai`
 
 ### POINT_TRANSACTIONS
+
 - Untuk `transaction_type = 'penalty'`, `points` harus negatif
 - Untuk tipe lain, `points` harus positif
 
 ### LEADERBOARD
+
 - `rank` harus unique per `period`
 - `total_points` tidak boleh negatif
 
 ## View yang Disarankan
 
 ### v_user_statistics
+
 ```sql
 CREATE VIEW v_user_statistics AS
-SELECT 
+SELECT
     u.uid,
     u.nama,
     u.kelas,
@@ -381,9 +398,10 @@ GROUP BY u.uid;
 ```
 
 ### v_active_events
+
 ```sql
 CREATE VIEW v_active_events AS
-SELECT 
+SELECT
     j.*,
     u.nama as creator_name,
     COUNT(ep.id) as participant_count
@@ -396,9 +414,10 @@ GROUP BY j.id;
 ```
 
 ### v_unread_notifications
+
 ```sql
 CREATE VIEW v_unread_notifications AS
-SELECT 
+SELECT
     n.*,
     u.nama as user_name
 FROM NOTIFIKASI n
