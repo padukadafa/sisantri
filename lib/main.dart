@@ -9,14 +9,10 @@ import 'features/auth/presentation/pages/auth_wrapper.dart';
 import 'shared/services/notification_service.dart';
 import 'firebase_options.dart';
 
-/// Background message handler untuk Firebase Messaging
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Ensure Firebase is initialized
   await Firebase.initializeApp();
-  // Handling a background message
 }
 
-/// Flutter Local Notifications plugin instance
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
@@ -28,25 +24,16 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Initialize Firebase Messaging background handler dengan error handling
     try {
       FirebaseMessaging.onBackgroundMessage(
         _firebaseMessagingBackgroundHandler,
       );
-    } catch (e) {
-      // Firebase Messaging error (akan diabaikan)
-    }
+    } catch (e) {}
 
-    // Initialize local notifications
     try {
       await NotificationService.initialize();
-    } catch (e) {
-      // Local notifications error (akan diabaikan)
-    }
-  } catch (e) {
-    // Firebase initialization error
-    // Lanjutkan saja meskipun ada error Firebase
-  }
+    } catch (e) {}
+  } catch (e) {}
 
   runApp(const ProviderScope(child: SiSantriApp()));
 }
@@ -60,7 +47,6 @@ class SiSantriApp extends StatelessWidget {
       title: 'SiSantri',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      // Firebase sudah diinisialisasi di main(), langsung tampilkan AuthWrapper
       home: const AuthWrapper(),
     );
   }
