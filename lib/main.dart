@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/pages/auth_wrapper.dart';
@@ -36,6 +37,25 @@ void main() async {
   } catch (e) {}
 
   runApp(const ProviderScope(child: SiSantriApp()));
+
+  // Configure EasyLoading
+  configLoading();
+}
+
+void configLoading() {
+  EasyLoading.instance
+    ..displayDuration = const Duration(milliseconds: 2000)
+    ..indicatorType = EasyLoadingIndicatorType.fadingCircle
+    ..loadingStyle = EasyLoadingStyle.dark
+    ..indicatorSize = 45.0
+    ..radius = 10.0
+    ..progressColor = Colors.white
+    ..backgroundColor = Colors.black87
+    ..indicatorColor = Colors.white
+    ..textColor = Colors.white
+    ..maskColor = Colors.blue.withAlpha(50)
+    ..userInteractions = false
+    ..dismissOnTap = false;
 }
 
 class SiSantriApp extends StatelessWidget {
@@ -48,6 +68,7 @@ class SiSantriApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       home: const AuthWrapper(),
+      builder: EasyLoading.init(),
     );
   }
 }

@@ -9,7 +9,6 @@ import '../../../../shared/services/presensi_service.dart';
 import '../providers/dashboard_providers.dart';
 import '../providers/stats_providers.dart';
 import '../providers/notification_providers.dart';
-import 'dashboard_welcome_card.dart';
 import 'dashboard_notifications_section.dart';
 import 'dashboard_stats_cards.dart';
 import 'dashboard_additional_stats.dart';
@@ -38,8 +37,6 @@ class DashboardContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DashboardWelcomeCard(user: user),
-            const SizedBox(height: 16),
             const DashboardNotificationsSection(),
             const SizedBox(height: 20),
             DashboardStatsCards(user: user, todayPresensi: todayPresensi),

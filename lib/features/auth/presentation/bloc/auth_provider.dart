@@ -6,7 +6,6 @@ import '../../domain/usecases/logout.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/result.dart';
 
-/// Auth State
 class AuthState {
   final User? user;
   final bool isLoading;
@@ -23,7 +22,6 @@ class AuthState {
   }
 }
 
-/// Auth Notifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final LoginWithEmailAndPassword _loginUseCase;
   final GetCurrentUser _getCurrentUserUseCase;
@@ -58,7 +56,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Login dengan email dan password
   Future<void> loginWithEmailAndPassword({
     required String email,
     required String password,
@@ -77,12 +74,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Logout
   Future<void> logout() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // Add timeout to prevent loading state getting stuck
       final result = await Future.any([
         _logoutUseCase(),
         Future.delayed(const Duration(seconds: 10), () {
@@ -99,18 +94,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       );
     } catch (e) {
-      // Force clear user state even if logout fails
       state = state.copyWith(user: null, isLoading: false, error: e.toString());
     }
   }
 
-  /// Clear error
   void clearError() {
     state = state.copyWith(error: null);
   }
 }
 
-/// Auth Provider
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     loginUseCase: ref.read(loginWithEmailAndPasswordProvider),

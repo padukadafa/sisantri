@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 
-/// Provider untuk pengaturan notifikasi
 final notificationSettingsProvider = StateProvider<Map<String, bool>>(
   (ref) => {
     'pengumuman': true,
@@ -14,17 +13,15 @@ final notificationSettingsProvider = StateProvider<Map<String, bool>>(
   },
 );
 
-/// Provider untuk pengaturan umum
 final generalSettingsProvider = StateProvider<Map<String, dynamic>>(
   (ref) => {
-    'theme': 'light', // 'light', 'dark', 'system'
-    'language': 'id', // 'id', 'en'
+    'theme': 'light',
+    'language': 'id',
     'autoSync': true,
     'saveData': false,
   },
 );
 
-/// Halaman Pengaturan
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 

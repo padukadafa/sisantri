@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../bloc/auth_provider.dart';
+import '../../../dashboard/presentation/role_based_navigation.dart';
+import '../../../../shared/widgets/splash_screen.dart';
 import 'login_page.dart';
 import 'rfid_setup_required_page.dart';
-import '../../../dashboard/presentation/role_based_navigation.dart';
 
 /// Widget wrapper untuk mengelola state autentikasi dengan Clean Architecture
 class AuthWrapper extends ConsumerWidget {
@@ -11,71 +11,54 @@ class AuthWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch auth state
-    final authState = ref.watch(authProvider);
+    final userData = ref.watch(currentUserDataProvider);
 
-    // Check current user on first load
-    ref.listen(authProvider, (previous, current) {
-      if (previous == null || (previous.user == null && current.user != null)) {
-        // User logged in, setup messaging if needed
-        _setupMessaging(current.user?.id);
-      }
-    });
-
-    // Initialize auth check
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (authState.user == null && !authState.isLoading) {
-        ref.read(authProvider.notifier).checkCurrentUser();
-      }
-    });
-
-    // Show error if any
-    if (authState.error != null) {
-      return Scaffold(
+    return userData.when(
+      loading: () => const SplashScreen(),
+      error: (error, stack) => Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'Error: ${authState.error}',
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 60),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(authProvider.notifier).clearError();
-                  ref.read(authProvider.notifier).checkCurrentUser();
-                },
-                child: const Text('Retry'),
+              const Text(
+                'Terjadi kesalahan',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  error.toString(),
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => ref.invalidate(currentUserDataProvider),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Coba Lagi'),
               ),
             ],
           ),
         ),
-      );
-    }
+      ),
+      data: (user) {
+        // Not logged in - show login page
+        if (user == null) {
+          return const LoginPageClean();
+        }
 
-    // If user is null, show login
-    if (authState.user == null) {
-      return const LoginPageClean();
-    }
+        // User needs RFID setup
+        if (user.needsRfidSetup) {
+          return const RfidSetupRequiredPage();
+        }
 
-    final user = authState.user!;
-
-    // Check if RFID setup is required
-    if (user.needsRfidSetup) {
-      return const RfidSetupRequiredPage();
-    }
-
-    // Navigate based on role
-    return const RoleBasedNavigation();
-  }
-
-  /// Setup messaging untuk user yang login
-  void _setupMessaging(String? userId) {
-    if (userId == null) return;
-
-    // Setup messaging helper - implementasi dapat disesuaikan
-    // MessagingHelper.setupMessaging(userId);
+        // User is logged in and ready - show main navigation
+        return const RoleBasedNavigation();
+      },
+    );
   }
 }
