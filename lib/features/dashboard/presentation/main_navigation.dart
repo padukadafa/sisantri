@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/features/presensi/presentation/pages/presensi_page.dart';
-
-import '../../../core/theme/app_theme.dart';
-import 'dashboard_page.dart';
-import '../../jadwal/presentation/jadwal_page.dart';
-import '../../leaderboard/presentation/leaderboard_page.dart';
-import '../../profile/presentation/profile_page.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:sisantri/features/jadwal/presentation/jadwal_page.dart';
+import 'package:sisantri/features/leaderboard/presentation/leaderboard_page.dart';
+import 'package:sisantri/features/profile/presentation/pages/profile_page.dart';
 
 /// Provider untuk current tab index
 final currentTabProvider = StateProvider<int>((ref) => 0);

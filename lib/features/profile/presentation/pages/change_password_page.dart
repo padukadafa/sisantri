@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/services/auth_service.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
 
 class ChangePasswordPage extends ConsumerStatefulWidget {
   const ChangePasswordPage({super.key});

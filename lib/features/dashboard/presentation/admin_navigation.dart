@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/user_model.dart';
-import '../../admin/presentation/admin_dashboard_page.dart';
-import '../../admin/presentation/manual_attendance_page.dart';
-import '../../admin/presentation/schedule_management_page.dart';
-import '../../admin/presentation/announcement_management_page.dart';
-import '../../profile/presentation/profile_page.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/features/admin/presentation/admin_dashboard_page.dart';
+import 'package:sisantri/features/admin/presentation/manual_attendance_page.dart';
+import 'package:sisantri/features/admin/presentation/schedule_management_page.dart';
+import 'package:sisantri/features/admin/presentation/announcement_management_page.dart';
+import 'package:sisantri/features/profile/presentation/pages/profile_page.dart';
 
 /// Provider untuk current tab index di admin navigation
 final adminCurrentTabProvider = StateProvider<int>((ref) => 0);

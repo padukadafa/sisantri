@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../dashboard/presentation/role_based_navigation.dart';
-import '../../../../shared/widgets/splash_screen.dart';
+import 'package:sisantri/core/routing/role_based_navigation.dart';
+import 'package:sisantri/shared/widgets/splash_screen.dart';
 import 'login_page.dart';
 import 'rfid_setup_required_page.dart';
 

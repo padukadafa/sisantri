@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/models/user_model.dart';
-import '../../../shared/services/auth_service.dart';
-import '../../../shared/widgets/splash_screen.dart';
-import 'main_navigation.dart';
-import 'admin_navigation.dart';
-import 'dewan_guru_navigation.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/widgets/splash_screen.dart';
+import 'package:sisantri/features/dashboard/presentation/main_navigation.dart';
+import 'package:sisantri/features/dashboard/presentation/admin_navigation.dart';
+import 'package:sisantri/features/dashboard/presentation/dewan_guru_navigation.dart';
 
 final currentUserDataProvider = StreamProvider<UserModel?>((ref) {
   return AuthService.authStateChanges.asyncMap((user) async {

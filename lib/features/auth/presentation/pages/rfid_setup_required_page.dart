@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sisantri/features/dashboard/presentation/role_based_navigation.dart';
+import 'package:sisantri/core/routing/role_based_navigation.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
 
 class RfidSetupRequiredPage extends ConsumerWidget {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/features/auth/presentation/pages/register_page.dart';
 import 'package:sisantri/shared/widgets/reusable_text_field.dart';
-import '../provider/auth_provider.dart';
+import 'package:sisantri/features/auth/presentation/provider/auth_provider.dart';
 
 class LoginPageClean extends ConsumerStatefulWidget {
   const LoginPageClean({super.key});

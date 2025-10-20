@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
-
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/user_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
 
 /// Provider untuk loading state
 final editProfileLoadingProvider = StateProvider<bool>((ref) => false);

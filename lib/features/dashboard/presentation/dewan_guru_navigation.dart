@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/user_model.dart';
-import '../../../shared/services/auth_service.dart';
-import '../../../shared/services/presensi_service.dart';
-import '../../jadwal/presentation/jadwal_page.dart';
-import '../../presensi/presentation/pages/presensi_summary_page.dart';
-import '../../leaderboard/presentation/leaderboard_page.dart';
-import '../../profile/presentation/profile_page.dart';
-import '../../admin/presentation/dewan_guru_dashboard_page.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
+import 'package:sisantri/features/jadwal/presentation/jadwal_page.dart';
+import 'package:sisantri/features/presensi/presentation/pages/presensi_summary_page.dart';
+import 'package:sisantri/features/leaderboard/presentation/leaderboard_page.dart';
+import 'package:sisantri/features/profile/presentation/pages/profile_page.dart';
+import 'package:sisantri/features/dashboard/presentation/pages/dewan_guru_dashboard_page.dart';
 
 /// Provider untuk current tab index khusus dewan guru
 final dewaGuruTabProvider = StateProvider<int>((ref) => 0);

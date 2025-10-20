@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/user.dart';
-import '../../domain/usecases/login_with_email_and_password.dart';
-import '../../domain/usecases/get_current_user.dart';
-import '../../domain/usecases/logout.dart';
-import '../../../../core/di/injection.dart';
-import '../../../../core/utils/result.dart';
+import 'package:sisantri/features/auth/domain/entities/user.dart';
+import 'package:sisantri/features/auth/domain/usecases/login_with_email_and_password.dart';
+import 'package:sisantri/features/auth/domain/usecases/get_current_user.dart';
+import 'package:sisantri/features/auth/domain/usecases/logout.dart';
+import 'package:sisantri/core/di/injection.dart';
+import 'package:sisantri/core/utils/result.dart';
 
 class AuthState {
   final User? user;

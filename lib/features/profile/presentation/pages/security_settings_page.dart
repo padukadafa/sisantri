@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_theme.dart';
-import 'change_password_page.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/features/profile/presentation/pages/change_password_page.dart';
 
 class SecuritySettingsPage extends ConsumerStatefulWidget {
   const SecuritySettingsPage({super.key});

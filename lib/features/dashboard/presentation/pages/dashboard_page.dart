@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../shared/services/auth_service.dart';
-import 'providers/dashboard_providers.dart';
-import 'widgets/dashboard_notification_button.dart';
-import 'widgets/dashboard_error_widget.dart';
-import 'widgets/dashboard_content.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/features/dashboard/presentation/providers/dashboard_providers.dart';
+import 'package:sisantri/features/dashboard/presentation/widgets/dashboard_notification_button.dart';
+import 'package:sisantri/features/dashboard/presentation/widgets/dashboard_error_widget.dart';
+import 'package:sisantri/features/dashboard/presentation/widgets/dashboard_content.dart';
 
 /// Halaman Dashboard utama aplikasi
 class DashboardPage extends ConsumerWidget {
