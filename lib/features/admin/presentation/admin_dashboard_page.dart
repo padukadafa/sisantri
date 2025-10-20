@@ -78,17 +78,7 @@ class AdminDashboardPage extends ConsumerWidget {
     final statsAsync = ref.watch(adminStatsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(adminStatsProvider);
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Admin Dashboard')),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(adminStatsProvider);

@@ -5,7 +5,6 @@ import '../../../../shared/widgets/splash_screen.dart';
 import 'login_page.dart';
 import 'rfid_setup_required_page.dart';
 
-/// Widget wrapper untuk mengelola state autentikasi dengan Clean Architecture
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
 
@@ -46,17 +45,14 @@ class AuthWrapper extends ConsumerWidget {
         ),
       ),
       data: (user) {
-        // Not logged in - show login page
         if (user == null) {
           return const LoginPageClean();
         }
 
-        // User needs RFID setup
         if (user.needsRfidSetup) {
           return const RfidSetupRequiredPage();
         }
 
-        // User is logged in and ready - show main navigation
         return const RoleBasedNavigation();
       },
     );

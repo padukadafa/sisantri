@@ -36,7 +36,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
        _logoutUseCase = logoutUseCase,
        super(const AuthState());
 
-  /// Check current user on app start
   Future<void> checkCurrentUser() async {
     state = state.copyWith(isLoading: true, error: null);
 

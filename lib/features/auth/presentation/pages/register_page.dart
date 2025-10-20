@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/widgets/reusable_text_field.dart';
 
-/// Halaman register untuk aplikasi SiSantri
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 
@@ -30,7 +30,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     super.dispose();
   }
 
-  /// Handle register dengan email dan password
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -47,12 +46,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Akun berhasil dibuat! Silakan login.'),
-            backgroundColor: Colors.green,
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
@@ -69,7 +62,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
   }
 
-  /// Validator untuk nama
   String? _validateNama(String? value) {
     if (value == null || value.isEmpty) {
       return 'Nama tidak boleh kosong';
@@ -80,7 +72,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return null;
   }
 
-  /// Validator untuk email
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email tidak boleh kosong';
@@ -91,7 +82,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return null;
   }
 
-  /// Validator untuk password
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password tidak boleh kosong';
@@ -102,7 +92,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return null;
   }
 
-  /// Validator untuk konfirmasi password
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Konfirmasi password tidak boleh kosong';
@@ -118,7 +107,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Daftar'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppTheme.primaryColor,
@@ -158,90 +146,75 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Bergabunglah dengan komunitas santri',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
                   ],
                 ),
 
                 const SizedBox(height: 40),
 
-                // Form Register
-                TextFormField(
+                ReusableTextField(
                   controller: _namaController,
+                  labelText: 'Nama Lengkap',
+                  prefixIcon: Icons.person_outline,
                   textCapitalization: TextCapitalization.words,
                   validator: _validateNama,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama Lengkap',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
                 ),
 
                 const SizedBox(height: 16),
 
-                TextFormField(
+                ReusableTextField(
                   controller: _emailController,
+                  labelText: 'Email',
+                  prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
                 ),
 
                 const SizedBox(height: 16),
 
-                TextFormField(
+                ReusableTextField(
                   controller: _passwordController,
+                  labelText: 'Password',
+                  prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   validator: _validatePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
-                TextFormField(
+                ReusableTextField(
                   controller: _confirmPasswordController,
+                  labelText: 'Konfirmasi Password',
+                  prefixIcon: Icons.lock_outline,
                   obscureText: _obscureConfirmPassword,
                   validator: _validateConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Konfirmasi Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
                   ),
                 ),
 
                 const SizedBox(height: 32),
 
-                // Register Button
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleRegister,
                   child: _isLoading
@@ -260,7 +233,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
                 const SizedBox(height: 24),
 
-                // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

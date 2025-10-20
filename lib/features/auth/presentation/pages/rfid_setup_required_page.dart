@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sisantri/features/dashboard/presentation/role_based_navigation.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
 
-/// Halaman yang ditampilkan ketika santri belum setup RFID
 class RfidSetupRequiredPage extends ConsumerWidget {
   const RfidSetupRequiredPage({super.key});
 
@@ -17,7 +18,6 @@ class RfidSetupRequiredPage extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Icon RFID
                 Container(
                   width: 120,
                   height: 120,
@@ -130,7 +130,6 @@ class RfidSetupRequiredPage extends ConsumerWidget {
 
                 const SizedBox(height: 32),
 
-                // Contact Info
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
@@ -164,7 +163,6 @@ class RfidSetupRequiredPage extends ConsumerWidget {
 
                 const SizedBox(height: 40),
 
-                // Logout Button
                 SizedBox(
                   width: double.infinity,
                   child: LogoutButton(showLabel: true, color: Colors.red[600]),
@@ -172,15 +170,31 @@ class RfidSetupRequiredPage extends ConsumerWidget {
 
                 const SizedBox(height: 16),
 
-                // Refresh Button
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {
-                      // Refresh the app to check RFID status again
-                      Navigator.of(
-                        context,
-                      ).pushNamedAndRemoveUntil('/', (route) => false);
+                    onPressed: () async {
+                      // Show loading
+                      EasyLoading.show(
+                        status: 'Memeriksa status RFID...',
+                        maskType: EasyLoadingMaskType.black,
+                      );
+
+                      // Invalidate provider to force refresh from Firebase
+                      ref.invalidate(currentUserDataProvider);
+
+                      // Wait a bit for the invalidation to take effect
+                      await Future.delayed(const Duration(milliseconds: 500));
+
+                      // Dismiss loading
+                      EasyLoading.dismiss();
+
+                      // Navigate back to trigger role check
+                      if (context.mounted) {
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/', (route) => false);
+                      }
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

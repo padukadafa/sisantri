@@ -1,20 +1,19 @@
-/// Model untuk user/santri dalam aplikasi
 class UserModel {
   final String id;
   final String nama;
   final String email;
-  final String role; // 'admin', 'santri', atau 'dewan_guru'
+  final String role;
   final int poin;
   final String? fotoProfil;
   final bool statusAktif;
-  final String? rfidCardId; // ID kartu RFID untuk presensi otomatis
+  final String? rfidCardId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? nim;
   final String? jurusan;
   final String? kampus;
   final String? tempatKos;
-  final List<String>? deviceTokens; // FCM tokens untuk push notifications
+  final List<String>? deviceTokens;
 
   const UserModel({
     required this.id,
@@ -34,7 +33,6 @@ class UserModel {
     this.deviceTokens,
   });
 
-  /// Factory constructor untuk membuat UserModel dari JSON
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String,
@@ -65,7 +63,6 @@ class UserModel {
     );
   }
 
-  /// Method untuk convert UserModel ke JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -86,7 +83,6 @@ class UserModel {
     };
   }
 
-  /// Method untuk copy dengan perubahan tertentu
   UserModel copyWith({
     String? id,
     String? nama,
@@ -123,28 +119,20 @@ class UserModel {
     );
   }
 
-  /// Check apakah user adalah admin
   bool get isAdmin => role == 'admin';
 
-  /// Check apakah user adalah santri
   bool get isSantri => role == 'santri';
 
-  /// Check apakah user adalah dewan guru
   bool get isDewaGuru => role == 'dewan_guru';
 
-  /// Check apakah RFID sudah di-setup
   bool get hasRfidSetup => rfidCardId != null && rfidCardId!.isNotEmpty;
 
-  /// Check apakah user perlu setup RFID (santri tanpa RFID)
   bool get needsRfidSetup => isSantri && !hasRfidSetup;
 
-  /// Check apakah user memiliki device tokens untuk push notifications
   bool get hasDeviceTokens => deviceTokens != null && deviceTokens!.isNotEmpty;
 
-  /// Get list device tokens (tidak null)
   List<String> get safeDeviceTokens => deviceTokens ?? [];
 
-  /// Method untuk menambah device token baru (tanpa duplikasi)
   List<String> addDeviceToken(String token) {
     final currentTokens = safeDeviceTokens;
     if (!currentTokens.contains(token)) {
@@ -153,13 +141,11 @@ class UserModel {
     return currentTokens;
   }
 
-  /// Method untuk menghapus device token
   List<String> removeDeviceToken(String token) {
     final currentTokens = safeDeviceTokens;
     return currentTokens.where((t) => t != token).toList();
   }
 
-  /// Daftar pilihan tempat kos
   static const List<String> tempatKosPilihan = [
     'Asrama Putra',
     'Kos Pak Harsono',
@@ -173,7 +159,6 @@ class UserModel {
     'Lainnya',
   ];
 
-  /// Daftar pilihan kampus (contoh - bisa disesuaikan)
   static const List<String> kampusPilihan = [
     'Institut Teknologi Sumatera',
     'UIN Raden Intan Lampung',
@@ -194,7 +179,6 @@ class UserModel {
     'Lainnya',
   ];
 
-  /// Helper method untuk mendapatkan icon tempat kos
   static String getTempatKosIcon(String? tempatKos) {
     if (tempatKos == null) return '🏠';
 
@@ -218,7 +202,6 @@ class UserModel {
     }
   }
 
-  /// Helper method untuk format tempat kos dengan icon
   String get formattedTempatKos {
     if (tempatKos == null || tempatKos!.isEmpty) return 'Belum diatur';
     return '${getTempatKosIcon(tempatKos)} $tempatKos';

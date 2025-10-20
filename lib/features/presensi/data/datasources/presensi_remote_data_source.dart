@@ -246,9 +246,8 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
         throw Exception('Sudah melakukan presensi pada tanggal ini');
       }
 
-      // Buat presensi baru
       final presensi = PresensiModel(
-        id: '', // Akan di-set oleh Firestore
+        id: '',
         userId: userId,
         tanggal: tanggal,
         status: StatusPresensi.hadir,

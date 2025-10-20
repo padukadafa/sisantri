@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/auth_service.dart';
@@ -9,7 +8,6 @@ import 'main_navigation.dart';
 import 'admin_navigation.dart';
 import 'dewan_guru_navigation.dart';
 
-/// Provider untuk mendapatkan data user saat ini dengan real-time updates
 final currentUserDataProvider = StreamProvider<UserModel?>((ref) {
   return AuthService.authStateChanges.asyncMap((user) async {
     if (user == null) return null;
@@ -17,18 +15,11 @@ final currentUserDataProvider = StreamProvider<UserModel?>((ref) {
     try {
       return await AuthService.getUserData(user.uid);
     } catch (e) {
-      // Error loading user data
       return null;
     }
   });
 });
 
-/// Provider untuk auth state changes
-final authStateChangesProvider = StreamProvider<User?>((ref) {
-  return AuthService.authStateChanges;
-});
-
-/// Widget untuk menentukan navigasi berdasarkan role user dengan real-time updates
 class RoleBasedNavigation extends ConsumerWidget {
   const RoleBasedNavigation({super.key});
 
@@ -65,9 +56,7 @@ class RoleBasedNavigation extends ConsumerWidget {
                 onPressed: () async {
                   try {
                     await AuthService.signOut();
-                  } catch (e) {
-                    // Error signing out
-                  }
+                  } catch (e) {}
                 },
                 child: const Text('Logout'),
               ),
@@ -99,7 +88,6 @@ class RoleBasedNavigation extends ConsumerWidget {
           );
         }
 
-        // Navigasi berdasarkan role dengan validasi
         if (user.isAdmin) {
           return AdminNavigation(admin: user);
         } else if (user.isDewaGuru) {

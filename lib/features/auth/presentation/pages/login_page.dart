@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/features/auth/presentation/pages/register_page.dart';
-import '../bloc/auth_provider.dart';
+import 'package:sisantri/shared/widgets/reusable_text_field.dart';
+import '../provider/auth_provider.dart';
 
-/// Login Page dengan Clean Architecture
 class LoginPageClean extends ConsumerStatefulWidget {
   const LoginPageClean({super.key});
 
@@ -28,13 +28,11 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Listen to auth state changes
     ref.listen<AuthState>(authProvider, (previous, current) {
       if (current.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(current.error!), backgroundColor: Colors.red),
         );
-        // Clear error after showing
         Future.delayed(const Duration(seconds: 3), () {
           ref.read(authProvider.notifier).clearError();
         });
@@ -51,18 +49,9 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo atau judul aplikasi
-                const Icon(Icons.mosque, size: 80, color: Colors.green),
+                Image.asset('assets/images/logo.png', height: 150),
                 const SizedBox(height: 24),
-                const Text(
-                  'SiSantri',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+
                 const SizedBox(height: 8),
                 const Text(
                   'Silakan login untuk melanjutkan',
@@ -71,15 +60,11 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
                 ),
                 const SizedBox(height: 48),
 
-                // Email Field
-                TextFormField(
+                ReusableTextField(
                   controller: _emailController,
+                  labelText: 'Email',
+                  prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email),
-                    border: OutlineInputBorder(),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Email tidak boleh kosong';
@@ -92,26 +77,22 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
                 ),
                 const SizedBox(height: 16),
 
-                // Password Field
-                TextFormField(
+                ReusableTextField(
                   controller: _passwordController,
+                  labelText: 'Password',
+                  prefixIcon: Icons.lock,
                   obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                     ),
-                    border: const OutlineInputBorder(),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -125,7 +106,6 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
                 ),
                 const SizedBox(height: 24),
 
-                // Login Button
                 ElevatedButton(
                   onPressed: authState.isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
@@ -157,7 +137,6 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
                 ),
                 const SizedBox(height: 16),
 
-                // Register Link
                 TextButton(
                   onPressed: authState.isLoading
                       ? null

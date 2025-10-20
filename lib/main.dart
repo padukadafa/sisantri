@@ -38,7 +38,6 @@ void main() async {
 
   runApp(const ProviderScope(child: SiSantriApp()));
 
-  // Configure EasyLoading
   configLoading();
 }
 
@@ -64,7 +63,7 @@ class SiSantriApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SiSantri',
+      title: 'Si Santri',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       home: const AuthWrapper(),
