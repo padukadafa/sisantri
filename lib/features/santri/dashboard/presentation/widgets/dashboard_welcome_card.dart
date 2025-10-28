@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/models/user_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
 
 class DashboardWelcomeCard extends StatelessWidget {
   final UserModel? user;

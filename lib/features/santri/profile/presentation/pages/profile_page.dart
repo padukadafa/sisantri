@@ -4,9 +4,9 @@ import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
-import 'package:sisantri/features/dashboard/presentation/pages/dewan_guru_dashboard_page.dart';
-import 'package:sisantri/features/profile/presentation/pages/edit_profile_page.dart';
-import 'package:sisantri/features/profile/presentation/pages/security_settings_page.dart';
+import 'package:sisantri/features/dewan_guru/dashboard/presentation/pages/dewan_guru_dashboard_page.dart';
+import 'package:sisantri/features/santri/profile/presentation/pages/edit_profile_page.dart';
+import 'package:sisantri/features/santri/profile/presentation/pages/security_settings_page.dart';
 
 final userProfileProvider = FutureProvider<UserModel?>((ref) async {
   final currentUser = AuthService.currentUser;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 import 'announcement_card_header.dart';
 import 'announcement_card_content.dart';
 import 'announcement_card_chips.dart';
@@ -7,7 +7,7 @@ import 'announcement_card_footer.dart';
 
 /// Widget untuk menampilkan card pengumuman individual
 class AnnouncementCard extends StatelessWidget {
-  final Pengumuman pengumuman;
+  final PengumumanModel pengumuman;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;

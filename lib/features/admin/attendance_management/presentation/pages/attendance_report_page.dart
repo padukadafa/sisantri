@@ -8,9 +8,9 @@ import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/user_model.dart';
-import '../../../shared/models/presensi_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/models/presensi_model.dart';
 
 /// Provider untuk data laporan presensi
 final attendanceReportProvider =

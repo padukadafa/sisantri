@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/services/firestore_service.dart';
-import '../../../shared/models/jadwal_pengajian_model.dart';
-import '../../../shared/models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/models/jadwal_pengajian_model.dart';
+import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 
 /// Provider untuk jadwal pengajian
 final jadwalPengajianProvider = StreamProvider<List<JadwalPengajianModel>>((

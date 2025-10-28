@@ -1,5 +1,5 @@
 import '../repositories/auth_repository.dart';
-import '../../../../core/utils/result.dart';
+import 'package:sisantri/core/utils/result.dart';
 
 /// Use case untuk logout
 class Logout {

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
-import '../../../../core/error/auth_error_mapper.dart';
+import 'package:sisantri/core/error/auth_error_mapper.dart';
 
 /// Google Sign-In operations
 class GoogleAuthOperations {

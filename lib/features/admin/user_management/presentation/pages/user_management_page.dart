@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../shared/models/user_model.dart';
-import '../../../shared/services/nfc_service.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/services/nfc_service.dart';
 
 /// Provider untuk daftar semua users
 final allUsersProvider = StreamProvider<List<UserModel>>((ref) {

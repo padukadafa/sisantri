@@ -1,8 +1,8 @@
 import '../entities/presensi.dart';
 import '../repositories/presensi_repository.dart';
-import '../../../../core/utils/result.dart';
-import '../../../../core/error/failures.dart';
-import '../../../auth/domain/repositories/auth_repository.dart';
+import 'package:sisantri/core/utils/result.dart';
+import 'package:sisantri/core/error/failures.dart';
+import 'package:sisantri/features/shared/auth/domain/repositories/auth_repository.dart';
 
 /// Use case untuk presensi dengan RFID
 class PresensiWithRfid {

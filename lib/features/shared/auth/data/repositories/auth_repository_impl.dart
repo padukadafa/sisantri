@@ -2,8 +2,8 @@ import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_data_source_interface.dart';
 import '../models/user_model.dart';
-import '../../../../core/utils/result.dart';
-import '../../../../core/error/failures.dart';
+import 'package:sisantri/core/utils/result.dart';
+import 'package:sisantri/core/error/failures.dart';
 
 /// Implementation Auth Repository
 class AuthRepositoryImpl implements AuthRepository {

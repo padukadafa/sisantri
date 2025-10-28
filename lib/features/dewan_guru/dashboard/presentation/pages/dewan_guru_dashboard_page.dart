@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
-import 'package:sisantri/features/presensi/presentation/pages/presensi_summary_page.dart';
-import 'package:sisantri/features/leaderboard/presentation/leaderboard_page.dart';
-import 'package:sisantri/features/pengumuman/presentation/pengumuman_page.dart';
-import 'package:sisantri/features/jadwal/presentation/jadwal_page.dart';
+import 'package:sisantri/features/santri/presensi/presentation/pages/presensi_summary_page.dart';
+import 'package:sisantri/features/santri/leaderboard/presentation/leaderboard_page.dart';
+import 'package:sisantri/features/shared/pengumuman/presentation/pengumuman_page.dart';
+import 'package:sisantri/features/shared/jadwal/presentation/jadwal_page.dart';
 
 class DewanGuruDashboardPage extends ConsumerWidget {
   final UserModel user;

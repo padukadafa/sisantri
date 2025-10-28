@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 /// Widget untuk menu actions pada list item pengumuman
 class AnnouncementListItemMenu extends StatelessWidget {
-  final Pengumuman pengumuman;
+  final PengumumanModel pengumuman;
   final Function(String) onMenuSelected;
 
   const AnnouncementListItemMenu({

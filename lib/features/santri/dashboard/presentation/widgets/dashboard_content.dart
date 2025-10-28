@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/models/user_model.dart';
-import '../../../../shared/models/jadwal_kegiatan_model.dart';
-import '../../../../shared/models/pengumuman_model.dart';
-import '../../../../shared/services/presensi_service.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/pengumuman_model.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
 import '../providers/dashboard_providers.dart';
 import '../providers/stats_providers.dart';

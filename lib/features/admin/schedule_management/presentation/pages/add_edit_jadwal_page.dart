@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../shared/helpers/messaging_helper.dart';
-import '../../../shared/providers/materi_provider.dart';
-import '../../../shared/services/materi_service.dart';
-import '../../../shared/models/jadwal_model.dart';
-import '../../../shared/services/attendance_service.dart';
+import 'package:sisantri/shared/helpers/messaging_helper.dart';
+import 'package:sisantri/shared/providers/materi_provider.dart';
+import 'package:sisantri/shared/services/materi_service.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
+import 'package:sisantri/shared/services/attendance_service.dart';
 import 'schedule_management_page.dart';
 
 /// Halaman untuk menambah/edit jadwal kegiatan
@@ -200,7 +200,6 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
               ),
               const SizedBox(height: 16),
 
-              // Tanggal
               InkWell(
                 onTap: () async {
                   final date = await showDatePicker(

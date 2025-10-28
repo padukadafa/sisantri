@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 /// Widget header untuk announcement card dengan judul dan menu popup
 class AnnouncementCardHeader extends StatelessWidget {
-  final Pengumuman pengumuman;
+  final PengumumanModel pengumuman;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onToggleStatus;

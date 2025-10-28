@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sisantri/features/auth/domain/entities/user.dart';
-import 'package:sisantri/features/auth/domain/usecases/login_with_email_and_password.dart';
-import 'package:sisantri/features/auth/domain/usecases/get_current_user.dart';
-import 'package:sisantri/features/auth/domain/usecases/logout.dart';
+import 'package:sisantri/features/shared/auth/domain/entities/user.dart';
+import 'package:sisantri/features/shared/auth/domain/usecases/login_with_email_and_password.dart';
+import 'package:sisantri/features/shared/auth/domain/usecases/get_current_user.dart';
+import 'package:sisantri/features/shared/auth/domain/usecases/logout.dart';
 import 'package:sisantri/core/di/injection.dart';
 import 'package:sisantri/core/utils/result.dart';
 

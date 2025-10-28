@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 
 class KegiatanListItem extends StatelessWidget {
   final JadwalKegiatanModel item;

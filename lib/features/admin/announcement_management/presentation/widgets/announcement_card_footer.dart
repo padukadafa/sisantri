@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 /// Widget footer untuk menampilkan tanggal dan view count
 class AnnouncementCardFooter extends StatelessWidget {
-  final Pengumuman pengumuman;
+  final PengumumanModel pengumuman;
 
   const AnnouncementCardFooter({super.key, required this.pengumuman});
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
 import '../providers/notification_providers.dart';
 
 class DashboardNotificationsSection extends ConsumerWidget {

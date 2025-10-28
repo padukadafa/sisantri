@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sisantri/features/admin/presentation/materi_management_page.dart';
+import 'package:sisantri/features/admin/materi_management/presentation/pages/materi_management_page.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/user_model.dart';
-import 'user_management_page.dart';
-import 'attendance_report_page.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/features/admin/user_management/presentation/pages/user_management_page.dart';
+import 'package:sisantri/features/admin/attendance_management/presentation/pages/attendance_report_page.dart';
 
 /// Provider untuk statistics admin dashboard
 final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {

@@ -1,5 +1,5 @@
 import '../entities/user.dart';
-import '../../../../core/utils/result.dart';
+import 'package:sisantri/core/utils/result.dart';
 
 /// Abstract Repository untuk Auth operations
 /// Repository pattern memisahkan business logic dari implementation detail

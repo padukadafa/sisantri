@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 /// Widget untuk menampilkan konten announcement
 class AnnouncementCardContent extends StatelessWidget {
-  final Pengumuman pengumuman;
+  final PengumumanModel pengumuman;
 
   const AnnouncementCardContent({super.key, required this.pengumuman});
 

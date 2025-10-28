@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
 
 class PengumumanHeader extends StatelessWidget {
   const PengumumanHeader({super.key});

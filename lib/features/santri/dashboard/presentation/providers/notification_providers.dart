@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/services/auth_service.dart';
-import '../../../../shared/services/firestore_service.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
 
 /// Provider untuk notifikasi real-time
 final notificationsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {

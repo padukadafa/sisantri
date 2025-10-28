@@ -3,8 +3,8 @@ import '../../domain/entities/presensi.dart';
 import '../../domain/usecases/add_presensi.dart';
 import '../../domain/usecases/get_presensi_by_user_id.dart';
 import '../../domain/usecases/presensi_with_rfid.dart';
-import '../../../../core/di/injection.dart';
-import '../../../../core/utils/result.dart';
+import 'package:sisantri/core/di/injection.dart';
+import 'package:sisantri/core/utils/result.dart';
 
 /// Presensi State
 class PresensiState {

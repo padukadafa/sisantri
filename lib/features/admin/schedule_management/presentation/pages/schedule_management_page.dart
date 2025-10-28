@@ -2,10 +2,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/helpers/messaging_helper.dart';
-import '../../../shared/models/jadwal_model.dart';
-import '../../../shared/services/attendance_service.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/helpers/messaging_helper.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
+import 'package:sisantri/shared/services/attendance_service.dart';
 import 'add_edit_jadwal_page.dart';
 
 /// Model untuk jadwal kegiatan (semua jadwal sekarang menggunakan tanggal spesifik)

@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import '../../../../core/error/auth_error_mapper.dart';
+import 'package:sisantri/core/error/auth_error_mapper.dart';
 
 class AuthUtilityOperations {
   final firebase_auth.FirebaseAuth _firebaseAuth;

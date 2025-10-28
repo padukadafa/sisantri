@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../../shared/models/pengumuman_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/pengumuman_model.dart';
 
 class PengumumanListItem extends StatelessWidget {
   final PengumumanModel item;

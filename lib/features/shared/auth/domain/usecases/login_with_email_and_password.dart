@@ -1,7 +1,7 @@
 import '../entities/user.dart';
 import '../repositories/auth_repository.dart';
-import '../../../../core/utils/result.dart';
-import '../../../../core/error/failures.dart';
+import 'package:sisantri/core/utils/result.dart';
+import 'package:sisantri/core/error/failures.dart';
 
 /// Use case untuk login dengan email dan password
 class LoginWithEmailAndPassword {

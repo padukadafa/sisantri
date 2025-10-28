@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 /// Widget untuk menampilkan chips prioritas, kategori, dan status
 class AnnouncementCardChips extends StatelessWidget {
-  final Pengumuman pengumuman;
+  final PengumumanModel pengumuman;
 
   const AnnouncementCardChips({super.key, required this.pengumuman});
 

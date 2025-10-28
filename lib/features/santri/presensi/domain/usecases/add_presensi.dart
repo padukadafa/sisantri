@@ -1,7 +1,7 @@
 import '../entities/presensi.dart';
 import '../repositories/presensi_repository.dart';
-import '../../../../core/utils/result.dart';
-import '../../../../core/error/failures.dart';
+import 'package:sisantri/core/utils/result.dart';
+import 'package:sisantri/core/error/failures.dart';
 
 /// Use case untuk menambah presensi
 class AddPresensi {

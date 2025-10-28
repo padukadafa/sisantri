@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../../shared/models/jadwal_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 
 /// Model untuk jadwal kegiatan (semua jadwal sekarang menggunakan tanggal spesifik)
 class JadwalKegiatan {

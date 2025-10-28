@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../../../shared/models/user_model.dart';
-import '../../../../../shared/models/presensi_model.dart';
-import '../models/attendance_report_filter.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/models/presensi_model.dart';
+import 'package:sisantri/features/admin/attendance_management/data/attendance_report_filter.dart';
 
 /// Provider untuk data laporan presensi
 final attendanceReportProvider =

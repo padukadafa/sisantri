@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/helpers/messaging_helper.dart';
-import '../../../shared/services/notification_service.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:sisantri/shared/helpers/messaging_helper.dart';
+import 'package:sisantri/shared/services/notification_service.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
 
 /// Page untuk mengelola pengiriman notifikasi (khusus admin/dewan guru)
 class NotificationManagementPage extends ConsumerStatefulWidget {

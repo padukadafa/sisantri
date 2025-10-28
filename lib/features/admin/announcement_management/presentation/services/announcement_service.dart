@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/pengumuman_model.dart';
-import '../../../../shared/helpers/messaging_helper.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/shared/helpers/messaging_helper.dart';
 
 /// Service untuk CRUD operations pengumuman
 class AnnouncementService {
@@ -10,7 +10,7 @@ class AnnouncementService {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Tambah pengumuman baru
-  Future<String> addAnnouncement(Pengumuman pengumuman) async {
+  Future<String> addAnnouncement(PengumumanModel pengumuman) async {
     try {
       final docRef = await _firestore
           .collection('pengumuman')
@@ -28,7 +28,7 @@ class AnnouncementService {
   }
 
   /// Update pengumuman
-  Future<void> updateAnnouncement(Pengumuman pengumuman) async {
+  Future<void> updateAnnouncement(PengumumanModel pengumuman) async {
     try {
       await _firestore
           .collection('pengumuman')
@@ -74,7 +74,7 @@ class AnnouncementService {
   }
 
   /// Send notification to target audience
-  Future<void> _sendNotificationToTargetAudience(Pengumuman pengumuman) async {
+  Future<void> _sendNotificationToTargetAudience(PengumumanModel pengumuman) async {
     try {
       if (pengumuman.targetAudience.contains('all')) {
         await MessagingHelper.sendPengumumanToSantri(
@@ -98,7 +98,7 @@ class AnnouncementService {
     try {
       final doc = await _firestore.collection('pengumuman').doc(id).get();
       if (doc.exists) {
-        final pengumuman = Pengumuman.fromJson({'id': id, ...doc.data()!});
+        final pengumuman = PengumumanModel.fromJson({'id': id, ...doc.data()!});
 
         await _firestore.collection('pengumuman').doc(id).update({
           'isActive': true,
@@ -113,7 +113,7 @@ class AnnouncementService {
   }
 
   /// Get announcements by date range
-  Future<List<Pengumuman>> getAnnouncementsByDateRange(
+  Future<List<PengumumanModel>> getAnnouncementsByDateRange(
     DateTime startDate,
     DateTime endDate,
   ) async {
@@ -132,7 +132,7 @@ class AnnouncementService {
           .get();
 
       return snapshot.docs
-          .map((doc) => Pengumuman.fromJson({'id': doc.id, ...doc.data()}))
+          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
           .toList();
     } catch (e) {
       throw Exception('Failed to get announcements by date range: $e');

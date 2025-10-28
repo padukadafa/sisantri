@@ -1,22 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 /// Provider untuk semua pengumuman
-final announcementProvider = StreamProvider<List<Pengumuman>>((ref) {
+final announcementProvider = StreamProvider<List<PengumumanModel>>((ref) {
   return FirebaseFirestore.instance
       .collection('pengumuman')
-      .orderBy('tanggalPost', descending: true)
+      .orderBy('createdAt', descending: true)
       .snapshots()
       .map((snapshot) {
         return snapshot.docs
-            .map((doc) => Pengumuman.fromJson({'id': doc.id, ...doc.data()}))
+            .map(
+              (doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+            )
             .toList();
       });
 });
 
 /// Provider untuk pengumuman yang aktif saja
-final activeAnnouncementProvider = Provider<List<Pengumuman>>((ref) {
+final activeAnnouncementProvider = Provider<List<PengumumanModel>>((ref) {
   final announcements = ref.watch(announcementProvider).asData?.value ?? [];
   return announcements.where((a) => a.isActive && !a.isExpired).toList();
 });
@@ -36,7 +38,7 @@ final announcementStatsProvider = Provider<Map<String, int>>((ref) {
 
 /// Provider untuk pengumuman berdasarkan kategori
 final announcementByCategoryProvider =
-    Provider.family<List<Pengumuman>, String>((ref, category) {
+    Provider.family<List<PengumumanModel>, String>((ref, category) {
       final announcements = ref.watch(announcementProvider).asData?.value ?? [];
 
       if (category == 'all') return announcements;
@@ -45,7 +47,7 @@ final announcementByCategoryProvider =
 
 /// Provider untuk pengumuman berdasarkan prioritas
 final announcementByPriorityProvider =
-    Provider.family<List<Pengumuman>, String>((ref, priority) {
+    Provider.family<List<PengumumanModel>, String>((ref, priority) {
       final announcements = ref.watch(announcementProvider).asData?.value ?? [];
 
       if (priority == 'all') return announcements;

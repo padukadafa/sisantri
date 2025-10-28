@@ -1,5 +1,5 @@
 import '../entities/presensi.dart';
-import '../../../../core/utils/result.dart';
+import 'package:sisantri/core/utils/result.dart';
 
 /// Abstract Repository untuk Presensi operations
 abstract class PresensiRepository {

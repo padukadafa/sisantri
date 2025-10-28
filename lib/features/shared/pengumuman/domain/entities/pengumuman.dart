@@ -41,6 +41,13 @@ class Pengumuman extends Equatable {
     required this.updatedAt,
   });
 
+  // Getter untuk kompatibilitas dengan kode lama
+  bool get isActive => isPublished;
+  bool get isExpired =>
+      tanggalBerakhir != null && DateTime.now().isAfter(tanggalBerakhir!);
+  bool get isHighPriority => prioritas == 'high';
+  DateTime get tanggalPost => createdAt;
+
   @override
   List<Object?> get props => [
     id,

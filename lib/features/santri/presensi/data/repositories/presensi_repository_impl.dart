@@ -2,8 +2,8 @@ import '../../domain/entities/presensi.dart';
 import '../../domain/repositories/presensi_repository.dart';
 import '../datasources/presensi_remote_data_source.dart';
 import '../models/presensi_model.dart';
-import '../../../../core/utils/result.dart';
-import '../../../../core/error/failures.dart';
+import 'package:sisantri/core/utils/result.dart';
+import 'package:sisantri/core/error/failures.dart';
 
 /// Implementation Presensi Repository
 class PresensiRepositoryImpl implements PresensiRepository {

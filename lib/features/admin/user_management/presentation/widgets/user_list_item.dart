@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/models/user_model.dart';
+import 'package:sisantri/shared/models/user_model.dart';
 
 /// Widget untuk menampilkan single user item dalam list
 class UserListItem extends StatelessWidget {

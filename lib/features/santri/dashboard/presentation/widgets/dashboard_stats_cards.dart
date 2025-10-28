@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/models/user_model.dart';
-import '../../../../shared/services/presensi_service.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
 class DashboardStatsCards extends StatelessWidget {
   final UserModel? user;

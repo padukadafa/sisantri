@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
 
 class StatsHeader extends StatelessWidget {
   const StatsHeader({super.key});

@@ -5,7 +5,7 @@ import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/features/admin/dashboard/presentation/pages/admin_dashboard_page.dart';
 import 'package:sisantri/features/admin/attendance_management/presentation/pages/manual_attendance_page.dart';
 import 'package:sisantri/features/admin/schedule_management/presentation/pages/schedule_management_page.dart';
-import 'package:sisantri/features/admin/announcement_management/presentation/pages/announcement_management_page.dart';
+// import 'package:sisantri/features/admin/announcement_management/presentation/pages/announcement_management_page.dart'; // TODO: Refactor needed
 import 'package:sisantri/features/santri/profile/presentation/pages/profile_page.dart';
 
 /// Provider untuk current tab index di admin navigation
@@ -25,7 +25,8 @@ class AdminNavigation extends ConsumerWidget {
       AdminDashboardPage(admin: admin),
       const ManualAttendancePage(),
       const ScheduleManagementPage(),
-      const AnnouncementManagementPage(),
+      // const AnnouncementManagementPage(), // TODO: Implement announcement management
+      const Scaffold(body: Center(child: Text('Pengumuman - Coming Soon'))),
       const ProfilePage(),
     ];
 

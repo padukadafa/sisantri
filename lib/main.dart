@@ -6,7 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/pages/auth_wrapper.dart';
+import 'features/shared/auth/presentation/pages/auth_wrapper.dart';
 import 'shared/services/notification_service.dart';
 import 'firebase_options.dart';
 

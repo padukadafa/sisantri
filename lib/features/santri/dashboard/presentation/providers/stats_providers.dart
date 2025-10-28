@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../shared/services/auth_service.dart';
-import '../../../../shared/services/firestore_service.dart';
-import '../../../../shared/services/presensi_service.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
 /// Provider untuk statistik user yang lebih comprehensive
 final userStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {

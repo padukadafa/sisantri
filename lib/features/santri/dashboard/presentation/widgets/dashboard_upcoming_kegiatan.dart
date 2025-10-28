@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 import 'kegiatan_header.dart';
 import 'kegiatan_empty_state.dart';
 import 'kegiatan_list_item.dart';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/materi_model.dart';
-import '../../../shared/providers/materi_provider.dart';
-import '../../../shared/services/materi_service.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/materi_model.dart';
+import 'package:sisantri/shared/providers/materi_provider.dart';
+import 'package:sisantri/shared/services/materi_service.dart';
 
 class MateriManagementPage extends ConsumerStatefulWidget {
   const MateriManagementPage({super.key});

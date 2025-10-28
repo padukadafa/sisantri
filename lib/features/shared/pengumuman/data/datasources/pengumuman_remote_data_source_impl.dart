@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../core/error/exceptions.dart';
+import 'package:sisantri/core/error/exceptions.dart';
 import '../models/pengumuman_model.dart';
 import 'pengumuman_remote_data_source.dart';
 

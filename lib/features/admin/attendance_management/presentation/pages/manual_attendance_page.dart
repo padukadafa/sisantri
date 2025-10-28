@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/models/user_model.dart';
-import '../../../shared/models/jadwal_model.dart';
-import '../../../shared/services/auth_service.dart';
-import '../../../shared/helpers/messaging_helper.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/helpers/messaging_helper.dart';
 
-/// Provider untuk daftar santri
 final santriListProvider = FutureProvider<List<UserModel>>((ref) async {
   return await AuthService.getSantriList();
 });
 
-/// Provider untuk status absensi santri berdasarkan activity yang dipilih
+final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
 final attendanceStatusProvider =
     FutureProvider.family<Map<String, String>, String?>((
       ref,
@@ -59,35 +59,23 @@ final attendanceStatusProvider =
       }
     });
 
-/// Provider untuk 5 kegiatan terakhir yang tersedia
-final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
+/// Provider untuk kegiatan berdasarkan tanggal yang dipilih (auto-refresh)
+final activitiesByDateProvider = FutureProvider<List<JadwalModel>>((ref) async {
+  // Watch selected date so it auto-refreshes when date changes
+  final selectedDate = ref.watch(selectedDateProvider);
+
   try {
-    // Ambil 5 kegiatan terakhir dari jadwal yang aktif
     final jadwalSnapshot = await FirebaseFirestore.instance
         .collection('jadwal')
         .where('isAktif', isEqualTo: true)
+        .where('tanggal', isEqualTo: Timestamp.fromDate(selectedDate))
         .orderBy('createdAt', descending: true)
-        .limit(5)
+        .limit(10)
         .get();
+    print('Kegiatan ditemukan: ${jadwalSnapshot.docs.length}');
 
     if (jadwalSnapshot.docs.isNotEmpty) {
       return jadwalSnapshot.docs.map((doc) {
-        final data = doc.data();
-        // Adapter untuk handling field yang berbeda
-        final adaptedData = _adaptJadwalData(data);
-        return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
-      }).toList();
-    }
-
-    // Fallback: jika tidak ada jadwal aktif, ambil yang terbaru berdasarkan createdAt
-    final fallbackSnapshot = await FirebaseFirestore.instance
-        .collection('jadwal')
-        .orderBy('createdAt', descending: true)
-        .limit(5)
-        .get();
-
-    if (fallbackSnapshot.docs.isNotEmpty) {
-      return fallbackSnapshot.docs.map((doc) {
         final data = doc.data();
         final adaptedData = _adaptJadwalData(data);
         return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
@@ -96,35 +84,18 @@ final activitiesProvider = FutureProvider<List<JadwalModel>>((ref) async {
 
     return [];
   } catch (e) {
-    // Jika gagal dengan index, coba tanpa orderBy
-    try {
-      final simpleSnapshot = await FirebaseFirestore.instance
-          .collection('jadwal')
-          .limit(5)
-          .get();
-
-      return simpleSnapshot.docs.map((doc) {
-        final data = doc.data();
-        final adaptedData = _adaptJadwalData(data);
-        return JadwalModel.fromJson({'id': doc.id, ...adaptedData});
-      }).toList();
-    } catch (e2) {
-      // Error loading activities
-      return [];
-    }
+    print('Error loading activities: $e');
+    return [];
   }
 });
 
-// Fungsi adapter untuk mengkonversi data dari format baru ke format lama
 Map<String, dynamic> _adaptJadwalData(Map<String, dynamic> data) {
   final adaptedData = Map<String, dynamic>.from(data);
 
-  // Convert 'judul' ke 'nama' jika ada
   if (data.containsKey('judul') && !data.containsKey('nama')) {
     adaptedData['nama'] = data['judul'];
   }
 
-  // Convert TimeOfDay objects ke string jika ada
   if (data.containsKey('jamMulai') && data['jamMulai'] is Map) {
     final jamMulai = data['jamMulai'] as Map<String, dynamic>;
     final hour = jamMulai['hour'] ?? 0;
@@ -141,23 +112,19 @@ Map<String, dynamic> _adaptJadwalData(Map<String, dynamic> data) {
         '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 
-  // Handle hari field - untuk jadwal event, gunakan tanggal sebagai hari
   if (data.containsKey('jenis')) {
     if (data['jenis'] == 'event' &&
         data.containsKey('tanggal') &&
         !data.containsKey('hari')) {
-      // Untuk event, gunakan tanggal sebagai hari
       adaptedData['hari'] = data['tanggal'] ?? 'Senin';
     } else if (!data.containsKey('hari')) {
       adaptedData['hari'] = 'Senin'; // default
     }
   }
 
-  // Ensure tanggal is set
   if (!data.containsKey('tanggal') || data['tanggal'] == null) {
     adaptedData['tanggal'] = Timestamp.now(); // default ke hari ini
   } else if (data['tanggal'] is String) {
-    // Convert string date to Timestamp
     try {
       final parts = data['tanggal'].split('-');
       if (parts.length == 3) {
@@ -176,6 +143,39 @@ Map<String, dynamic> _adaptJadwalData(Map<String, dynamic> data) {
   return adaptedData;
 }
 
+String _formatDateIndonesia(DateTime date) {
+  final dayNames = [
+    'Minggu',
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+  ];
+  final monthNames = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
+
+  final dayName = dayNames[date.weekday % 7];
+  final day = date.day;
+  final monthName = monthNames[date.month - 1];
+  final year = date.year;
+
+  return '$dayName, $day $monthName $year';
+}
+
 /// Halaman untuk absensi manual oleh admin
 class ManualAttendancePage extends ConsumerStatefulWidget {
   const ManualAttendancePage({super.key});
@@ -189,6 +189,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String? _selectedActivity;
+  // DateTime _selectedDate dihapus, pakai provider selectedDateProvider
 
   // Track individual attendance status for each santri
   final Map<String, String> _santriAttendanceStatus = {};
@@ -206,7 +207,8 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
   @override
   Widget build(BuildContext context) {
     final santriAsync = ref.watch(santriListProvider);
-    final activitiesAsync = ref.watch(activitiesProvider);
+    final activitiesAsync = ref.watch(activitiesByDateProvider);
+    final selectedDate = ref.watch(selectedDateProvider);
     final attendanceStatusAsync = ref.watch(
       attendanceStatusProvider(_selectedActivity),
     );
@@ -262,7 +264,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
           // Refresh all providers
           ref.invalidate(santriListProvider);
-          ref.invalidate(activitiesProvider);
+          ref.invalidate(activitiesByDateProvider);
           if (_selectedActivity != null) {
             ref.invalidate(attendanceStatusProvider(_selectedActivity));
           }
@@ -295,7 +297,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         },
         child: Column(
           children: [
-            _buildFiltersSection(activitiesAsync),
+            _buildFiltersSection(activitiesAsync, selectedDate),
             Expanded(
               child: santriAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
@@ -328,7 +330,10 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
     );
   }
 
-  Widget _buildFiltersSection(AsyncValue<List<JadwalModel>> activitiesAsync) {
+  Widget _buildFiltersSection(
+    AsyncValue<List<JadwalModel>> activitiesAsync,
+    DateTime selectedDate,
+  ) {
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
@@ -367,6 +372,57 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             ),
             const SizedBox(height: 16),
 
+            const Text(
+              'Pilih Tanggal:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: () async {
+                final currentDate = ref.read(selectedDateProvider);
+                final pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: currentDate,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (pickedDate != null) {
+                  // Update provider, will auto-refresh activities
+                  ref.read(selectedDateProvider.notifier).state = pickedDate;
+                  setState(() {
+                    _selectedActivity = null; // Reset selected activity
+                  });
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today,
+                      color: AppTheme.primaryColor,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _formatDateIndonesia(selectedDate),
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Activity selector
             const Text(
               'Kegiatan:',
@@ -397,7 +453,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                     IconButton(
                       icon: const Icon(Icons.refresh, color: Colors.red),
                       onPressed: () {
-                        ref.invalidate(activitiesProvider);
+                        ref.invalidate(activitiesByDateProvider);
                       },
                       tooltip: 'Refresh',
                     ),
@@ -425,7 +481,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                         IconButton(
                           icon: const Icon(Icons.refresh, color: Colors.grey),
                           onPressed: () {
-                            ref.invalidate(activitiesProvider);
+                            ref.invalidate(activitiesByDateProvider);
                           },
                           tooltip: 'Refresh',
                         ),

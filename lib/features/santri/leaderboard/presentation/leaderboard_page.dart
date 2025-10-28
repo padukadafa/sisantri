@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../shared/services/firestore_service.dart';
-import '../../../shared/models/leaderboard_model.dart';
+import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/models/leaderboard_model.dart';
 
 /// Provider untuk leaderboard
 final leaderboardProvider = StreamProvider<List<LeaderboardModel>>((ref) {
