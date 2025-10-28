@@ -1,14 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/jadwal_kegiatan_model.dart';
 
-/// Service untuk CRUD operations jadwal kegiatan
 class ScheduleService {
   final FirebaseFirestore _firestore;
 
   ScheduleService({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Tambah jadwal baru
   Future<String> addJadwal(JadwalKegiatan jadwal) async {
     try {
       final docRef = await _firestore.collection('jadwal').add(jadwal.toJson());
@@ -21,7 +19,6 @@ class ScheduleService {
     }
   }
 
-  /// Update jadwal
   Future<void> updateJadwal(JadwalKegiatan jadwal) async {
     try {
       await _firestore

@@ -2,6 +2,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/jadwal_kegiatan_model.dart';
 
+/// Enum untuk filter rentang waktu jadwal
+enum ScheduleFilter {
+  futureOnly, // Mendatang saja (dari hari ini)
+  thisMonthAndFuture, // Bulan ini dan mendatang
+  lastMonth, // 1 bulan terakhir
+  last3Months, // 3 bulan terakhir
+  all, // Semua jadwal
+}
+
+/// Provider untuk mengontrol filter jadwal
+final scheduleFilterProvider = StateProvider<ScheduleFilter>(
+  (ref) => ScheduleFilter.futureOnly,
+);
+
 /// Provider untuk daftar semua jadwal kegiatan
 final jadwalProvider = StreamProvider<List<JadwalKegiatan>>((ref) {
   return FirebaseFirestore.instance
