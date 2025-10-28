@@ -217,7 +217,7 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -239,18 +239,11 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
             icon: const Icon(Icons.filter_list),
             onPressed: () => _showFilterDialog(context),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(attendanceReportProvider);
-            },
-          ),
         ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: 'Ringkasan', icon: Icon(Icons.analytics)),
-            Tab(text: 'Detail', icon: Icon(Icons.list)),
             Tab(text: 'Per Santri', icon: Icon(Icons.person)),
           ],
         ),
@@ -260,9 +253,7 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
         children: [
           // Tab 1: Summary
           _buildSummaryTab(reportAsync),
-          // Tab 2: Detail records
-          _buildDetailTab(reportAsync),
-          // Tab 3: Per Santri
+          // Tab 2: Per Santri
           _buildUserSummaryTab(reportAsync),
         ],
       ),
@@ -303,65 +294,6 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
           );
         },
       ),
-    );
-  }
-
-  Widget _buildDetailTab(AsyncValue<Map<String, dynamic>> reportAsync) {
-    return reportAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => _buildErrorWidget(error.toString()),
-      data: (data) {
-        final records = data['attendanceRecords'] as List<PresensiModel>;
-        final users = data['users'] as List<UserModel>;
-
-        if (records.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              ref.invalidate(attendanceReportProvider);
-            },
-            child: const SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inbox, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      'Tidak ada data presensi',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(attendanceReportProvider);
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: records.length,
-            itemBuilder: (context, index) {
-              final record = records[index];
-              final user = users.firstWhere(
-                (u) => u.id == record.userId,
-                orElse: () => UserModel(
-                  id: record.userId,
-                  nama: 'Unknown User',
-                  email: '',
-                  role: 'santri',
-                ),
-              );
-              return _buildAttendanceRecordCard(record, user);
-            },
-          ),
-        );
-      },
     );
   }
 
@@ -689,44 +621,6 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
     );
   }
 
-  Widget _buildAttendanceRecordCard(PresensiModel record, UserModel user) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: record.status.color,
-          child: Icon(record.status.icon, color: Colors.white, size: 20),
-        ),
-        title: Text(user.nama),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Status: ${record.status.label}'),
-            if (record.keterangan?.isNotEmpty == true)
-              Text(
-                'Keterangan: ${record.keterangan}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              DateFormat('dd/MM/yyyy').format(record.tanggal),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              DateFormat('HH:mm').format(record.tanggal),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildUserSummaryCard(Map<String, dynamic> userSummaryData) {
     final user = userSummaryData['user'] as UserModel;
     final totalRecords = userSummaryData['totalRecords'] as int;
@@ -842,18 +736,13 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
 
   Future<void> _exportToExcel() async {
     try {
-      // Request storage permissions first (especially for Downloads access)
-
       if (Platform.isAndroid) {
-        // Check and request storage permissions
         final storageStatus = await Permission.storage.status;
 
         if (!storageStatus.isGranted) {
           final result = await Permission.storage.request();
 
-          if (!result.isGranted) {
-            // Storage permission denied, will use app-specific directory
-          }
+          if (!result.isGranted) {}
         }
 
         // For Android 11+ (API 30+), might need MANAGE_EXTERNAL_STORAGE for Downloads
@@ -939,7 +828,6 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       final santriSheet = excel['Per Santri'];
       _createSantriSummarySheet(santriSheet, userSummary);
 
-      // Save file to /storage/emulated/0/Download (public folder) if available
       Directory? directory;
       String directoryType = '';
 
@@ -1431,45 +1319,10 @@ class _FilterDialogState extends ConsumerState<_FilterDialog> {
               trailing: const Icon(Icons.calendar_today),
               onTap: () => _selectEndDate(),
             ),
-
-            // Status filter
-            DropdownButtonFormField<String?>(
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-              ),
-              value: _tempFilter.status,
-              items: const [
-                DropdownMenuItem(value: null, child: Text('Semua Status')),
-                DropdownMenuItem(value: 'Hadir', child: Text('Hadir')),
-                DropdownMenuItem(value: 'Alpha', child: Text('Alpha')),
-                DropdownMenuItem(value: 'Sakit', child: Text('Sakit')),
-                DropdownMenuItem(value: 'Izin', child: Text('Izin')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _tempFilter = _tempFilter.copyWith(status: value);
-                });
-              },
-            ),
           ],
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () {
-            // Reset filter
-            setState(() {
-              final now = DateTime.now();
-              final startOfMonth = DateTime(now.year, now.month, 1);
-              _tempFilter = AttendanceReportFilter(
-                startDate: startOfMonth,
-                endDate: now,
-              );
-            });
-          },
-          child: const Text('Reset'),
-        ),
         TextButton(
           onPressed: () {
             // Show all data (no date filter)
