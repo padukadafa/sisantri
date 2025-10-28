@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/materi_model.dart';
 import 'package:sisantri/shared/providers/materi_provider.dart';
 import 'package:sisantri/shared/services/materi_service.dart';
+import '../widgets/materi_filter_dropdown.dart';
 
 class MateriManagementPage extends ConsumerStatefulWidget {
   const MateriManagementPage({super.key});
@@ -14,93 +14,20 @@ class MateriManagementPage extends ConsumerStatefulWidget {
 }
 
 class _MateriManagementPageState extends ConsumerState<MateriManagementPage> {
-  JenisMateri? _selectedFilter;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddMateriDialog,
+        child: Icon(Icons.add),
+      ),
       appBar: AppBar(
         title: const Text('Kelola Materi Kajian'),
         elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => _showAddMateriDialog(),
-            icon: const Icon(Icons.add),
-            tooltip: 'Tambah Materi',
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'dummy') {
-                _createDummyData();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'dummy',
-                child: Row(
-                  children: [
-                    Icon(Icons.storage, size: 20),
-                    SizedBox(width: 8),
-                    Text('Buat Data Dummy'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+        actions: const [MateriFilterDropdown(), SizedBox(width: 8)],
       ),
-      body: Column(
-        children: [
-          _buildFilterSection(),
-          Expanded(child: _buildMateriList()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Filter Berdasarkan Jenis',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildFilterChip('Semua', null),
-              ...JenisMateri.values.map(
-                (jenis) => _buildFilterChip(_getJenisDisplayName(jenis), jenis),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, JenisMateri? jenis) {
-    final isSelected = _selectedFilter == jenis;
-
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _selectedFilter = selected ? jenis : null;
-        });
-        ref.read(materiFilterProvider.notifier).state = jenis;
-      },
-      backgroundColor: Colors.grey[100],
-      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
-      checkmarkColor: AppTheme.primaryColor,
+      body: _buildMateriList(),
     );
   }
 
