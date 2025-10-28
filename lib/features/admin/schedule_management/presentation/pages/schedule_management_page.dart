@@ -18,14 +18,7 @@ class ScheduleManagementPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen Jadwal'),
-        actions: [
-          const ScheduleFilterMenu(),
-          IconButton(
-            onPressed: () => _showAddEditDialog(context, ref),
-            icon: const Icon(Icons.add),
-            tooltip: 'Tambah Kegiatan Baru',
-          ),
-        ],
+        actions: [const ScheduleFilterMenu()],
       ),
       body: RefreshIndicator(
         onRefresh: () async {

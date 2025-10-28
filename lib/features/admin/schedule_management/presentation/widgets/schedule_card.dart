@@ -56,7 +56,8 @@ class ScheduleCard extends StatelessWidget {
                   ),
                   ScheduleCardMenu(
                     jadwal: jadwal,
-                    onEdit: onEdit,
+                    onEdit:
+                        onEdit ?? onTap, // Use onTap if onEdit is not provided
                     onDuplicate: onDuplicate,
                     onToggleStatus: onToggleStatus,
                     onDelete: onDelete,

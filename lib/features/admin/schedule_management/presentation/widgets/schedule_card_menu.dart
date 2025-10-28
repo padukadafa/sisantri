@@ -58,19 +58,6 @@ class ScheduleCardMenu extends StatelessWidget {
             ],
           ),
         ),
-        PopupMenuItem(
-          value: 'toggle',
-          child: Row(
-            children: [
-              Icon(
-                jadwal.isAktif ? Icons.visibility_off : Icons.visibility,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Text(jadwal.isAktif ? 'Nonaktifkan' : 'Aktifkan'),
-            ],
-          ),
-        ),
         const PopupMenuItem(
           value: 'delete',
           child: Row(

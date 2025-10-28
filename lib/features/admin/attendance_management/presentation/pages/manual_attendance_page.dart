@@ -65,14 +65,29 @@ final activitiesByDateProvider = FutureProvider<List<JadwalModel>>((ref) async {
   final selectedDate = ref.watch(selectedDateProvider);
 
   try {
+    final startOfDay = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+    final endOfDay = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      23,
+      59,
+      59,
+    );
     final jadwalSnapshot = await FirebaseFirestore.instance
         .collection('jadwal')
         .where('isAktif', isEqualTo: true)
-        .where('tanggal', isEqualTo: Timestamp.fromDate(selectedDate))
-        .orderBy('createdAt', descending: true)
+        .where(
+          'tanggal',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
+        .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .limit(10)
         .get();
-    print('Kegiatan ditemukan: ${jadwalSnapshot.docs.length}');
 
     if (jadwalSnapshot.docs.isNotEmpty) {
       return jadwalSnapshot.docs.map((doc) {

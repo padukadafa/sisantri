@@ -1,11 +1,58 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sisantri/shared/helpers/messaging_helper.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
+import 'package:sisantri/shared/services/attendance_service.dart';
 import '../models/jadwal_kegiatan_model.dart';
 
+/// Service untuk CRUD operations jadwal kegiatan
 class ScheduleService {
   final FirebaseFirestore _firestore;
 
   ScheduleService({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  /// Tambah jadwal baru dengan attendance generation
+  Future<String> addJadwalWithAttendance(JadwalKegiatan jadwal) async {
+    try {
+      // Step 1: Save jadwal to Firestore
+      final docRef = await _firestore.collection('jadwal').add(jadwal.toJson());
+
+      // Step 2: Generate default attendance records for all active santri
+      // Only generate for non-libur activities
+      if (jadwal.kategori != TipeJadwal.libur) {
+        await AttendanceService.generateDefaultAttendanceForJadwal(
+          jadwalId: docRef.id,
+          createdBy: 'admin',
+          createdByName: 'Admin',
+        );
+      }
+
+      // Step 3: Send notification about new schedule
+      await MessagingHelper.sendPengumumanToSantri(
+        title: 'Jadwal Baru Ditambahkan',
+        message:
+            '${jadwal.nama} - ${jadwal.tanggal.day}/${jadwal.tanggal.month}/${jadwal.tanggal.year}',
+      );
+
+      return docRef.id;
+    } catch (e) {
+      _showError('Gagal menambahkan jadwal: $e');
+      rethrow;
+    }
+  }
+
+  /// Update jadwal existing
+  Future<void> updateJadwalData(JadwalKegiatan jadwal) async {
+    try {
+      await _firestore
+          .collection('jadwal')
+          .doc(jadwal.id)
+          .update(jadwal.toJson());
+    } catch (e) {
+      _showError('Gagal mengupdate jadwal: $e');
+      rethrow;
+    }
+  }
 
   Future<String> addJadwal(JadwalKegiatan jadwal) async {
     try {
