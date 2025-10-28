@@ -67,27 +67,13 @@ class _UserManagementPageState extends ConsumerState<UserManagementPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen User'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddUserDialog(),
-            tooltip: 'Tambah User',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(allUsersProvider);
-              ref.invalidate(userStatsProvider);
-            },
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
-          isScrollable: true,
+
           tabs: const [
             Tab(icon: Icon(Icons.people), text: 'Semua'),
             Tab(icon: Icon(Icons.school), text: 'Santri'),
-            Tab(icon: Icon(Icons.person_outline), text: 'Dewan Guru'),
+            Tab(icon: Icon(Icons.person_outline), text: 'Guru'),
             Tab(icon: Icon(Icons.admin_panel_settings), text: 'Admin'),
           ],
         ),

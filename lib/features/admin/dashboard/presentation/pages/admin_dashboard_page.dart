@@ -5,6 +5,7 @@ import 'package:sisantri/features/admin/materi_management/presentation/pages/mat
 
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/models/presensi_model.dart';
 import 'package:sisantri/features/admin/user_management/presentation/pages/user_management_page.dart';
 import 'package:sisantri/features/admin/attendance_management/presentation/pages/attendance_report_page.dart';
 
@@ -37,9 +38,26 @@ final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
         .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
         .get();
 
+    // Parse presensi and count only 'Hadir' status
+    int presentCount = 0;
     final todayAttendance = attendanceSnapshot.docs.length;
+
+    for (var doc in attendanceSnapshot.docs) {
+      try {
+        final data = doc.data();
+        final presensi = PresensiModel.fromJson({'id': doc.id, ...data});
+        if (presensi.status == StatusPresensi.hadir) {
+          presentCount++;
+        }
+      } catch (e) {
+        // Skip invalid records
+        continue;
+      }
+    }
+
+    // Calculate attendance rate based on santri yang hadir
     final attendanceRate = santriCount > 0
-        ? (todayAttendance / santriCount * 100)
+        ? (presentCount / santriCount * 100)
         : 0.0;
 
     // Get recent activities
@@ -59,6 +77,7 @@ final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
       'totalAdmin': adminCount,
       'totalUsers': users.length,
       'todayAttendance': todayAttendance,
+      'presentCount': presentCount,
       'attendanceRate': attendanceRate,
       'recentActivities': recentActivities,
     };
@@ -82,13 +101,14 @@ class AdminDashboardPage extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(adminStatsProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
         },
         child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
               statsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, stack) => _buildErrorCard(error.toString()),
@@ -111,6 +131,9 @@ class AdminDashboardPage extends ConsumerWidget {
   }
 
   Widget _buildStatsCards(Map<String, dynamic> stats) {
+    final presentCount = stats['presentCount'] ?? 0;
+    final totalSantri = stats['totalSantri'] ?? 0;
+
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -131,8 +154,8 @@ class AdminDashboardPage extends ConsumerWidget {
           Colors.green,
         ),
         _buildStatCard(
-          'Presensi Hari Ini',
-          stats['todayAttendance'].toString(),
+          'Santri Hadir Hari Ini',
+          '$presentCount / $totalSantri',
           Icons.check_circle_outline,
           Colors.orange,
         ),
