@@ -84,7 +84,12 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
           widget.jadwal!.halamanSelesai?.toString() ?? '';
       _catatanController.text = widget.jadwal!.catatan ?? '';
     } else {
-      _selectedDate = DateTime.now();
+      final currentDate = DateTime.now();
+      _selectedDate = DateTime(
+        currentDate.year,
+        currentDate.month,
+        currentDate.day,
+      );
     }
   }
 
@@ -209,7 +214,7 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
                   );
                   if (date != null) {
                     setState(() {
-                      _selectedDate = date;
+                      _selectedDate = DateTime(date.year, date.month, date.day);
                     });
                   }
                 },
