@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/widgets/splash_screen.dart';
-import 'package:sisantri/features/dashboard/presentation/main_navigation.dart';
-import 'package:sisantri/features/dashboard/presentation/admin_navigation.dart';
-import 'package:sisantri/features/dashboard/presentation/dewan_guru_navigation.dart';
+import 'package:sisantri/features/santri/navigation/main_navigation.dart';
+import 'package:sisantri/features/admin/navigation/admin_navigation.dart';
+import 'package:sisantri/features/dewan_guru/navigation/dewan_guru_navigation.dart';
 
 final currentUserDataProvider = StreamProvider<UserModel?>((ref) {
   return AuthService.authStateChanges.asyncMap((user) async {
