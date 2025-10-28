@@ -71,7 +71,21 @@ class PresensiPage extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Presensi RFID'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Presensi RFID'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(todayPresensiProvider);
+              ref.invalidate(presensiHistoryProvider);
+              ref.invalidate(presensiStatsProvider);
+            },
+            tooltip: 'Refresh Data',
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(todayPresensiProvider);

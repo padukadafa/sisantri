@@ -20,7 +20,6 @@ enum TipeJadwal {
   }
 }
 
-/// Model terpadu untuk semua jadwal (kegiatan dan pengajian)
 class JadwalModel {
   final String id;
   final String nama;

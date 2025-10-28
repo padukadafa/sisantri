@@ -103,6 +103,15 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
         elevation: 0,
         foregroundColor: AppTheme.primaryColor,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(presensiSummaryProvider);
+              ref.invalidate(presensiStatsProvider);
+              ref.invalidate(recentActivitiesProvider);
+            },
+            tooltip: 'Refresh Data',
+          ),
           PopupMenuButton<String>(
             initialValue: selectedPeriod,
             onSelected: (String value) {
@@ -174,9 +183,10 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
       onRefresh: () async {
         ref.invalidate(presensiSummaryProvider);
         ref.invalidate(recentActivitiesProvider);
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 500));
       },
       child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -582,6 +592,7 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
             ),
           ),
           data: (stats) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Card(
               elevation: 2,
@@ -728,6 +739,7 @@ class _PresensiSummaryPageState extends ConsumerState<PresensiSummaryPage>
 
   Widget _buildStatisticsTab() {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [

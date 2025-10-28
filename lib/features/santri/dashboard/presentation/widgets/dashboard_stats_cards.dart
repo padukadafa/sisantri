@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:sisantri/shared/models/user_model.dart';
-import 'package:sisantri/shared/services/presensi_service.dart';
+import 'package:sisantri/shared/models/presensi_model.dart';
 
 class DashboardStatsCards extends StatelessWidget {
   final UserModel? user;
@@ -13,29 +13,33 @@ class DashboardStatsCards extends StatelessWidget {
     required this.todayPresensi,
   });
 
-  String getStatusLabel(String? status) {
+  String getStatusLabel(StatusPresensi? status) {
+    if (status == null) return 'Belum';
+
     switch (status) {
-      case 'hadir':
+      case StatusPresensi.hadir:
         return 'Hadir';
-      case 'terlambat':
-        return 'Terlambat';
-      case 'alpha':
+      case StatusPresensi.izin:
+        return 'Izin';
+      case StatusPresensi.sakit:
+        return 'Sakit';
+      case StatusPresensi.alpha:
         return 'Alpha';
-      default:
-        return 'Belum';
     }
   }
 
-  Color getStatusColor(String? status) {
+  Color getStatusColor(StatusPresensi? status) {
+    if (status == null) return Colors.grey;
+
     switch (status) {
-      case 'hadir':
+      case StatusPresensi.hadir:
         return Colors.green;
-      case 'terlambat':
+      case StatusPresensi.izin:
+        return Colors.blue;
+      case StatusPresensi.sakit:
         return Colors.orange;
-      case 'alpha':
+      case StatusPresensi.alpha:
         return Colors.red;
-      default:
-        return Colors.grey;
     }
   }
 

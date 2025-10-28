@@ -23,7 +23,19 @@ class SantriDashboardPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        actions: const [DashboardNotificationButton()],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.invalidate(dashboardUserProvider);
+              ref.invalidate(todayPresensiProvider);
+              ref.invalidate(upcomingKegiatanProvider);
+              ref.invalidate(recentPengumumanProvider);
+            },
+            tooltip: 'Refresh Data',
+          ),
+          const DashboardNotificationButton(),
+        ],
       ),
       body: dashboardData.when(
         loading: () => const Center(
