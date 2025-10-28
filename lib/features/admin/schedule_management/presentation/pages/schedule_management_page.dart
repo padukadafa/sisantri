@@ -3,116 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/features/admin/schedule_management/presentation/models/jadwal_kegiatan_model.dart';
 import 'package:sisantri/shared/helpers/messaging_helper.dart';
 import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'package:sisantri/shared/services/attendance_service.dart';
 import 'add_edit_jadwal_page.dart';
 
-/// Model untuk jadwal kegiatan (semua jadwal sekarang menggunakan tanggal spesifik)
-class JadwalKegiatan {
-  final String id;
-  final String nama;
-  final String deskripsi;
-  final DateTime tanggal; // Semua jadwal sekarang menggunakan tanggal spesifik
-  final TimeOfDay waktuMulai;
-  final TimeOfDay waktuSelesai;
-  final String tempat;
-  final TipeJadwal kategori;
-  final String? materiId; // ID materi yang dipilih
-  final String? materiNama; // Nama materi untuk display
-
-  // Fields untuk kajian/tahfidz
-  final String? surah; // Nama surah untuk kajian Quran
-  final int? ayatMulai; // Ayat mulai untuk kajian Quran
-  final int? ayatSelesai; // Ayat selesai untuk kajian Quran
-  final int? halamanMulai; // Halaman mulai untuk kitab
-  final int? halamanSelesai; // Halaman selesai untuk kitab
-  final String? catatan; // Catatan tambahan untuk kajian
-
-  final bool isAktif;
-  final DateTime createdAt;
-
-  JadwalKegiatan({
-    required this.id,
-    required this.nama,
-    required this.deskripsi,
-    required this.tanggal,
-    required this.waktuMulai,
-    required this.waktuSelesai,
-    required this.tempat,
-    required this.kategori,
-    this.materiId,
-    this.materiNama,
-    this.surah,
-    this.ayatMulai,
-    this.ayatSelesai,
-    this.halamanMulai,
-    this.halamanSelesai,
-    this.catatan,
-    this.isAktif = true,
-    required this.createdAt,
-  });
-
-  factory JadwalKegiatan.fromJson(String id, Map<String, dynamic> json) {
-    return JadwalKegiatan(
-      id: id,
-      nama: json['nama'] ?? '',
-      deskripsi: json['deskripsi'] ?? '',
-      tanggal: (json['tanggal'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      waktuMulai: _timeFromString(json['waktuMulai'] ?? '00:00'),
-      waktuSelesai: _timeFromString(json['waktuSelesai'] ?? '00:00'),
-      tempat: json['tempat'] ?? '',
-      kategori: TipeJadwal.fromString(json['kategori'] ?? 'umum'),
-      materiId: json['materiId'],
-      materiNama: json['materiNama'],
-      surah: json['surah'],
-      ayatMulai: json['ayatMulai'],
-      ayatSelesai: json['ayatSelesai'],
-      halamanMulai: json['halamanMulai'],
-      halamanSelesai: json['halamanSelesai'],
-      catatan: json['catatan'],
-      isAktif: json['isAktif'] ?? true,
-      createdAt: (json['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'nama': nama,
-      'deskripsi': deskripsi,
-      'tanggal': Timestamp.fromDate(tanggal),
-      'waktuMulai':
-          '${waktuMulai.hour.toString().padLeft(2, '0')}:${waktuMulai.minute.toString().padLeft(2, '0')}',
-      'waktuSelesai':
-          '${waktuSelesai.hour.toString().padLeft(2, '0')}:${waktuSelesai.minute.toString().padLeft(2, '0')}',
-      'tempat': tempat,
-      'kategori': kategori.value,
-      if (materiId != null) 'materiId': materiId,
-      if (materiNama != null) 'materiNama': materiNama,
-      if (surah != null) 'surah': surah,
-      if (ayatMulai != null) 'ayatMulai': ayatMulai,
-      if (ayatSelesai != null) 'ayatSelesai': ayatSelesai,
-      if (halamanMulai != null) 'halamanMulai': halamanMulai,
-      if (halamanSelesai != null) 'halamanSelesai': halamanSelesai,
-      if (catatan != null) 'catatan': catatan,
-      'isAktif': isAktif,
-      'createdAt': FieldValue.serverTimestamp(),
-    };
-  }
-
-  static TimeOfDay _timeFromString(String timeStr) {
-    final parts = timeStr.split(':');
-    if (parts.length == 2) {
-      return TimeOfDay(
-        hour: int.tryParse(parts[0]) ?? 0,
-        minute: int.tryParse(parts[1]) ?? 0,
-      );
-    }
-    return const TimeOfDay(hour: 0, minute: 0);
-  }
-}
-
-/// Provider untuk daftar semua jadwal kegiatan
 final jadwalProvider = StreamProvider<List<JadwalKegiatan>>((ref) {
   return FirebaseFirestore.instance
       .collection('jadwal')
@@ -126,18 +22,134 @@ final jadwalProvider = StreamProvider<List<JadwalKegiatan>>((ref) {
       });
 });
 
-/// Halaman manajemen jadwal kegiatan
+enum ScheduleFilter {
+  futureOnly, // Mendatang saja (dari hari ini)
+  thisMonthAndFuture, // Bulan ini dan mendatang
+  lastMonth, // 1 bulan terakhir
+  last3Months, // 3 bulan terakhir
+  all, // Semua jadwal
+}
+
+final scheduleFilterProvider = StateProvider<ScheduleFilter>(
+  (ref) => ScheduleFilter.futureOnly,
+);
+
 class ScheduleManagementPage extends ConsumerWidget {
   const ScheduleManagementPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final jadwalAsync = ref.watch(jadwalProvider);
+    final scheduleFilter = ref.watch(scheduleFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manajemen Jadwal'),
         actions: [
+          PopupMenuButton<ScheduleFilter>(
+            icon: Icon(
+              Icons.filter_list,
+              color: scheduleFilter != ScheduleFilter.futureOnly
+                  ? AppTheme.primaryColor
+                  : null,
+            ),
+            tooltip: 'Filter Jadwal',
+            onSelected: (value) {
+              ref.read(scheduleFilterProvider.notifier).state = value;
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: ScheduleFilter.futureOnly,
+                child: Row(
+                  children: [
+                    Icon(
+                      scheduleFilter == ScheduleFilter.futureOnly
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 18,
+                      color: scheduleFilter == ScheduleFilter.futureOnly
+                          ? AppTheme.primaryColor
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Mendatang Saja'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ScheduleFilter.thisMonthAndFuture,
+                child: Row(
+                  children: [
+                    Icon(
+                      scheduleFilter == ScheduleFilter.thisMonthAndFuture
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 18,
+                      color: scheduleFilter == ScheduleFilter.thisMonthAndFuture
+                          ? AppTheme.primaryColor
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Bulan Ini & Mendatang'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ScheduleFilter.lastMonth,
+                child: Row(
+                  children: [
+                    Icon(
+                      scheduleFilter == ScheduleFilter.lastMonth
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 18,
+                      color: scheduleFilter == ScheduleFilter.lastMonth
+                          ? AppTheme.primaryColor
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('1 Bulan Terakhir'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ScheduleFilter.last3Months,
+                child: Row(
+                  children: [
+                    Icon(
+                      scheduleFilter == ScheduleFilter.last3Months
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 18,
+                      color: scheduleFilter == ScheduleFilter.last3Months
+                          ? AppTheme.primaryColor
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('3 Bulan Terakhir'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: ScheduleFilter.all,
+                child: Row(
+                  children: [
+                    Icon(
+                      scheduleFilter == ScheduleFilter.all
+                          ? Icons.check_circle
+                          : Icons.circle_outlined,
+                      size: 18,
+                      color: scheduleFilter == ScheduleFilter.all
+                          ? AppTheme.primaryColor
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Semua Jadwal'),
+                  ],
+                ),
+              ),
+            ],
+          ),
           IconButton(
             onPressed: () => _showAddEditDialog(context, ref),
             icon: const Icon(Icons.add),
@@ -169,7 +181,77 @@ class ScheduleManagementPage extends ConsumerWidget {
     WidgetRef ref,
     List<JadwalKegiatan> jadwalList,
   ) {
-    if (jadwalList.isEmpty) {
+    final scheduleFilter = ref.watch(scheduleFilterProvider);
+
+    // Filter jadwal berdasarkan rentang waktu yang dipilih
+    final now = DateTime.now();
+
+    List<JadwalKegiatan> filteredJadwalList;
+
+    switch (scheduleFilter) {
+      case ScheduleFilter.futureOnly:
+        // Tampilkan jadwal dari hari ini dan ke depan
+        final today = DateTime(now.year, now.month, now.day);
+        filteredJadwalList = jadwalList.where((jadwal) {
+          final jadwalDate = DateTime(
+            jadwal.tanggal.year,
+            jadwal.tanggal.month,
+            jadwal.tanggal.day,
+          );
+          return jadwalDate.isAtSameMomentAs(today) ||
+              jadwalDate.isAfter(today);
+        }).toList();
+        break;
+
+      case ScheduleFilter.thisMonthAndFuture:
+        // Tampilkan jadwal dari awal bulan ini dan ke depan
+        final startOfMonth = DateTime(now.year, now.month, 1);
+        filteredJadwalList = jadwalList.where((jadwal) {
+          final jadwalDate = DateTime(
+            jadwal.tanggal.year,
+            jadwal.tanggal.month,
+            jadwal.tanggal.day,
+          );
+          return jadwalDate.isAtSameMomentAs(startOfMonth) ||
+              jadwalDate.isAfter(startOfMonth);
+        }).toList();
+        break;
+
+      case ScheduleFilter.lastMonth:
+        // Tampilkan jadwal 1 bulan terakhir
+        final oneMonthAgo = DateTime(now.year, now.month - 1, now.day);
+        filteredJadwalList = jadwalList.where((jadwal) {
+          final jadwalDate = DateTime(
+            jadwal.tanggal.year,
+            jadwal.tanggal.month,
+            jadwal.tanggal.day,
+          );
+          return jadwalDate.isAtSameMomentAs(oneMonthAgo) ||
+              jadwalDate.isAfter(oneMonthAgo);
+        }).toList();
+        break;
+
+      case ScheduleFilter.last3Months:
+        // Tampilkan jadwal 3 bulan terakhir
+        final threeMonthsAgo = DateTime(now.year, now.month - 3, now.day);
+        filteredJadwalList = jadwalList.where((jadwal) {
+          final jadwalDate = DateTime(
+            jadwal.tanggal.year,
+            jadwal.tanggal.month,
+            jadwal.tanggal.day,
+          );
+          return jadwalDate.isAtSameMomentAs(threeMonthsAgo) ||
+              jadwalDate.isAfter(threeMonthsAgo);
+        }).toList();
+        break;
+
+      case ScheduleFilter.all:
+        // Tampilkan semua jadwal
+        filteredJadwalList = jadwalList;
+        break;
+    }
+
+    if (filteredJadwalList.isEmpty) {
       return SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Container(
@@ -181,15 +263,27 @@ class ScheduleManagementPage extends ConsumerWidget {
                 Icon(Icons.event_note, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Belum ada kegiatan terjadwal',
+                  _getEmptyStateTitle(scheduleFilter),
                   style: TextStyle(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Tambahkan kegiatan baru untuk memulai',
+                  _getEmptyStateMessage(scheduleFilter, jadwalList.isNotEmpty),
                   style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
+                if (scheduleFilter != ScheduleFilter.all &&
+                    jadwalList.isNotEmpty)
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(scheduleFilterProvider.notifier).state =
+                          ScheduleFilter.all;
+                    },
+                    icon: const Icon(Icons.all_inclusive),
+                    label: const Text('Lihat Semua Jadwal'),
+                  ),
+                const SizedBox(height: 8),
                 ElevatedButton.icon(
                   onPressed: () => _showAddEditDialog(context, ref),
                   icon: const Icon(Icons.add),
@@ -206,10 +300,9 @@ class ScheduleManagementPage extends ConsumerWidget {
       );
     }
 
-    // Group jadwal by date for better organization
     final groupedJadwal = <String, List<JadwalKegiatan>>{};
 
-    for (final jadwal in jadwalList) {
+    for (final jadwal in filteredJadwalList) {
       final dateKey = _formatDateKey(jadwal.tanggal);
       groupedJadwal.putIfAbsent(dateKey, () => []);
       groupedJadwal[dateKey]!.add(jadwal);
@@ -228,11 +321,11 @@ class ScheduleManagementPage extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
-        final dateKey = sortedKeys[index];
+        final dateIndex = index;
+        final dateKey = sortedKeys[dateIndex];
         final jadwalHari = groupedJadwal[dateKey]!;
         final date = _parseDateKey(dateKey);
 
-        // Sort activities by time within each day
         jadwalHari.sort((a, b) {
           final aMinutes = a.waktuMulai.hour * 60 + a.waktuMulai.minute;
           final bMinutes = b.waktuMulai.hour * 60 + b.waktuMulai.minute;
@@ -244,7 +337,7 @@ class ScheduleManagementPage extends ConsumerWidget {
           children: [
             // Date header
             Container(
-              margin: EdgeInsets.only(bottom: 12, top: index == 0 ? 0 : 24),
+              margin: EdgeInsets.only(bottom: 12, top: dateIndex == 0 ? 0 : 24),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _isToday(date)
@@ -326,6 +419,55 @@ class ScheduleManagementPage extends ConsumerWidget {
       int.parse(parts[1]),
       int.parse(parts[2]),
     );
+  }
+
+  String _getEmptyStateTitle(ScheduleFilter filter) {
+    switch (filter) {
+      case ScheduleFilter.futureOnly:
+        return 'Belum ada kegiatan yang akan datang';
+      case ScheduleFilter.thisMonthAndFuture:
+        return 'Belum ada kegiatan bulan ini';
+      case ScheduleFilter.lastMonth:
+        return 'Tidak ada kegiatan dalam 1 bulan terakhir';
+      case ScheduleFilter.last3Months:
+        return 'Tidak ada kegiatan dalam 3 bulan terakhir';
+      case ScheduleFilter.all:
+        return 'Belum ada kegiatan terjadwal';
+    }
+  }
+
+  String _getEmptyStateMessage(ScheduleFilter filter, bool hasOtherSchedules) {
+    if (!hasOtherSchedules) {
+      return 'Tambahkan kegiatan baru untuk memulai';
+    }
+
+    switch (filter) {
+      case ScheduleFilter.futureOnly:
+        return 'Tidak ada jadwal yang akan datang.\nSemua jadwal sudah lewat atau belum ada jadwal.';
+      case ScheduleFilter.thisMonthAndFuture:
+        return 'Tidak ada jadwal untuk bulan ini dan mendatang.\nLihat semua jadwal untuk melihat jadwal sebelumnya.';
+      case ScheduleFilter.lastMonth:
+        return 'Tidak ada jadwal dalam rentang 1 bulan terakhir.\nCoba filter lain atau lihat semua jadwal.';
+      case ScheduleFilter.last3Months:
+        return 'Tidak ada jadwal dalam rentang 3 bulan terakhir.\nCoba filter lain atau lihat semua jadwal.';
+      case ScheduleFilter.all:
+        return 'Tambahkan kegiatan baru untuk memulai';
+    }
+  }
+
+  String _getFilterInfoText(ScheduleFilter filter) {
+    switch (filter) {
+      case ScheduleFilter.futureOnly:
+        return 'Menampilkan jadwal hari ini dan mendatang';
+      case ScheduleFilter.thisMonthAndFuture:
+        return 'Menampilkan jadwal bulan ini dan mendatang';
+      case ScheduleFilter.lastMonth:
+        return 'Menampilkan jadwal 1 bulan terakhir';
+      case ScheduleFilter.last3Months:
+        return 'Menampilkan jadwal 3 bulan terakhir';
+      case ScheduleFilter.all:
+        return 'Menampilkan semua jadwal';
+    }
   }
 
   bool _isToday(DateTime date) {
@@ -793,11 +935,7 @@ class ScheduleManagementPage extends ConsumerWidget {
     );
 
     if (result != null) {
-      if (jadwal == null) {
-        _addJadwal(ref, result);
-      } else {
-        _updateJadwal(ref, jadwal.id, result);
-      }
+      ref.invalidate(jadwalProvider);
     }
   }
 
@@ -826,21 +964,6 @@ class ScheduleManagementPage extends ConsumerWidget {
       );
     } catch (e) {
       // Error adding jadwal
-    }
-  }
-
-  Future<void> _updateJadwal(
-    WidgetRef ref,
-    String id,
-    JadwalKegiatan jadwal,
-  ) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('jadwal')
-          .doc(id)
-          .update(jadwal.toJson());
-    } catch (e) {
-      // Error updating jadwal
     }
   }
 

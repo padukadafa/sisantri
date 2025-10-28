@@ -6,8 +6,6 @@ import '../models/presensi_model.dart';
 class AttendanceService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Generate default attendance records untuk semua santri aktif saat jadwal dibuat
-  /// Status default: Alpha (tidak hadir)
   static Future<void> generateDefaultAttendanceForJadwal({
     required String jadwalId,
     required String createdBy,
@@ -15,7 +13,6 @@ class AttendanceService {
     List<String>? specificSantriIds,
   }) async {
     try {
-      // Get santri yang akan dibuatkan record presensi
       List<UserModel> activeSantri;
 
       if (specificSantriIds != null && specificSantriIds.isNotEmpty) {
@@ -40,7 +37,6 @@ class AttendanceService {
             .toList();
       }
 
-      // Check existing records
       final existingRecords = await _firestore
           .collection('presensi')
           .where('activity', isEqualTo: jadwalId)
@@ -50,14 +46,12 @@ class AttendanceService {
           .map((doc) => doc.data()['userId'] as String)
           .toSet();
 
-      // Filter santri yang belum punya record
       final santriNeedingRecords = activeSantri
           .where((santri) => !existingSantriIds.contains(santri.id))
           .toList();
 
       if (santriNeedingRecords.isEmpty) return;
 
-      // Create batch operation untuk semua records sekaligus
       final batch = _firestore.batch();
       final timestamp = Timestamp.now();
 
@@ -85,7 +79,6 @@ class AttendanceService {
     }
   }
 
-  /// Update status presensi dari alpha ke status lain
   static Future<void> updateAttendanceStatus({
     required String attendanceId,
     required StatusPresensi newStatus,
@@ -106,7 +99,6 @@ class AttendanceService {
     }
   }
 
-  /// Get attendance records for specific jadwal
   static Future<List<Map<String, dynamic>>> getAttendanceForJadwal(
     String jadwalId,
   ) async {

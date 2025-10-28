@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sisantri/features/admin/schedule_management/presentation/models/jadwal_kegiatan_model.dart';
 
 import 'package:sisantri/shared/helpers/messaging_helper.dart';
 import 'package:sisantri/shared/providers/materi_provider.dart';
 import 'package:sisantri/shared/services/materi_service.dart';
 import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'package:sisantri/shared/services/attendance_service.dart';
-import 'schedule_management_page.dart';
 
-/// Halaman untuk menambah/edit jadwal kegiatan
 class AddEditJadwalPage extends ConsumerStatefulWidget {
   final JadwalKegiatan? jadwal;
   final String? preselectedDay;
@@ -75,7 +74,6 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
       _waktuSelesai = widget.jadwal!.waktuSelesai;
       _isAktif = widget.jadwal!.isAktif;
 
-      // Fill kajian fields
       _surahController.text = widget.jadwal!.surah ?? '';
       _ayatMulaiController.text = widget.jadwal!.ayatMulai?.toString() ?? '';
       _ayatSelesaiController.text =
@@ -86,7 +84,6 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
           widget.jadwal!.halamanSelesai?.toString() ?? '';
       _catatanController.text = widget.jadwal!.catatan ?? '';
     } else {
-      // Set default date to today
       _selectedDate = DateTime.now();
     }
   }
@@ -769,22 +766,18 @@ class _AddEditJadwalPageState extends ConsumerState<AddEditJadwalPage> {
   }
 
   Future<void> _addJadwal(JadwalKegiatan jadwal) async {
-    // Step 1: Save jadwal to Firestore
     final docRef = await FirebaseFirestore.instance
         .collection('jadwal')
         .add(jadwal.toJson());
 
-    // Step 2: Generate default attendance records for all active santri
-    // Only generate for non-libur activities
     if (jadwal.kategori != TipeJadwal.libur) {
       await AttendanceService.generateDefaultAttendanceForJadwal(
         jadwalId: docRef.id,
-        createdBy: 'admin', // TODO: get from current user
-        createdByName: 'Admin', // TODO: get from current user
+        createdBy: 'admin',
+        createdByName: 'Admin',
       );
     }
 
-    // Step 3: Send notification about new schedule
     await MessagingHelper.sendPengumumanToSantri(
       title: 'Jadwal Baru Ditambahkan',
       message:
