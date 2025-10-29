@@ -1,17 +1,16 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
 const {
-  findUserByRFID,
   getTodaySchedule,
   getTodayAttendance,
   checkScheduleTime,
   createAttendance,
-  logDeviceActivity,
   getAttendanceStats,
   createLogActivity,
 } = require("../services/attendanceService");
 const { verifyDevice } = require("../middleware/auth");
-
+const { findUserByRFID } = require("../services/userService");
+const { addUserPoint } = require("../services/gamifikasiService");
 const router = express.Router();
 
 /**
@@ -70,14 +69,14 @@ router.post(
         });
       }
       await createAttendance(todayAttendance);
-      await createLogActivity(
-        ...{
-          description: `${user.nama} - ${user.id}: Hadir`,
-          title: "Absensi RFID",
-          type: "rfid_attendance",
-          recordedBy: user.id,
-        }
-      );
+      const attendancePoin = process.env.PRESENSI_POIN_REWARD;
+      await addUserPoint(user, attendancePoin);
+      await createLogActivity({
+        description: `${user.nama} - ${user.id}: Hadir, point added ${attendancePoin}`,
+        title: "Absensi RFID",
+        type: "rfid_attendance",
+        recordedBy: user.id,
+      });
       return res.status(200).json({
         success: true,
         message: "Presensi sudah dicatat",
