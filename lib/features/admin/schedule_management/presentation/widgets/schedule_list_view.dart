@@ -12,12 +12,14 @@ class ScheduleListView extends ConsumerWidget {
   final List<JadwalKegiatan> jadwalList;
   final VoidCallback onAddPressed;
   final Function(JadwalKegiatan) onJadwalTap;
+  final Function(JadwalKegiatan)? onJadwalDelete;
 
   const ScheduleListView({
     super.key,
     required this.jadwalList,
     required this.onAddPressed,
     required this.onJadwalTap,
+    this.onJadwalDelete,
   });
 
   @override
@@ -57,6 +59,7 @@ class ScheduleListView extends ConsumerWidget {
           date: date,
           jadwalList: jadwalHari,
           onJadwalTap: onJadwalTap,
+          onJadwalDelete: onJadwalDelete,
           isFirstGroup: dateIndex == 0,
         );
       },

@@ -49,16 +49,6 @@ class ScheduleCardMenu extends StatelessWidget {
           ),
         ),
         const PopupMenuItem(
-          value: 'duplicate',
-          child: Row(
-            children: [
-              Icon(Icons.copy, size: 16),
-              SizedBox(width: 8),
-              Text('Duplikasi'),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [

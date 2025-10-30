@@ -8,6 +8,7 @@ class ScheduleDateGroup extends StatelessWidget {
   final DateTime date;
   final List<JadwalKegiatan> jadwalList;
   final Function(JadwalKegiatan) onJadwalTap;
+  final Function(JadwalKegiatan)? onJadwalDelete;
   final bool isFirstGroup;
 
   const ScheduleDateGroup({
@@ -15,6 +16,7 @@ class ScheduleDateGroup extends StatelessWidget {
     required this.date,
     required this.jadwalList,
     required this.onJadwalTap,
+    this.onJadwalDelete,
     this.isFirstGroup = false,
   });
 
@@ -93,8 +95,13 @@ class ScheduleDateGroup extends StatelessWidget {
         ),
         // Activities for this date
         ...sortedJadwal.map(
-          (jadwal) =>
-              ScheduleCard(jadwal: jadwal, onTap: () => onJadwalTap(jadwal)),
+          (jadwal) => ScheduleCard(
+            jadwal: jadwal,
+            onTap: () => onJadwalTap(jadwal),
+            onDelete: onJadwalDelete != null
+                ? () => onJadwalDelete!(jadwal)
+                : null,
+          ),
         ),
       ],
     );

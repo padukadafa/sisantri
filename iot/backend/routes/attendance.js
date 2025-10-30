@@ -25,6 +25,7 @@ router.post(
     body("rfidUid").isString().withMessage("RFID UID must be a string"),
   ],
   async (req, res, next) => {
+    // validasi input
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -35,11 +36,12 @@ router.post(
         });
       }
 
+      // mendapatkan rfid
       const { rfidUid } = req.body;
       const deviceId = req.device.id;
 
       console.log(`RFID scan received: ${rfidUid} from device: ${deviceId}`);
-
+      // mendapatkan jadwal hari ini
       const schedule = await getTodaySchedule();
       if (!schedule.isWithinSchedule) {
         return res.status(403).json({
@@ -47,6 +49,7 @@ router.post(
           message: schedule.message,
         });
       }
+      // mencari user berdasarkan rfid
       const user = await findUserByRFID(rfidUid);
       if (!user) {
         return res.status(403).json({
@@ -54,7 +57,7 @@ router.post(
           message: "RFID Belum di daftarkan",
         });
       }
-
+      // mendapatkan data presensi hari ini
       const todayAttendance = await getTodayAttendance(schedule.id, user.id);
       if (!todayAttendance) {
         return res.status(403).json({
@@ -62,14 +65,17 @@ router.post(
           message: "Tidak ada presensi untukmu",
         });
       }
+      // mengecek hadir atau tidak
       if (todayAttendance.status === "hadir") {
         return res.status(403).json({
           success: true,
           message: "Presensi sudah dicatat",
         });
       }
+      // mencatat presensi
       await createAttendance(todayAttendance);
       const attendancePoin = process.env.PRESENSI_POIN_REWARD;
+      // menambahkan poin dan log aktivitas
       await addUserPoint(user, attendancePoin);
       await createLogActivity({
         description: `${user.nama} - ${user.id}: Hadir, point added ${attendancePoin}`,

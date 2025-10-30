@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 
 import '../models/jadwal_kegiatan_model.dart';
@@ -33,6 +35,8 @@ class ScheduleManagementPage extends ConsumerWidget {
             onAddPressed: () => _showAddEditDialog(context, ref),
             onJadwalTap: (jadwal) =>
                 _showAddEditDialog(context, ref, jadwal: jadwal),
+            onJadwalDelete: (jadwal) =>
+                _showDeleteConfirmation(context, ref, jadwal),
           ),
         ),
       ),
@@ -98,6 +102,130 @@ class ScheduleManagementPage extends ConsumerWidget {
       // Jadwal sudah disimpan di AddEditJadwalPage
       // Hanya refresh provider untuk update UI
       ref.invalidate(jadwalProvider);
+    }
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+    JadwalKegiatan jadwal,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Jadwal'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Apakah Anda yakin ingin menghapus jadwal ini?'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    jadwal.nama,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 12,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${jadwal.tanggal.day}/${jadwal.tanggal.month}/${jadwal.tanggal.year}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.access_time,
+                        size: 12,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        jadwal.waktuFormatted,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteJadwal(context, ref, jadwal);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteJadwal(
+    BuildContext context,
+    WidgetRef ref,
+    JadwalKegiatan jadwal,
+  ) async {
+    try {
+      EasyLoading.show(
+        status: 'Menghapus jadwal...',
+        maskType: EasyLoadingMaskType.black,
+      );
+
+      await FirebaseFirestore.instance
+          .collection('jadwal')
+          .doc(jadwal.id)
+          .delete();
+
+      EasyLoading.dismiss();
+
+      ref.invalidate(jadwalProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Jadwal "${jadwal.nama}" berhasil dihapus'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus jadwal: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 }
