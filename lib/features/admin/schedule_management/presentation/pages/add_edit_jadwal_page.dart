@@ -84,24 +84,7 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     final isEdit = widget.jadwal != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? 'Edit Jadwal' : 'Tambah Jadwal'),
-        actions: [
-          if (isEdit)
-            IconButton(
-              icon: Icon(
-                _isAktif ? Icons.visibility : Icons.visibility_off,
-                color: _isAktif ? Colors.green : Colors.grey,
-              ),
-              onPressed: () {
-                setState(() {
-                  _isAktif = !_isAktif;
-                });
-              },
-              tooltip: _isAktif ? 'Aktif' : 'Nonaktif',
-            ),
-        ],
-      ),
+      appBar: AppBar(title: Text(isEdit ? 'Edit Jadwal' : 'Tambah Jadwal')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

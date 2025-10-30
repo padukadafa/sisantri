@@ -201,6 +201,15 @@ class ScheduleManagementPage extends ConsumerWidget {
           .collection('jadwal')
           .doc(jadwal.id)
           .delete();
+      final presensis = await FirebaseFirestore.instance
+          .collection('presensi')
+          .where("activity", isEqualTo: jadwal.id)
+          .get();
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+      for (var doc in presensis.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
 
       EasyLoading.dismiss();
 
