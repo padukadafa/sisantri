@@ -17,7 +17,7 @@ migrate_working_dir/
 *.ipr
 *.iws
 .idea/
-
+*firebase-admin*.json
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
@@ -32,7 +32,7 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
-
+/iot/backend/belajar-login-system-firebase-adminsdk-vbat2-f962c8f56c.json
 # Symbolication related
 app.*.symbols
 

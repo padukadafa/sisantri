@@ -31,11 +31,8 @@ class AnnouncementCardHeader extends StatelessWidget {
         PopupMenuButton<String>(
           onSelected: (value) {
             switch (value) {
-              case 'edit':
+              case 'lihat':
                 onEdit?.call();
-                break;
-              case 'toggle':
-                onToggleStatus?.call();
                 break;
               case 'delete':
                 onDelete?.call();
@@ -44,27 +41,12 @@ class AnnouncementCardHeader extends StatelessWidget {
           },
           itemBuilder: (context) => [
             const PopupMenuItem(
-              value: 'edit',
+              value: 'lihat',
               child: Row(
                 children: [
                   Icon(Icons.edit, size: 16),
                   SizedBox(width: 8),
-                  Text('Edit'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'toggle',
-              child: Row(
-                children: [
-                  Icon(
-                    pengumuman.isActive
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(pengumuman.isActive ? 'Sembunyikan' : 'Tampilkan'),
+                  Text('Lihat'),
                 ],
               ),
             ),

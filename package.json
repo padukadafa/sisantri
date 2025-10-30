@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "firebase": "^12.4.0"
+  },
+  "name": "sisantri",
+  "version": "1.0.0",
+  "description": "Aplikasi gamifikasi untuk Pondok Pesantren Mahasiswa Al-Awwabin Sukarame – Bandar Lampung yang memberikan pengalaman digital bagi santri untuk melihat jadwal pengajian, jadwal kegiatan, melakukan presensi otomatis dengan RFID, melihat leaderboard santri paling rajin, autentikasi, dan menerima pengumuman.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/padukadafa/sisantri.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/padukadafa/sisantri/issues"
+  },
+  "homepage": "https://github.com/padukadafa/sisantri#readme"
+}
