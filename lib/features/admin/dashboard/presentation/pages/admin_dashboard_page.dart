@@ -9,82 +9,124 @@ import 'package:sisantri/shared/models/presensi_model.dart';
 import 'package:sisantri/features/admin/user_management/presentation/pages/user_management_page.dart';
 import 'package:sisantri/features/admin/attendance_management/presentation/pages/attendance_report_page.dart';
 
-/// Provider untuk statistics admin dashboard
-final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  try {
-    final firestore = FirebaseFirestore.instance;
+enum PeriodFilter {
+  day('Hari', 1),
+  week('Minggu', 7),
+  month('Bulan', 30),
+  year('Tahun', 365);
 
-    // Get total users by role
-    final usersSnapshot = await firestore.collection('users').get();
-    final users = usersSnapshot.docs
-        .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
-        .toList();
+  final String label;
+  final int days;
 
-    final santriCount = users.where((u) => u.isSantri).length;
-    final guruCount = users.where((u) => u.isDewaGuru).length;
-    final adminCount = users.where((u) => u.isAdmin).length;
+  const PeriodFilter(this.label, this.days);
+}
 
-    // Get today's attendance
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+final selectedPeriodProvider = StateProvider<PeriodFilter>(
+  (ref) => PeriodFilter.day,
+);
 
-    final attendanceSnapshot = await firestore
-        .collection('presensi')
-        .where(
-          'timestamp',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-        )
-        .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-        .get();
-
-    // Parse presensi and count only 'Hadir' status
-    int presentCount = 0;
-    final todayAttendance = attendanceSnapshot.docs.length;
-
-    for (var doc in attendanceSnapshot.docs) {
+final adminStatsProvider =
+    FutureProvider.family<Map<String, dynamic>, PeriodFilter>((
+      ref,
+      period,
+    ) async {
       try {
-        final data = doc.data();
-        final presensi = PresensiModel.fromJson({'id': doc.id, ...data});
-        if (presensi.status == StatusPresensi.hadir) {
-          presentCount++;
-        }
+        final firestore = FirebaseFirestore.instance;
+
+        final usersSnapshot = await firestore.collection('users').get();
+        final users = usersSnapshot.docs
+            .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
+            .toList();
+
+        final santriCount = users.where((u) => u.isSantri).length;
+        final guruCount = users.where((u) => u.isDewaGuru).length;
+        final adminCount = users.where((u) => u.isAdmin).length;
+
+        final today = DateTime.now();
+        final startOfDay = DateTime(today.year, today.month, today.day);
+        final endOfDay = startOfDay.add(const Duration(days: 1));
+
+        final attendanceSnapshot = await firestore
+            .collection('presensi')
+            .where(
+              'timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
+            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+            .get();
+        final attendanceHadirSnapshot = await firestore
+            .collection('presensi')
+            .where(
+              'timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+            )
+            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+            .where(
+              'status',
+              isEqualTo: StatusPresensi.hadir.toString().split('.').last,
+            )
+            .get();
+
+        final periodStartDate = today.subtract(Duration(days: period.days - 1));
+        final periodStart = DateTime(
+          periodStartDate.year,
+          periodStartDate.month,
+          periodStartDate.day,
+        );
+        final periodAttendanceSnapshot = await firestore
+            .collection('presensi')
+            .where(
+              'timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(periodStart),
+            )
+            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+            .get();
+
+        final periodAttendanceHadirSnapshot = await firestore
+            .collection('presensi')
+            .where(
+              'timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(periodStart),
+            )
+            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+            .where(
+              'status',
+              isEqualTo: StatusPresensi.hadir.toString().split('.').last,
+            )
+            .get();
+
+        final attendanceRate = periodAttendanceSnapshot.docs.isNotEmpty
+            ? (periodAttendanceHadirSnapshot.docs.length /
+                  periodAttendanceSnapshot.docs.length *
+                  100)
+            : 0.0;
+
+        // Get recent activities
+        final activitiesSnapshot = await firestore
+            .collection('activities')
+            .orderBy('timestamp', descending: true)
+            .limit(5)
+            .get();
+
+        final recentActivities = activitiesSnapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+
+        return {
+          'totalSantri': santriCount,
+          'totalGuru': guruCount,
+          'totalAdmin': adminCount,
+          'totalUsers': users.length,
+          'todayAttendance': attendanceSnapshot.docs.length,
+          'presentCount': attendanceHadirSnapshot.docs.length,
+          'attendanceRate': attendanceRate,
+          'recentActivities': recentActivities,
+          'period': period,
+        };
       } catch (e) {
-        // Skip invalid records
-        continue;
+        throw Exception('Error loading admin stats: $e');
       }
-    }
-
-    // Calculate attendance rate based on santri yang hadir
-    final attendanceRate = santriCount > 0
-        ? (presentCount / santriCount * 100)
-        : 0.0;
-
-    // Get recent activities
-    final activitiesSnapshot = await firestore
-        .collection('activities')
-        .orderBy('timestamp', descending: true)
-        .limit(5)
-        .get();
-
-    final recentActivities = activitiesSnapshot.docs
-        .map((doc) => {'id': doc.id, ...doc.data()})
-        .toList();
-
-    return {
-      'totalSantri': santriCount,
-      'totalGuru': guruCount,
-      'totalAdmin': adminCount,
-      'totalUsers': users.length,
-      'todayAttendance': todayAttendance,
-      'presentCount': presentCount,
-      'attendanceRate': attendanceRate,
-      'recentActivities': recentActivities,
-    };
-  } catch (e) {
-    throw Exception('Error loading admin stats: $e');
-  }
-});
+    });
 
 /// Admin Dashboard Page dengan fitur lengkap
 class AdminDashboardPage extends ConsumerWidget {
@@ -94,7 +136,8 @@ class AdminDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(adminStatsProvider);
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
+    final statsAsync = ref.watch(adminStatsProvider(selectedPeriod));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Dashboard')),
@@ -114,6 +157,8 @@ class AdminDashboardPage extends ConsumerWidget {
                 error: (error, stack) => _buildErrorCard(error.toString()),
                 data: (stats) => Column(
                   children: [
+                    _buildPeriodFilter(context, ref),
+                    const SizedBox(height: 16),
                     _buildStatsCards(stats),
                     const SizedBox(height: 16),
                     const SizedBox(height: 16),
@@ -130,9 +175,71 @@ class AdminDashboardPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildPeriodFilter(BuildContext context, WidgetRef ref) {
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.filter_list, color: AppTheme.primaryColor, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Periode',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: PeriodFilter.values.map((period) {
+                  final isSelected = selectedPeriod == period;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(period.label),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          ref.read(selectedPeriodProvider.notifier).state =
+                              period;
+                        }
+                      },
+                      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                      checkmarkColor: AppTheme.primaryColor,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? AppTheme.primaryColor
+                            : Colors.grey[700],
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                      backgroundColor: Colors.grey[100],
+                      elevation: isSelected ? 2 : 0,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatsCards(Map<String, dynamic> stats) {
     final presentCount = stats['presentCount'] ?? 0;
     final totalSantri = stats['totalSantri'] ?? 0;
+    final period = stats['period'] as PeriodFilter;
 
     return GridView.count(
       crossAxisCount: 2,
@@ -160,7 +267,7 @@ class AdminDashboardPage extends ConsumerWidget {
           Colors.orange,
         ),
         _buildStatCard(
-          'Tingkat Kehadiran',
+          'Tingkat Kehadiran (${period.label})',
           '${stats['attendanceRate'].toStringAsFixed(1)}%',
           Icons.trending_up,
           Colors.purple,

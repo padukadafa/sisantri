@@ -17,18 +17,7 @@ class AnnouncementManagementPage extends ConsumerWidget {
     final stats = ref.watch(announcementStatsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manajemen Pengumuman'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(announcementProvider);
-            },
-            tooltip: 'Refresh Data',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Manajemen Pengumuman')),
       body: Column(
         children: [
           AnnouncementStatsBar(stats: stats),

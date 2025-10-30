@@ -32,8 +32,9 @@ async function sendNotificationToDevices(tokens, title, body) {
     console.error("Gagal mengirim notifikasi:", error);
   }
 }
-const colRef = collection(db, "pengumuman");
-onSnapshot(colRef, (snapshot) => {
+const colRefPengumuman = collection(db, "pengumuman");
+const colRefJadwal = collection(db, "jadwal");
+onSnapshot(colRefPengumuman, (snapshot) => {
   snapshot.docChanges().forEach(async (change) => {
     const docId = change.doc.id;
     const data = change.doc.data();
@@ -91,6 +92,53 @@ onSnapshot(colRef, (snapshot) => {
       await admin
         .firestore()
         .collection("pengumuman")
+        .doc(docId)
+        .update({ isSended: true });
+    }
+  });
+});
+onSnapshot(colRefJadwal, (snapshot) => {
+  snapshot.docChanges().forEach(async (change) => {
+    const docId = change.doc.id;
+    const data = change.doc.data();
+    const jadwal = await admin
+      .firestore()
+      .collection("jadwal")
+      .doc(docId)
+      .get();
+    const jadwalData = jadwal.data();
+    if (!jadwal.exists) {
+      console.log("Jadwal tidak ditemukan:", docId);
+      return;
+    }
+    if (change.type === "added") {
+      if (jadwalData.isSended) {
+        return;
+      }
+      const tokens = [];
+      const users = await admin.firestore().collection("users").get();
+      for (const user of users.docs) {
+        const userData = user.data();
+        const userTokens = userData.deviceTokens;
+        if (!userTokens || userTokens.length === 0) {
+          continue;
+        }
+        for (const token of userTokens) {
+          tokens.push(token);
+        }
+      }
+      if (tokens.length > 0) {
+        await sendNotificationToDevices(
+          tokens,
+          "Jadwal Baru",
+          `Ada jadwal baru : ${
+            data.deskripsi ? data.deskripsi?.slice(0, 20) : ""
+          }...`
+        );
+      }
+      await admin
+        .firestore()
+        .collection("jadwal")
         .doc(docId)
         .update({ isSended: true });
     }
