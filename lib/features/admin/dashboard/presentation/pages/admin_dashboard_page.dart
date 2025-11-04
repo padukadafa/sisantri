@@ -4,10 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/features/admin/materi_management/presentation/pages/materi_management_page.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
+import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/features/admin/user_management/presentation/pages/user_management_page.dart';
 import 'package:sisantri/features/admin/attendance_management/presentation/pages/attendance_report_page.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
 enum PeriodFilter {
   day('Hari', 1),
@@ -46,62 +47,38 @@ final adminStatsProvider =
         final startOfDay = DateTime(today.year, today.month, today.day);
         final endOfDay = startOfDay.add(const Duration(days: 1));
 
-        final attendanceSnapshot = await firestore
-            .collection('presensi')
-            .where(
-              'timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-            )
-            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-            .get();
-        final attendanceHadirSnapshot = await firestore
-            .collection('presensi')
-            .where(
-              'timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-            )
-            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-            .where(
-              'status',
-              isEqualTo: StatusPresensi.hadir.toString().split('.').last,
-            )
-            .get();
+        final todayAttendance = await PresensiService.getPresensiByPeriod(
+          startDate: startOfDay,
+          endDate: endOfDay,
+        );
 
-        final periodStartDate = today.subtract(Duration(days: period.days - 1));
+        int presentCount = 0;
+        for (var presensi in todayAttendance) {
+          if (presensi.status == StatusPresensi.hadir) {
+            presentCount++;
+          }
+        }
+
+        final periodStartDate = today.subtract(Duration(days: period.days));
         final periodStart = DateTime(
           periodStartDate.year,
           periodStartDate.month,
           periodStartDate.day,
         );
-        final periodAttendanceSnapshot = await firestore
-            .collection('presensi')
-            .where(
-              'timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(periodStart),
-            )
-            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-            .get();
 
-        final periodAttendanceHadirSnapshot = await firestore
-            .collection('presensi')
-            .where(
-              'timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(periodStart),
-            )
-            .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-            .where(
-              'status',
-              isEqualTo: StatusPresensi.hadir.toString().split('.').last,
-            )
-            .get();
+        final periodAttendance = await PresensiService.getPresensiByPeriod(
+          startDate: periodStart,
+          endDate: endOfDay,
+        );
 
-        final attendanceRate = periodAttendanceSnapshot.docs.isNotEmpty
-            ? (periodAttendanceHadirSnapshot.docs.length /
-                  periodAttendanceSnapshot.docs.length *
-                  100)
+        final periodHadirCount = periodAttendance
+            .where((p) => p.status == StatusPresensi.hadir)
+            .length;
+
+        final attendanceRate = periodAttendance.isNotEmpty
+            ? (periodHadirCount / periodAttendance.length * 100)
             : 0.0;
 
-        // Get recent activities
         final activitiesSnapshot = await firestore
             .collection('activities')
             .orderBy('timestamp', descending: true)
@@ -117,8 +94,8 @@ final adminStatsProvider =
           'totalGuru': guruCount,
           'totalAdmin': adminCount,
           'totalUsers': users.length,
-          'todayAttendance': attendanceSnapshot.docs.length,
-          'presentCount': attendanceHadirSnapshot.docs.length,
+          'todayAttendance': todayAttendance.length,
+          'presentCount': presentCount,
           'attendanceRate': attendanceRate,
           'recentActivities': recentActivities,
           'period': period,
