@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/presensi.dart';
 
-/// Model untuk Presensi dalam Data Layer
-/// Model adalah implementasi dari Entity yang dapat di-convert ke/dari JSON
 class PresensiModel extends Presensi {
   const PresensiModel({
     required super.id,
@@ -14,9 +12,7 @@ class PresensiModel extends Presensi {
     super.createdAt,
   });
 
-  /// Factory constructor untuk membuat PresensiModel dari JSON
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
-    // Parsing JSON data
     DateTime tanggalParsed;
     try {
       // Try tanggal field first, then timestamp

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:sisantri/shared/services/presensi_service.dart';
 import '../models/user_model.dart';
 import '../models/jadwal_pengajian_model.dart';
 import '../models/jadwal_kegiatan_model.dart';
@@ -169,31 +169,6 @@ class FirestoreService {
         );
   }
 
-  /// Get presensi hari ini untuk user
-  static Future<PresensiModel?> getTodayPresensi(String userId) async {
-    try {
-      final today = DateTime.now();
-      final startOfDay = DateTime(today.year, today.month, today.day);
-      final endOfDay = DateTime(today.year, today.month, today.day, 23, 59, 59);
-
-      final query = await _firestore
-          .collection('presensi')
-          .where('userId', isEqualTo: userId)
-          .where('tanggal', isGreaterThanOrEqualTo: startOfDay)
-          .where('tanggal', isLessThanOrEqualTo: endOfDay)
-          .limit(1)
-          .get();
-
-      if (query.docs.isNotEmpty) {
-        final doc = query.docs.first;
-        return PresensiModel.fromJson({'id': doc.id, ...doc.data()});
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Error mengambil presensi hari ini: $e');
-    }
-  }
-
   /// Tambah presensi
   static Future<void> addPresensi(PresensiModel presensi) async {
     try {
@@ -301,11 +276,11 @@ class FirestoreService {
   /// Get data dashboard untuk santri
   static Future<Map<String, dynamic>> getDashboardData(String userId) async {
     try {
-      // Get user data
       final user = await getUserById(userId);
 
-      // Get presensi hari ini
-      final todayPresensi = await getTodayPresensi(userId);
+      final todayPresensi = await PresensiService.getPresensiToday(
+        userId: userId,
+      );
 
       // Get upcoming kegiatan
       final upcomingKegiatanSnapshot = await _firestore

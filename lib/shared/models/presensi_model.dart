@@ -56,150 +56,78 @@ enum StatusPresensi {
   }
 }
 
-/// Model untuk presensi santri
 class PresensiModel {
   final String id;
+  final String activity;
   final String userId;
-  final DateTime tanggal;
+  final String userName;
+  final DateTime? timestamp;
   final StatusPresensi status;
-  final String? keterangan;
-  final int poinDiperoleh;
-  final DateTime? createdAt;
+  final String keterangan;
+  final bool isManual;
+  final DateTime createdAt;
+  final String recordedBy;
+  final String recordedByName;
 
   const PresensiModel({
     required this.id,
     required this.userId,
-    required this.tanggal,
+    required this.userName,
     required this.status,
-    this.keterangan,
-    this.poinDiperoleh = 0,
-    this.createdAt,
+    required this.createdAt,
+    required this.timestamp,
+    required this.isManual,
+    required this.recordedBy,
+    required this.recordedByName,
+    required this.activity,
+    this.keterangan = '',
   });
 
-  /// Factory constructor untuk membuat PresensiModel dari JSON
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
-    // Parsing JSON data
-
-    DateTime tanggalParsed;
-    try {
-      // Try tanggal field first, then timestamp
-      dynamic dateField = json['tanggal'] ?? json['timestamp'];
-
-      if (dateField is DateTime) {
-        tanggalParsed = dateField;
-      } else if (dateField is Timestamp) {
-        tanggalParsed = dateField.toDate();
-      } else if (dateField is int) {
-        tanggalParsed = DateTime.fromMillisecondsSinceEpoch(dateField);
-      } else {
-        // Unknown date format
-        // Available fields
-        tanggalParsed = DateTime.now();
-      }
-    } catch (e) {
-      // Error parsing date
-      tanggalParsed = DateTime.now();
-    }
-
-    DateTime? createdAtParsed;
-    try {
-      if (json['createdAt'] != null) {
-        if (json['createdAt'] is DateTime) {
-          createdAtParsed = json['createdAt'];
-        } else if (json['createdAt'] is Timestamp) {
-          createdAtParsed = (json['createdAt'] as Timestamp).toDate();
-        } else if (json['createdAt'] is int) {
-          createdAtParsed = DateTime.fromMillisecondsSinceEpoch(
-            json['createdAt'],
-          );
-        }
-      }
-    } catch (e) {
-      // Error parsing createdAt
-    }
-
-    final result = PresensiModel(
+    return PresensiModel(
       id: json['id'] as String,
       userId: json['userId'] as String,
-      tanggal: tanggalParsed,
+      userName: json['userName'] as String,
       status: StatusPresensi.fromString(json['status'] as String? ?? 'hadir'),
-      keterangan: json['keterangan'] as String?,
-      poinDiperoleh: json['poinDiperoleh'] as int? ?? 0,
-      createdAt: createdAtParsed,
+      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      timestamp: json['timestamp'] != null
+          ? (json['timestamp'] as Timestamp).toDate()
+          : null,
+      isManual: json['isManual'] as bool? ?? false,
+      recordedBy: json['recordedBy'] as String? ?? '',
+      recordedByName: json['recordedByName'] as String? ?? '',
+      activity: json['activity'] as String? ?? '',
+      keterangan: json['keterangan'] as String? ?? '',
     );
-
-    // Successfully parsed PresensiModel
-    return result;
   }
 
-  /// Method untuk convert PresensiModel ke JSON
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'userId': userId,
-      'tanggal': Timestamp.fromDate(tanggal),
-      'status': status.label,
+      'userName': userName,
+      'status': status,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : null,
+      'isManual': isManual,
+      'recordedBy': recordedBy,
+      'recordedByName': recordedByName,
+      'activity': activity,
       'keterangan': keterangan,
-      'poinDiperoleh': poinDiperoleh,
-      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
     };
-  }
-
-  /// Method untuk copy dengan perubahan tertentu
-  PresensiModel copyWith({
-    String? id,
-    String? userId,
-    DateTime? tanggal,
-    StatusPresensi? status,
-    String? keterangan,
-    int? poinDiperoleh,
-    DateTime? createdAt,
-  }) {
-    return PresensiModel(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      tanggal: tanggal ?? this.tanggal,
-      status: status ?? this.status,
-      keterangan: keterangan ?? this.keterangan,
-      poinDiperoleh: poinDiperoleh ?? this.poinDiperoleh,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-
-  /// Get formatted tanggal string
-  String get formattedTanggal {
-    return '${tanggal.day}/${tanggal.month}/${tanggal.year}';
-  }
-
-  /// Get formatted date string
-  String get formattedDate {
-    return '${tanggal.day}/${tanggal.month}/${tanggal.year}';
-  }
-
-  /// Get formatted time string
-  String get formattedTime {
-    final hour = tanggal.hour.toString().padLeft(2, '0');
-    final minute = tanggal.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 
   /// Get poin berdasarkan status
   static int getPoinByStatus(StatusPresensi status) {
     switch (status) {
       case StatusPresensi.hadir:
-        return 10; // Poin untuk hadir
+        return 1;
       case StatusPresensi.izin:
-        return 5; // Poin untuk izin
+        return 0;
       case StatusPresensi.sakit:
-        return 5; // Poin untuk sakit
+        return 0;
       case StatusPresensi.alpha:
-        return 0; // Poin untuk alpha
+        return 0;
     }
-  }
-
-  @override
-  String toString() {
-    return 'PresensiModel(id: $id, userId: $userId, tanggal: $tanggal, status: ${status.label})';
   }
 
   @override

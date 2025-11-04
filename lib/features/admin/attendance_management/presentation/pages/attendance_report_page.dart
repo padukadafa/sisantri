@@ -1054,14 +1054,17 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       sheet
           .cell(excel_lib.CellIndex.indexByString('C$row'))
           .value = excel_lib.TextCellValue(
-        DateFormat('dd/MM/yyyy').format(record.tanggal),
+        DateFormat('dd/MM/yyyy').format(record.timestamp!),
       );
-      sheet.cell(excel_lib.CellIndex.indexByString('D$row')).value =
-          excel_lib.TextCellValue(DateFormat('HH:mm').format(record.tanggal));
+      sheet
+          .cell(excel_lib.CellIndex.indexByString('D$row'))
+          .value = excel_lib.TextCellValue(
+        DateFormat('HH:mm').format(record.timestamp!),
+      );
       sheet.cell(excel_lib.CellIndex.indexByString('E$row')).value =
           excel_lib.TextCellValue(record.status.label);
       sheet.cell(excel_lib.CellIndex.indexByString('F$row')).value =
-          excel_lib.TextCellValue(record.keterangan ?? '');
+          excel_lib.TextCellValue(record.keterangan);
     }
   }
 

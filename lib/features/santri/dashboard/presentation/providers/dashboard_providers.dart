@@ -5,6 +5,7 @@ import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
 import 'package:sisantri/shared/models/pengumuman_model.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
 final dashboardUserProvider = FutureProvider<UserModel?>((ref) async {
   final currentUser = AuthService.currentUser;
@@ -20,7 +21,7 @@ final todayPresensiProvider = FutureProvider<PresensiModel?>((ref) async {
   final currentUser = AuthService.currentUser;
   if (currentUser == null) return null;
 
-  return await FirestoreService.getTodayPresensi(currentUser.uid);
+  return await PresensiService.getCurrentPresensi(currentUser.uid);
 });
 
 final upcomingKegiatanProvider = StreamProvider<List<JadwalKegiatanModel>>((

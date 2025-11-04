@@ -1,66 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-/// Model untuk data presensi
-class PresensiModel {
-  final String id;
-  final String activity;
-  final String userId;
-  final String userName;
-  final DateTime? timestamp;
-  final String status; // 'hadir', 'terlambat', 'alpha'
-  final String keterangan;
-  final bool isManual;
-  final DateTime createdAt;
-  final String recordedBy;
-  final String recordedByName;
-
-  const PresensiModel({
-    required this.id,
-    required this.userId,
-    required this.userName,
-    required this.status,
-    required this.createdAt,
-    required this.timestamp,
-    required this.isManual,
-    required this.recordedBy,
-    required this.recordedByName,
-    required this.activity,
-    this.keterangan = '',
-  });
-
-  factory PresensiModel.fromJson(Map<String, dynamic> json) {
-    return PresensiModel(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      userName: json['userName'] as String,
-      status: json['status'] as String,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
-      timestamp: json['timestamp'] != null
-          ? (json['timestamp'] as Timestamp).toDate()
-          : null,
-      isManual: json['isManual'] as bool? ?? false,
-      recordedBy: json['recordedBy'] as String? ?? '',
-      recordedByName: json['recordedByName'] as String? ?? '',
-      activity: json['activity'] as String? ?? '',
-      keterangan: json['keterangan'] as String? ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'userName': userName,
-      'status': status,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : null,
-      'isManual': isManual,
-      'recordedBy': recordedBy,
-      'recordedByName': recordedByName,
-      'activity': activity,
-      'keterangan': keterangan,
-    };
-  }
-}
+import 'package:sisantri/shared/models/presensi_model.dart';
 
 class PresensiStatsModel {
   final int totalHadir;
@@ -180,12 +119,64 @@ class PresensiService {
     }
   }
 
-  static Future<List<PresensiModel>> getPresensiToday() async {
+  static Future<List<PresensiModel>> getPresensiToday({String? userId}) async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
-    return getPresensiByPeriod(startDate: startOfDay, endDate: endOfDay);
+    return getPresensiByPeriod(
+      startDate: startOfDay,
+      endDate: endOfDay,
+      userId: userId,
+    );
+  }
+
+  static Future<PresensiModel?> getCurrentPresensi(String userId) async {
+    final startDate = DateTime.now();
+    final endDate = DateTime(
+      startDate.year,
+      startDate.month,
+      startDate.day,
+      23,
+      59,
+      59,
+    );
+
+    final jadwalSnapshot = await _firestore
+        .collection('jadwal')
+        .where('tanggal', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+        .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+        .where('isAktif', isEqualTo: true)
+        .get();
+
+    if (jadwalSnapshot.docs.isEmpty) {
+      return null;
+    }
+
+    jadwalSnapshot.docs.sort((a, b) {
+      final dataA = a.data();
+      final dataB = b.data();
+      final timeA = dataA['waktuMulai'] as String;
+      final timeB = dataB['waktuMulai'] as String;
+      return timeA.compareTo(timeB);
+    });
+
+    final jadwalId = jadwalSnapshot.docs.first.id;
+
+    final presensiSnapshot = await _firestore
+        .collection('presensi')
+        .where('activity', isEqualTo: jadwalId)
+        .where('userId', isEqualTo: userId)
+        .limit(1)
+        .get();
+
+    if (presensiSnapshot.docs.isEmpty) {
+      return null;
+    }
+
+    final doc = presensiSnapshot.docs.first;
+    final data = doc.data();
+    return PresensiModel.fromJson({'id': doc.id, ...data});
   }
 
   static Future<List<PresensiModel>> getPresensiThisWeek() async {
@@ -286,8 +277,8 @@ class PresensiService {
           'type': presensi.status,
           'message': _getActivityMessage(presensi),
           'time': _getTimeAgo(presensi.createdAt),
-          'icon': _getActivityIcon(presensi.status),
-          'color': _getActivityColor(presensi.status),
+          'icon': _getActivityIcon(presensi.status.name),
+          'color': _getActivityColor(presensi.status.name),
         };
       }).toList();
     } catch (e) {
@@ -297,14 +288,14 @@ class PresensiService {
 
   static String _getActivityMessage(PresensiModel presensi) {
     switch (presensi.status) {
-      case 'hadir':
+      case StatusPresensi.hadir:
         return '${presensi.userName} melakukan presensi ${presensi.activity}';
-      case 'terlambat':
-        return '${presensi.userName} terlambat ${presensi.activity}';
-      case 'alpha':
+      case StatusPresensi.izin:
+        return '${presensi.userName} izin ${presensi.activity}';
+      case StatusPresensi.alpha:
         return '${presensi.userName} tidak hadir ${presensi.activity}';
-      default:
-        return '${presensi.userName} - ${presensi.activity}';
+      case StatusPresensi.sakit:
+        return '${presensi.userName} sakit ${presensi.activity}';
     }
   }
 

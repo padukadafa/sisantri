@@ -4,13 +4,13 @@ import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
-/// Provider untuk presensi hari ini dari sistem RFID
 final todayPresensiProvider = FutureProvider.family<PresensiModel?, String>((
   ref,
   userId,
 ) async {
-  return await FirestoreService.getTodayPresensi(userId);
+  return PresensiService.getCurrentPresensi(userId);
 });
 
 /// Provider untuk riwayat presensi dari sistem RFID
@@ -29,7 +29,7 @@ final presensiStatsProvider =
       final currentMonth = DateTime(now.year, now.month);
 
       final monthlyPresensi = allPresensi.where((p) {
-        final presensiDate = DateTime(p.tanggal.year, p.tanggal.month);
+        final presensiDate = DateTime(p.timestamp!.year, p.timestamp!.month);
         return presensiDate.isAtSameMomentAs(currentMonth);
       }).toList();
 
@@ -389,7 +389,7 @@ class PresensiPage extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              presensi.formattedTime,
+                              presensi.timestamp?.toIso8601String() ?? "00:00",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -397,10 +397,10 @@ class PresensiPage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        if (presensi.keterangan?.isNotEmpty == true) ...[
+                        if (presensi.keterangan.isNotEmpty == true) ...[
                           const SizedBox(height: 4),
                           Text(
-                            presensi.keterangan!,
+                            presensi.keterangan,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -792,17 +792,17 @@ class PresensiPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${presensi.formattedDate} • ${presensi.formattedTime}',
+                              '${presensi.timestamp?.toIso8601String()} • ${presensi.timestamp?.toIso8601String() ?? "00:00"}',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 13,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
-                            if (presensi.keterangan?.isNotEmpty == true) ...[
+                            if (presensi.keterangan.isNotEmpty == true) ...[
                               const SizedBox(height: 4),
                               Text(
-                                presensi.keterangan!,
+                                presensi.keterangan,
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 12,
