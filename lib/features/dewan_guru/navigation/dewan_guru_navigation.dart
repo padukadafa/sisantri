@@ -14,27 +14,26 @@ import 'package:sisantri/features/dewan_guru/dashboard/presentation/pages/dewan_
 /// Provider untuk current tab index khusus dewan guru
 final dewaGuruTabProvider = StateProvider<int>((ref) => 0);
 
-/// Provider untuk mendapatkan data user dewan guru dengan real-time updates
-final dewaGuruUserProvider = StreamProvider<UserModel?>((ref) {
-  return AuthService.authStateChanges.asyncMap((user) async {
-    if (user == null) {
+/// Provider untuk mendapatkan data user dewan guru (one-time fetch)
+final dewaGuruUserProvider = FutureProvider<UserModel?>((ref) async {
+  final currentUser = AuthService.currentUser;
+  if (currentUser == null) {
+    return null;
+  }
+
+  try {
+    final userData = await AuthService.getUserData(currentUser.uid);
+
+    // Validasi apakah user memiliki role dewan_guru
+    if (userData != null && userData.isDewaGuru) {
+      return userData;
+    } else {
       return null;
     }
-
-    try {
-      final userData = await AuthService.getUserData(user.uid);
-
-      // Validasi apakah user memiliki role dewan_guru
-      if (userData != null && userData.isDewaGuru) {
-        return userData;
-      } else {
-        return null;
-      }
-    } catch (e) {
-      // Log error dan return null untuk fallback
-      return null;
-    }
-  });
+  } catch (e) {
+    // Log error dan return null untuk fallback
+    return null;
+  }
 });
 
 /// Provider untuk auth state changes
@@ -62,9 +61,11 @@ final dewaGuruDashboardStatsProvider = FutureProvider<Map<String, dynamic>>((
   }
 });
 
-/// Provider untuk real-time presensi hari ini
-final todayPresensiStreamProvider = StreamProvider<List<PresensiModel>>((ref) {
-  return PresensiService.getPresensiTodayStream();
+/// Provider untuk presensi hari ini (one-time fetch)
+final todayPresensiStreamProvider = FutureProvider<List<PresensiModel>>((
+  ref,
+) async {
+  return await PresensiService.getPresensiToday();
 });
 
 /// Provider untuk notifikasi dewan guru

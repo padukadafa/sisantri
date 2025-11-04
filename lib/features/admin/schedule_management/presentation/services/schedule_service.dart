@@ -14,11 +14,8 @@ class ScheduleService {
   /// Tambah jadwal baru dengan attendance generation
   Future<String> addJadwalWithAttendance(JadwalKegiatan jadwal) async {
     try {
-      // Step 1: Save jadwal to Firestore
       final docRef = await _firestore.collection('jadwal').add(jadwal.toJson());
 
-      // Step 2: Generate default attendance records for all active santri
-      // Only generate for non-libur activities
       if (jadwal.kategori != TipeJadwal.libur) {
         await AttendanceService.generateDefaultAttendanceForJadwal(
           jadwalId: docRef.id,

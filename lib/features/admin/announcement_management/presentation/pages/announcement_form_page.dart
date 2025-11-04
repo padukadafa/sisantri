@@ -26,7 +26,6 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
   String _targetAudience = 'all';
   DateTime _tanggalMulai = DateTime.now();
   DateTime? _tanggalBerakhir;
-  bool _isPublished = false;
   bool _isPinned = false;
   bool _isLoading = false;
 
@@ -47,7 +46,6 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
     _targetAudience = announcement.targetAudience;
     _tanggalMulai = announcement.tanggalMulai;
     _tanggalBerakhir = announcement.tanggalBerakhir;
-    _isPublished = announcement.isPublished;
     _isPinned = announcement.isPinned;
   }
 

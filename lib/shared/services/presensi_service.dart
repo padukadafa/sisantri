@@ -3,25 +3,29 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Model untuk data presensi
 class PresensiModel {
   final String id;
+  final String activity;
   final String userId;
   final String userName;
-  final String jenisKegiatan; // 'kajian_tafsir', 'tahfidz_pagi', etc
-  final DateTime tanggal;
-  final DateTime? waktuPresensi;
+  final DateTime? timestamp;
   final String status; // 'hadir', 'terlambat', 'alpha'
-  final bool isRfid; // Apakah presensi menggunakan RFID
+  final String keterangan;
+  final bool isManual;
   final DateTime createdAt;
+  final String recordedBy;
+  final String recordedByName;
 
   const PresensiModel({
     required this.id,
     required this.userId,
     required this.userName,
-    required this.jenisKegiatan,
-    required this.tanggal,
-    this.waktuPresensi,
     required this.status,
-    this.isRfid = false,
     required this.createdAt,
+    required this.timestamp,
+    required this.isManual,
+    required this.recordedBy,
+    required this.recordedByName,
+    required this.activity,
+    this.keterangan = '',
   });
 
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
@@ -29,14 +33,16 @@ class PresensiModel {
       id: json['id'] as String,
       userId: json['userId'] as String,
       userName: json['userName'] as String,
-      jenisKegiatan: json['jenisKegiatan'] as String,
-      tanggal: (json['tanggal'] as Timestamp).toDate(),
-      waktuPresensi: json['waktuPresensi'] != null
-          ? (json['waktuPresensi'] as Timestamp).toDate()
-          : null,
       status: json['status'] as String,
-      isRfid: json['isRfid'] as bool? ?? false,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
+      timestamp: json['timestamp'] != null
+          ? (json['timestamp'] as Timestamp).toDate()
+          : null,
+      isManual: json['isManual'] as bool? ?? false,
+      recordedBy: json['recordedBy'] as String? ?? '',
+      recordedByName: json['recordedByName'] as String? ?? '',
+      activity: json['activity'] as String? ?? '',
+      keterangan: json['keterangan'] as String? ?? '',
     );
   }
 
@@ -44,19 +50,18 @@ class PresensiModel {
     return {
       'userId': userId,
       'userName': userName,
-      'jenisKegiatan': jenisKegiatan,
-      'tanggal': Timestamp.fromDate(tanggal),
-      'waktuPresensi': waktuPresensi != null
-          ? Timestamp.fromDate(waktuPresensi!)
-          : null,
       'status': status,
-      'isRfid': isRfid,
       'createdAt': Timestamp.fromDate(createdAt),
+      'timestamp': timestamp != null ? Timestamp.fromDate(timestamp!) : null,
+      'isManual': isManual,
+      'recordedBy': recordedBy,
+      'recordedByName': recordedByName,
+      'activity': activity,
+      'keterangan': keterangan,
     };
   }
 }
 
-/// Model untuk statistik presensi
 class PresensiStatsModel {
   final int totalHadir;
   final int totalTerlambat;
@@ -77,46 +82,37 @@ class PresensiStatsModel {
   int get totalPresensi => totalHadir + totalTerlambat + totalAlpha;
 }
 
-/// Service untuk mengelola data presensi
 class PresensiService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Get presensi berdasarkan periode
   static Future<List<PresensiModel>> getPresensiByPeriod({
     required DateTime startDate,
     required DateTime endDate,
     String? userId,
-    String? jenisKegiatan,
   }) async {
     try {
-      Query query = _firestore
-          .collection('presensi')
+      final jadwalSnapshot = await _firestore
+          .collection('jadwal')
           .where(
             'tanggal',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
           )
-          .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
-
-      if (userId != null) {
-        query = query.where('userId', isEqualTo: userId);
-      }
-
-      if (jenisKegiatan != null) {
-        query = query.where('jenisKegiatan', isEqualTo: jenisKegiatan);
-      }
-
-      final querySnapshot = await query
-          .orderBy('tanggal', descending: true)
+          .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .where('isAktif', isEqualTo: true)
           .get();
+      final jadwalIds = jadwalSnapshot.docs.map((doc) => doc.id).toList();
+      Query presensiQuery = _firestore
+          .collection('presensi')
+          .where('activity', whereIn: jadwalIds.isNotEmpty ? jadwalIds : ['']);
+      if (userId != null) {
+        presensiQuery = presensiQuery.where('userId', isEqualTo: userId);
+      }
+      final presensiSnapshots = await presensiQuery.get();
 
-      return querySnapshot.docs
-          .map(
-            (doc) => PresensiModel.fromJson({
-              'id': doc.id,
-              ...doc.data() as Map<String, dynamic>,
-            }),
-          )
-          .toList();
+      return presensiSnapshots.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return PresensiModel.fromJson({'id': doc.id, ...data});
+      }).toList();
     } catch (e) {
       throw Exception('Error mengambil data presensi: $e');
     }
@@ -174,7 +170,6 @@ class PresensiService {
         );
       }
 
-      // Sort by persentase kehadiran descending
       statsList.sort(
         (a, b) => b.persentaseKehadiran.compareTo(a.persentaseKehadiran),
       );
@@ -185,7 +180,6 @@ class PresensiService {
     }
   }
 
-  /// Get presensi hari ini
   static Future<List<PresensiModel>> getPresensiToday() async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -194,7 +188,6 @@ class PresensiService {
     return getPresensiByPeriod(startDate: startOfDay, endDate: endOfDay);
   }
 
-  /// Get presensi minggu ini
   static Future<List<PresensiModel>> getPresensiThisWeek() async {
     final now = DateTime.now();
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
@@ -274,30 +267,6 @@ class PresensiService {
     }
   }
 
-  /// Stream untuk realtime presensi hari ini
-  static Stream<List<PresensiModel>> getPresensiTodayStream() {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
-    return _firestore
-        .collection('presensi')
-        .where(
-          'tanggal',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-        )
-        .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
-        .orderBy('tanggal', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) => PresensiModel.fromJson({'id': doc.id, ...doc.data()}),
-              )
-              .toList(),
-        );
-  }
-
   /// Get aktivitas terbaru untuk dashboard
   static Future<List<Map<String, dynamic>>> getRecentActivities({
     int limit = 10,
@@ -329,13 +298,13 @@ class PresensiService {
   static String _getActivityMessage(PresensiModel presensi) {
     switch (presensi.status) {
       case 'hadir':
-        return '${presensi.userName} melakukan presensi ${presensi.jenisKegiatan.replaceAll('_', ' ')}';
+        return '${presensi.userName} melakukan presensi ${presensi.activity}';
       case 'terlambat':
-        return '${presensi.userName} terlambat ${presensi.jenisKegiatan.replaceAll('_', ' ')}';
+        return '${presensi.userName} terlambat ${presensi.activity}';
       case 'alpha':
-        return '${presensi.userName} tidak hadir ${presensi.jenisKegiatan.replaceAll('_', ' ')}';
+        return '${presensi.userName} tidak hadir ${presensi.activity}';
       default:
-        return '${presensi.userName} - ${presensi.jenisKegiatan.replaceAll('_', ' ')}';
+        return '${presensi.userName} - ${presensi.activity}';
     }
   }
 

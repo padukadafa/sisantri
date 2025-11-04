@@ -695,10 +695,6 @@ class _UserManagementPageState extends ConsumerState<UserManagementPage>
     );
   }
 
-  void _showAddUserDialog() {
-    showDialog(context: context, builder: (context) => _AddUserDialog());
-  }
-
   void _showRfidManagementDialog(UserModel user) {
     showDialog(
       context: context,
