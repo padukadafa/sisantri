@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
+import 'package:sisantri/shared/services/presensi_service.dart';
 
 /// Provider untuk data laporan presensi
 final attendanceReportProvider =
@@ -28,63 +29,32 @@ final attendanceReportProvider =
             .where((user) => user.isSantri)
             .toList();
 
-        // Build attendance query with proper date filtering
-        Query attendanceQuery = firestore.collection('presensi');
+        // Use PresensiService to get attendance records with date filtering
+        List<PresensiModel> attendanceRecords;
 
-        // Apply date filter to attendance records
-        if (filter.startDate != null) {
-          attendanceQuery = attendanceQuery.where(
-            'timestamp',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(filter.startDate!),
+        if (filter.startDate != null && filter.endDate != null) {
+          attendanceRecords = await PresensiService.getPresensiByPeriod(
+            startDate: filter.startDate!,
+            endDate: filter.endDate!,
+            userId: filter.userId,
           );
-        }
-        if (filter.endDate != null) {
-          final endOfDay = DateTime(
-            filter.endDate!.year,
-            filter.endDate!.month,
-            filter.endDate!.day,
-            23,
-            59,
-            59,
-          );
-          attendanceQuery = attendanceQuery.where(
-            'timestamp',
-            isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
+        } else {
+          final endDate = DateTime.now();
+          final startDate = DateTime(2020, 1, 1);
+
+          attendanceRecords = await PresensiService.getPresensiByPeriod(
+            startDate: startDate,
+            endDate: endDate,
+            userId: filter.userId,
           );
         }
 
-        // Apply user filter
-        if (filter.userId != null) {
-          attendanceQuery = attendanceQuery.where(
-            'userId',
-            isEqualTo: filter.userId,
-          );
-        }
-
-        // Apply status filter
         if (filter.status != null) {
-          attendanceQuery = attendanceQuery.where(
-            'status',
-            isEqualTo: filter.status,
-          );
+          attendanceRecords = attendanceRecords
+              .where((record) => record.status.name == filter.status)
+              .toList();
         }
 
-        final attendanceSnapshot = await attendanceQuery.get();
-
-        // Parse to PresensiModel
-        final attendanceRecords = <PresensiModel>[];
-        for (var doc in attendanceSnapshot.docs) {
-          try {
-            final data = doc.data() as Map<String, dynamic>;
-            final record = PresensiModel.fromJson({'id': doc.id, ...data});
-            attendanceRecords.add(record);
-          } catch (e) {
-            // Skip invalid records
-            continue;
-          }
-        }
-
-        // Calculate statistics
         final presentCount = attendanceRecords
             .where((a) => a.status == StatusPresensi.hadir)
             .length;
@@ -107,7 +77,6 @@ final attendanceReportProvider =
             : 0.0;
         final attendanceRate = rawAttendanceRate.clamp(0.0, 100.0);
 
-        // Group by user for summary
         final userAttendanceSummary = <String, Map<String, dynamic>>{};
 
         for (final user in users) {
@@ -197,7 +166,6 @@ class AttendanceReportFilter {
 
 /// State provider untuk filter
 final attendanceFilterProvider = StateProvider<AttendanceReportFilter>((ref) {
-  // For debugging: remove date filters to see all data
   return const AttendanceReportFilter();
 });
 
@@ -731,7 +699,12 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
   }
 
   void _showFilterDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => const _FilterDialog());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _FilterBottomSheet(),
+    );
   }
 
   Future<void> _exportToExcel() async {
@@ -1276,16 +1249,16 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
   }
 }
 
-/// Dialog untuk filter laporan
-class _FilterDialog extends ConsumerStatefulWidget {
-  const _FilterDialog();
+class _FilterBottomSheet extends ConsumerStatefulWidget {
+  const _FilterBottomSheet();
 
   @override
-  ConsumerState<_FilterDialog> createState() => _FilterDialogState();
+  ConsumerState<_FilterBottomSheet> createState() => _FilterBottomSheetState();
 }
 
-class _FilterDialogState extends ConsumerState<_FilterDialog> {
+class _FilterBottomSheetState extends ConsumerState<_FilterBottomSheet> {
   late AttendanceReportFilter _tempFilter;
+  String _selectedPreset = 'custom';
 
   @override
   void initState() {
@@ -1293,61 +1266,509 @@ class _FilterDialogState extends ConsumerState<_FilterDialog> {
     _tempFilter = ref.read(attendanceFilterProvider);
   }
 
+  void _applyPreset(String preset) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final endToday = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+    setState(() {
+      _selectedPreset = preset;
+      switch (preset) {
+        case 'today':
+          _tempFilter = AttendanceReportFilter(
+            startDate: today,
+            endDate: endToday,
+          );
+          break;
+        case 'week':
+          _tempFilter = AttendanceReportFilter(
+            startDate: today.subtract(const Duration(days: 7)),
+            endDate: endToday,
+          );
+          break;
+        case 'month':
+          _tempFilter = AttendanceReportFilter(
+            startDate: today.subtract(const Duration(days: 30)),
+            endDate: endToday,
+          );
+          break;
+        case 'all':
+          _tempFilter = const AttendanceReportFilter();
+          break;
+        case 'custom':
+        default:
+          break;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Filter Laporan'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Date range
-            ListTile(
-              title: const Text('Tanggal Mulai'),
-              subtitle: Text(
-                _tempFilter.startDate != null
-                    ? DateFormat('dd MMM yyyy').format(_tempFilter.startDate!)
-                    : 'Pilih tanggal',
-              ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectStartDate(),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
             ),
-            ListTile(
-              title: const Text('Tanggal Akhir'),
-              subtitle: Text(
-                _tempFilter.endDate != null
-                    ? DateFormat('dd MMM yyyy').format(_tempFilter.endDate!)
-                    : 'Pilih tanggal',
+          ),
+
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.filter_alt,
+                    color: AppTheme.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Filter Laporan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Pilih periode atau atur custom',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                  color: Colors.grey[600],
+                ),
+              ],
+            ),
+          ),
+
+          // Content
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Quick Presets
+                  const Text(
+                    'Preset Cepat',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Preset buttons in grid
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 2.5,
+                    children: [
+                      _buildPresetButton(
+                        'Hari Ini',
+                        'today',
+                        Icons.today,
+                        Colors.blue,
+                      ),
+                      _buildPresetButton(
+                        '7 Hari Terakhir',
+                        'week',
+                        Icons.date_range,
+                        Colors.green,
+                      ),
+                      _buildPresetButton(
+                        '30 Hari Terakhir',
+                        'month',
+                        Icons.calendar_month,
+                        Colors.orange,
+                      ),
+                      _buildPresetButton(
+                        'Semua Data',
+                        'all',
+                        Icons.all_inclusive,
+                        Colors.purple,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Divider with text
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'atau atur custom',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey[300])),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Custom Date Range
+                  Row(
+                    children: [
+                      const Text(
+                        'Periode Custom',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_selectedPreset != 'custom')
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _selectedPreset = 'custom';
+                            });
+                          },
+                          icon: const Icon(Icons.edit_calendar, size: 16),
+                          label: const Text('Edit'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  _buildDateCard(
+                    'Tanggal Mulai',
+                    _tempFilter.startDate,
+                    Icons.event,
+                    Colors.blue,
+                    () => _selectStartDate(),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _buildDateCard(
+                    'Tanggal Akhir',
+                    _tempFilter.endDate,
+                    Icons.event_available,
+                    Colors.green,
+                    () => _selectEndDate(),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Info banner
+                  if (_tempFilter.startDate != null &&
+                      _tempFilter.endDate != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppTheme.primaryColor.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 18,
+                            color: AppTheme.primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Menampilkan data ${_getDaysDifference()} hari',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+                ],
               ),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: () => _selectEndDate(),
+            ),
+          ),
+
+          // Bottom Actions
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  // Reset button
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _tempFilter = const AttendanceReportFilter();
+                          _selectedPreset = 'all';
+                        });
+                      },
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Reset'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey[300]!),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Apply button
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ref.read(attendanceFilterProvider.notifier).state =
+                            _tempFilter;
+                        Navigator.pop(context);
+
+                        // Show feedback
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(_getFilterSummary()),
+                              ],
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text(
+                        'Terapkan Filter',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPresetButton(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    final isSelected = _selectedPreset == value;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _applyPreset(value),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? color : color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : color.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: isSelected ? Colors.white : color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : color,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isSelected)
+                const Icon(Icons.check_circle, size: 16, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateCard(
+    String label,
+    DateTime? date,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: date != null ? color.withOpacity(0.08) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: date != null ? color.withOpacity(0.5) : Colors.grey[300]!,
+            width: date != null ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: date != null
+                    ? color.withOpacity(0.15)
+                    : Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: date != null ? color : Colors.grey[400],
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    date != null
+                        ? DateFormat('dd MMMM yyyy').format(date)
+                        : 'Pilih tanggal',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: date != null ? Colors.black87 : Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.calendar_today,
+              color: date != null ? color : Colors.grey[400],
+              size: 18,
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            // Show all data (no date filter)
-            setState(() {
-              _tempFilter = const AttendanceReportFilter();
-            });
-          },
-          child: const Text('Tampilkan Semua'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            ref.read(attendanceFilterProvider.notifier).state = _tempFilter;
-            Navigator.pop(context);
-          },
-          child: const Text('Terapkan'),
-        ),
-      ],
     );
+  }
+
+  String _getDaysDifference() {
+    if (_tempFilter.startDate == null || _tempFilter.endDate == null) {
+      return '0';
+    }
+    return _tempFilter.endDate!
+        .difference(_tempFilter.startDate!)
+        .inDays
+        .toString();
+  }
+
+  String _getFilterSummary() {
+    if (_tempFilter.startDate == null && _tempFilter.endDate == null) {
+      return 'Menampilkan semua data';
+    }
+    return 'Filter diterapkan untuk ${_getDaysDifference()} hari';
   }
 
   Future<void> _selectStartDate() async {
@@ -1356,11 +1777,20 @@ class _FilterDialogState extends ConsumerState<_FilterDialog> {
       initialDate: _tempFilter.startDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (date != null) {
       setState(() {
         _tempFilter = _tempFilter.copyWith(startDate: date);
+        _selectedPreset = 'custom';
       });
     }
   }
@@ -1371,11 +1801,20 @@ class _FilterDialogState extends ConsumerState<_FilterDialog> {
       initialDate: _tempFilter.endDate ?? DateTime.now(),
       firstDate: _tempFilter.startDate ?? DateTime(2020),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (date != null) {
       setState(() {
         _tempFilter = _tempFilter.copyWith(endDate: date);
+        _selectedPreset = 'custom';
       });
     }
   }

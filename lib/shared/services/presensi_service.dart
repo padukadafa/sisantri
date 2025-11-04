@@ -39,6 +39,9 @@ class PresensiService {
           .where('tanggal', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
           .where('isAktif', isEqualTo: true)
           .get();
+      print(
+        "Found ${jadwalSnapshot.docs.length} jadwal in the specified period.",
+      );
       final jadwalIds = jadwalSnapshot.docs.map((doc) => doc.id).toList();
       Query presensiQuery = _firestore
           .collection('presensi')
