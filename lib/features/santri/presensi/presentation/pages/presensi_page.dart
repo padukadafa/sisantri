@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
-import 'package:sisantri/shared/services/firestore_service.dart';
 import 'package:sisantri/shared/services/presensi_service.dart';
 
+/// Provider untuk presensi hari ini
 final todayPresensiProvider = FutureProvider.family<PresensiModel?, String>((
   ref,
   userId,
@@ -13,25 +14,32 @@ final todayPresensiProvider = FutureProvider.family<PresensiModel?, String>((
   return PresensiService.getCurrentPresensi(userId);
 });
 
-/// Provider untuk riwayat presensi dari sistem RFID
+/// Provider untuk riwayat presensi bulan ini menggunakan PresensiService
 final presensiHistoryProvider =
-    StreamProvider.family<List<PresensiModel>, String>((ref, userId) {
-      return FirestoreService.getPresensiByUser(userId);
+    FutureProvider.family<List<PresensiModel>, String>((ref, userId) async {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+
+      return PresensiService.getPresensiByPeriod(
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+        userId: userId,
+      );
     });
 
-/// Provider untuk statistik presensi
+/// Provider untuk statistik presensi bulan ini
 final presensiStatsProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, userId) async {
-      final List<PresensiModel> allPresensi =
-          await FirestoreService.getPresensiByUser(userId).first;
-
       final now = DateTime.now();
-      final currentMonth = DateTime(now.year, now.month);
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
 
-      final monthlyPresensi = allPresensi.where((p) {
-        final presensiDate = DateTime(p.timestamp!.year, p.timestamp!.month);
-        return presensiDate.isAtSameMomentAs(currentMonth);
-      }).toList();
+      final monthlyPresensi = await PresensiService.getPresensiByPeriod(
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+        userId: userId,
+      );
 
       final totalHadir = monthlyPresensi
           .where((p) => p.status == StatusPresensi.hadir)
@@ -71,21 +79,7 @@ class PresensiPage extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Presensi RFID'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.invalidate(todayPresensiProvider);
-              ref.invalidate(presensiHistoryProvider);
-              ref.invalidate(presensiStatsProvider);
-            },
-            tooltip: 'Refresh Data',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Presensi RFID'), centerTitle: true),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(todayPresensiProvider);
@@ -98,14 +92,6 @@ class PresensiPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Info RFID System
-              _buildRfidSystemInfo(context),
-
-              const SizedBox(height: 20),
-
-              // Presensi Hari Ini dari RFID
-              _buildTodayPresensi(context, ref, currentUser.uid),
-
               const SizedBox(height: 20),
 
               // Statistik Presensi Bulan Ini
@@ -119,304 +105,6 @@ class PresensiPage extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  /// Info Sistem RFID
-  Widget _buildRfidSystemInfo(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withAlpha(15),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppTheme.primaryColor.withAlpha(50),
-                width: 2,
-              ),
-            ),
-            child: const Icon(
-              Icons.contactless,
-              color: AppTheme.primaryColor,
-              size: 32,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Sistem Presensi RFID',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2E2E2E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Presensi direkam otomatis saat Anda melakukan tap kartu RFID pada reader yang tersedia di pesantren',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.green.withAlpha(15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withAlpha(50), width: 1),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
-                SizedBox(width: 8),
-                Text(
-                  'Sistem Aktif',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Presensi hari ini dari RFID
-  Widget _buildTodayPresensi(
-    BuildContext context,
-    WidgetRef ref,
-    String userId,
-  ) {
-    final todayPresensi = ref.watch(todayPresensiProvider(userId));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(Icons.today, color: AppTheme.primaryColor, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'Presensi Hari Ini',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2E2E2E),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        todayPresensi.when(
-          loading: () => Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-            ),
-            child: const Center(child: CircularProgressIndicator()),
-          ),
-          error: (error, stack) => Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-            ),
-            child: Center(
-              child: Column(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 32),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Error: $error',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          data: (presensi) {
-            if (presensi == null) {
-              return Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-                ),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withAlpha(15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.orange.withAlpha(50),
-                            width: 1,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.contactless_outlined,
-                          color: Colors.orange,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Belum ada presensi hari ini',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2E2E2E),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap kartu RFID Anda pada reader untuk melakukan presensi',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: presensi.status.color.withAlpha(15),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: presensi.status.color.withAlpha(50),
-                        width: 2,
-                      ),
-                    ),
-                    child: Icon(
-                      presensi.status.icon,
-                      color: presensi.status.color,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              presensi.status.label,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: presensi.status.color,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withAlpha(15),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: Colors.green.withAlpha(50),
-                                  width: 1,
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.contactless,
-                                    color: Colors.green,
-                                    size: 14,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'RFID',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.access_time,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              presensi.timestamp?.toIso8601String() ?? "00:00",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (presensi.keterangan.isNotEmpty == true) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            presensi.keterangan,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ],
     );
   }
 
@@ -694,7 +382,7 @@ class PresensiPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Belum ada riwayat presensi',
+                        'Belum ada riwayat presensi bulan ini',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 14,
@@ -792,7 +480,9 @@ class PresensiPage extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${presensi.timestamp?.toIso8601String()} • ${presensi.timestamp?.toIso8601String() ?? "00:00"}',
+                              presensi.timestamp != null
+                                  ? '${DateFormat('dd MMM yyyy').format(presensi.timestamp!)} • ${DateFormat('HH:mm').format(presensi.timestamp!)}'
+                                  : 'Tanggal tidak tersedia',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 13,

@@ -41,7 +41,6 @@ class LeaderboardPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Filter Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),

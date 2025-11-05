@@ -55,7 +55,6 @@ class AnnouncementService {
         });
   }
 
-  /// Get recent pengumuman (limited, stream)
   static Stream<List<PengumumanModel>> getRecentPengumuman({int limit = 5}) {
     return _firestore
         .collection(_collectionName)
