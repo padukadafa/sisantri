@@ -22,7 +22,6 @@ class AnnouncementManagementPage extends ConsumerWidget {
         children: [
           AnnouncementStatsBar(stats: stats),
 
-          // const AnnouncementFilterChips(),
           Expanded(
             child: announcementsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -160,15 +159,11 @@ class AnnouncementManagementPage extends ConsumerWidget {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-
               try {
-                // Delete announcement using AnnouncementService
                 await AnnouncementService.deletePengumuman(announcementId);
 
-                // Refresh the list
                 ref.invalidate(announcementProvider);
 
-                // Show success message
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

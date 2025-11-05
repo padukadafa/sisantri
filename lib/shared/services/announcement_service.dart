@@ -18,7 +18,7 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+                    PengumumanModel.fromJson({...doc.data(), 'id': doc.id}),
               )
               .toList();
         });

@@ -53,6 +53,19 @@ onSnapshot(colRefPengumuman, (snapshot) => {
       if (pengumumanData.isSended) {
         return;
       }
+      if (!pengumumanData.isPublished) {
+        return;
+      }
+      if (pengumumanData.tanggalMulai) {
+        const tanggalMulai = new Date(pengumumanData.tanggalMulai);
+        const now = new Date();
+        if (tanggalMulai.getTime() > now.getTime()) {
+          console.log(
+            `Pengumuman ${docId} belum waktunya. Tanggal mulai: ${tanggalMulai}, Sekarang: ${now}`
+          );
+          return;
+        }
+      }
       const tokens = [];
       var users;
       if (pengumumanData.targetAudience === "santri") {
@@ -84,8 +97,8 @@ onSnapshot(colRefPengumuman, (snapshot) => {
         await sendNotificationToDevices(
           tokens,
           "Pengumuman Baru",
-          `Ada pengumuman baru dari ${data.authorName}: ${
-            data.konten ? data.konten?.slice(0, 20) : ""
+          `Ada pengumuman baru dari ${pengumumanData.createdByName}: ${
+            pengumumanData.konten ? pengumumanData.konten?.slice(0, 20) : ""
           }...`
         );
       }
