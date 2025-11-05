@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/services/announcement_service.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/providers/announcement_providers.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_card.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_stats_bar.dart';
@@ -162,11 +162,8 @@ class AnnouncementManagementPage extends ConsumerWidget {
               Navigator.pop(context);
 
               try {
-                // Delete announcement from Firestore
-                await FirebaseFirestore.instance
-                    .collection('pengumuman')
-                    .doc(announcementId)
-                    .delete();
+                // Delete announcement using AnnouncementService
+                await AnnouncementService.deletePengumuman(announcementId);
 
                 // Refresh the list
                 ref.invalidate(announcementProvider);

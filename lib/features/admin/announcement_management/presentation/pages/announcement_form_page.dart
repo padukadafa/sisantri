@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/services/announcement_service.dart';
 import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 
@@ -354,7 +354,6 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
   }
 
   Future<void> _saveAnnouncement({required bool published}) async {
-    final firestore = FirebaseFirestore.instance;
     final currentUser = AuthService.currentUser;
 
     if (currentUser == null) {
@@ -362,35 +361,37 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
     }
 
     final now = DateTime.now();
-    final data = {
-      'judul': _judulController.text.trim(),
-      'konten': _kontenController.text.trim(),
-      'kategori': _kategori,
-      'prioritas': _prioritas,
-      'createdBy': currentUser.uid,
-      'createdByName': currentUser.displayName ?? 'Admin',
-      'targetAudience': _targetAudience,
-      'targetRoles': <String>[],
-      'targetClasses': <String>[],
-      'lampiranUrl': null,
-      'tanggalMulai': _tanggalMulai.toIso8601String(),
-      'tanggalBerakhir': _tanggalBerakhir?.toIso8601String(),
-      'isPublished': published,
-      'isPinned': _isPinned,
-      'viewCount': widget.announcement?.viewCount ?? 0,
-      'updatedAt': now.toIso8601String(),
-    };
+
+    final pengumumanModel = PengumumanModel(
+      id: widget.announcement?.id ?? '',
+      judul: _judulController.text.trim(),
+      konten: _kontenController.text.trim(),
+      kategori: _kategori,
+      prioritas: _prioritas,
+      createdBy: currentUser.uid,
+      createdByName: currentUser.displayName ?? 'Admin',
+      targetAudience: _targetAudience,
+      targetRoles: const [],
+      targetClasses: const [],
+      lampiranUrl: null,
+      tanggalMulai: _tanggalMulai,
+      tanggalBerakhir: _tanggalBerakhir,
+      isPublished: published,
+      isPinned: _isPinned,
+      viewCount: widget.announcement?.viewCount ?? 0,
+      createdAt: widget.announcement?.createdAt ?? now,
+      updatedAt: now,
+    );
 
     if (widget.announcement != null) {
       // Update existing
-      await firestore
-          .collection('pengumuman')
-          .doc(widget.announcement!.id)
-          .update(data);
+      await AnnouncementService.updatePengumuman(
+        widget.announcement!.id,
+        pengumumanModel,
+      );
     } else {
       // Create new
-      data['createdAt'] = now.toIso8601String();
-      await firestore.collection('pengumuman').add(data);
+      await AnnouncementService.addPengumuman(pengumumanModel);
     }
   }
 }

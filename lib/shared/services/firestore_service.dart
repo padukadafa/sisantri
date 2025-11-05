@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 import 'package:sisantri/shared/services/presensi_service.dart';
+import 'package:sisantri/shared/services/announcement_service.dart';
 import '../models/user_model.dart';
 import '../models/jadwal_pengajian_model.dart';
 import '../models/jadwal_kegiatan_model.dart';
 import '../models/presensi_model.dart';
-import '../models/pengumuman_model.dart';
 import '../models/leaderboard_model.dart';
 
 /// Service untuk mengelola operasi Firestore
+/// Note: Untuk operasi pengumuman, gunakan AnnouncementService
 class FirestoreService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -183,50 +185,6 @@ class FirestoreService {
     }
   }
 
-  // ===== PENGUMUMAN OPERATIONS =====
-
-  /// Get pengumuman
-  static Stream<List<PengumumanModel>> getPengumuman() {
-    return _firestore
-        .collection('pengumuman')
-        .orderBy('tanggal', descending: true)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
-              )
-              .toList(),
-        );
-  }
-
-  /// Get pengumuman terbaru (limit 5)
-  static Stream<List<PengumumanModel>> getRecentPengumuman() {
-    return _firestore
-        .collection('pengumuman')
-        .orderBy('tanggal', descending: true)
-        .limit(5)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map(
-                (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
-              )
-              .toList(),
-        );
-  }
-
-  /// Tambah pengumuman
-  static Future<void> addPengumuman(PengumumanModel pengumuman) async {
-    try {
-      await _firestore.collection('pengumuman').add(pengumuman.toJson());
-    } catch (e) {
-      throw Exception('Error menambah pengumuman: $e');
-    }
-  }
-
   // ===== LEADERBOARD OPERATIONS =====
 
   /// Get leaderboard santri
@@ -297,16 +255,11 @@ class FirestoreService {
           )
           .toList();
 
-      // Get recent pengumuman
-      final recentPengumumanSnapshot = await _firestore
-          .collection('pengumuman')
-          .orderBy('tanggal', descending: true)
-          .limit(3)
-          .get();
-
-      final recentPengumuman = recentPengumumanSnapshot.docs
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
-          .toList();
+      // Get recent pengumuman - use AnnouncementService
+      final recentPengumumanStream = AnnouncementService.getRecentPengumuman(
+        limit: 3,
+      );
+      final recentPengumuman = await recentPengumumanStream.first;
 
       return {
         'user': user,
@@ -317,5 +270,19 @@ class FirestoreService {
     } catch (e) {
       throw Exception('Error mengambil data dashboard: $e');
     }
+  }
+
+  // ===== PENGUMUMAN OPERATIONS (Wrapper untuk AnnouncementService) =====
+
+  /// Get recent pengumuman (wrapper method)
+  /// Gunakan AnnouncementService.getRecentPengumuman() untuk lebih banyak opsi
+  static Stream<List<PengumumanModel>> getRecentPengumuman({int limit = 5}) {
+    return AnnouncementService.getRecentPengumuman(limit: limit);
+  }
+
+  /// Get all pengumuman (wrapper method)
+  /// Gunakan AnnouncementService untuk operasi pengumuman lainnya
+  static Stream<List<PengumumanModel>> getAllPengumuman() {
+    return AnnouncementService.getAllPengumuman();
   }
 }

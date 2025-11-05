@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
@@ -20,12 +21,14 @@ final notificationsProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
       final recentPengumuman =
           await FirestoreService.getRecentPengumuman().first;
       for (final pengumuman in recentPengumuman.take(2)) {
-        if (pengumuman.isPenting) {
+        if (pengumuman.isHighPriority) {
           notifications.add({
             'type': 'pengumuman',
             'title': 'Pengumuman Penting',
             'message': pengumuman.judul,
-            'time': pengumuman.formattedTanggal,
+            'time': DateFormat(
+              'dd MMM yyyy HH:mm',
+            ).format(pengumuman.createdAt),
             'icon': Icons.campaign,
             'color': Colors.red,
           });

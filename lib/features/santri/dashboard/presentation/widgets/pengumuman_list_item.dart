@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/shared/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 
 class PengumumanListItem extends StatelessWidget {
   final PengumumanModel item;
@@ -24,20 +25,20 @@ class PengumumanListItem extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: item.isPenting
+              color: item.isHighPriority
                   ? Colors.red.withAlpha(15)
                   : AppTheme.primaryColor.withAlpha(15),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: item.isPenting
+                color: item.isHighPriority
                     ? Colors.red.withAlpha(50)
                     : AppTheme.primaryColor.withAlpha(50),
                 width: 1,
               ),
             ),
             child: Icon(
-              item.isPenting ? Icons.priority_high : Icons.campaign,
-              color: item.isPenting ? Colors.red : AppTheme.primaryColor,
+              item.isHighPriority ? Icons.priority_high : Icons.campaign,
+              color: item.isHighPriority ? Colors.red : AppTheme.primaryColor,
               size: 20,
             ),
           ),
@@ -60,7 +61,7 @@ class PengumumanListItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (item.isPenting)
+                    if (item.isHighPriority)
                       Container(
                         margin: const EdgeInsets.only(left: 8),
                         padding: const EdgeInsets.symmetric(
@@ -88,7 +89,7 @@ class PengumumanListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  item.isi,
+                  item.konten,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 13,
@@ -99,7 +100,7 @@ class PengumumanListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  item.formattedTanggal,
+                  DateFormat('dd MMM yyyy HH:mm').format(item.createdAt),
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 11,

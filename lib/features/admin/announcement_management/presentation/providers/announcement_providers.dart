@@ -1,20 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/shared/services/announcement_service.dart';
 
 /// Provider untuk semua pengumuman
 final announcementProvider = StreamProvider<List<PengumumanModel>>((ref) {
-  return FirebaseFirestore.instance
-      .collection('pengumuman')
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snapshot) {
-        return snapshot.docs
-            .map(
-              (doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
-            )
-            .toList();
-      });
+  return AnnouncementService.getAllPengumuman();
 });
 
 /// Provider untuk pengumuman yang aktif saja

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/shared/services/firestore_service.dart';
-import 'package:sisantri/shared/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/shared/services/announcement_service.dart';
 
 /// Provider untuk pengumuman
 final pengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
-  return FirestoreService.getPengumuman();
+  return AnnouncementService.getActivePengumuman();
 });
 
 /// Provider untuk filter pengumuman
@@ -161,7 +162,9 @@ class PengumumanPage extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: pengumuman.isPenting ? Colors.red[200]! : Colors.grey[200]!,
+          color: pengumuman.isHighPriority
+              ? Colors.red[200]!
+              : Colors.grey[200]!,
           width: 1,
         ),
         boxShadow: [
@@ -190,22 +193,22 @@ class PengumumanPage extends ConsumerWidget {
                     height: 48,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: pengumuman.isPenting
+                      color: pengumuman.isHighPriority
                           ? Colors.red[50]
                           : AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: pengumuman.isPenting
+                        color: pengumuman.isHighPriority
                             ? Colors.red[200]!
                             : AppTheme.primaryColor.withOpacity(0.3),
                         width: 1,
                       ),
                     ),
                     child: Icon(
-                      pengumuman.isPenting
+                      pengumuman.isHighPriority
                           ? Icons.priority_high
                           : Icons.campaign,
-                      color: pengumuman.isPenting
+                      color: pengumuman.isHighPriority
                           ? Colors.red[600]
                           : AppTheme.primaryColor,
                       size: 24,
@@ -234,7 +237,7 @@ class PengumumanPage extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (pengumuman.isPenting)
+                            if (pengumuman.isHighPriority)
                               Container(
                                 margin: const EdgeInsets.only(left: 8),
                                 padding: const EdgeInsets.symmetric(
@@ -265,7 +268,7 @@ class PengumumanPage extends ConsumerWidget {
 
                         // Content preview
                         Text(
-                          pengumuman.isi,
+                          pengumuman.konten,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -287,7 +290,7 @@ class PengumumanPage extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              pengumuman.authorName ?? 'Admin',
+                              pengumuman.createdByName,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -302,7 +305,9 @@ class PengumumanPage extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              pengumuman.formattedTanggal,
+                              DateFormat(
+                                'dd MMM yyyy HH:mm',
+                              ).format(pengumuman.createdAt),
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -367,7 +372,7 @@ class PengumumanPage extends ConsumerWidget {
                         children: [
                           Row(
                             children: [
-                              if (pengumuman.isPenting) ...[
+                              if (pengumuman.isHighPriority) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
@@ -454,14 +459,16 @@ class PengumumanPage extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    pengumuman.authorName ?? 'Admin',
+                                    pengumuman.createdByName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       color: Color(0xFF2E2E2E),
                                     ),
                                   ),
                                   Text(
-                                    pengumuman.formattedTanggal,
+                                    DateFormat(
+                                      'dd MMM yyyy HH:mm',
+                                    ).format(pengumuman.createdAt),
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                       fontSize: 12,
@@ -478,7 +485,7 @@ class PengumumanPage extends ConsumerWidget {
 
                       // Content
                       Text(
-                        pengumuman.isi,
+                        pengumuman.konten,
                         style: const TextStyle(
                           fontSize: 16,
                           height: 1.6,
@@ -504,9 +511,9 @@ class PengumumanPage extends ConsumerWidget {
   ) {
     switch (filter) {
       case 'penting':
-        return pengumumanList.where((p) => p.isPenting).toList();
+        return pengumumanList.where((p) => p.isHighPriority).toList();
       case 'umum':
-        return pengumumanList.where((p) => !p.isPenting).toList();
+        return pengumumanList.where((p) => !p.isHighPriority).toList();
       default:
         return pengumumanList;
     }
