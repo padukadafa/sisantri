@@ -425,6 +425,17 @@ class AnnouncementService {
     }
   }
 
+  /// Increment view count
+  static Future<void> incrementViewCount(String id) async {
+    try {
+      await _firestore.collection(_collectionName).doc(id).update({
+        'viewCount': FieldValue.increment(1),
+      });
+    } catch (e) {
+      throw Exception('Error incrementing view count: $e');
+    }
+  }
+
   /// Get total count pengumuman
   static Future<int> getTotalPengumumanCount() async {
     try {
