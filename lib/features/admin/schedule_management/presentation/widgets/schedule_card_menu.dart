@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 
 /// Widget untuk menu actions pada schedule card
 class ScheduleCardMenu extends StatelessWidget {
-  final JadwalKegiatan jadwal;
+  final JadwalModel jadwal;
   final VoidCallback? onEdit;
   final VoidCallback? onDuplicate;
   final VoidCallback? onToggleStatus;

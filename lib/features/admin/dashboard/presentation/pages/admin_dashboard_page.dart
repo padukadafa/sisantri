@@ -59,7 +59,7 @@ final adminStatsProvider =
           }
         }
 
-        final periodStartDate = today.subtract(Duration(days: period.days));
+        final periodStartDate = today.subtract(Duration(days: period.days - 1));
         final periodStart = DateTime(
           periodStartDate.year,
           periodStartDate.month,
@@ -216,6 +216,7 @@ class AdminDashboardPage extends ConsumerWidget {
   Widget _buildStatsCards(Map<String, dynamic> stats) {
     final presentCount = stats['presentCount'] ?? 0;
     final totalSantri = stats['totalSantri'] ?? 0;
+    final todayAttendance = stats['todayAttendance'] ?? 0;
     final period = stats['period'] as PeriodFilter;
 
     return GridView.count(
@@ -238,8 +239,8 @@ class AdminDashboardPage extends ConsumerWidget {
           Colors.green,
         ),
         _buildStatCard(
-          'Santri Hadir Hari Ini',
-          '$presentCount / $totalSantri',
+          'Kehadiran Hari Ini',
+          '$presentCount / $todayAttendance',
           Icons.check_circle_outline,
           Colors.orange,
         ),

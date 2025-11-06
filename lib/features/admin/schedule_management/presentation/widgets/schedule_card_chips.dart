@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 
 /// Widget untuk chips kategori dan status pada schedule card
 class ScheduleCardChips extends StatelessWidget {
-  final JadwalKegiatan jadwal;
+  final JadwalModel jadwal;
 
   const ScheduleCardChips({super.key, required this.jadwal});
 

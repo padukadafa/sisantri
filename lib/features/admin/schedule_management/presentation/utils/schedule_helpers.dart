@@ -75,17 +75,13 @@ class ScheduleHelpers {
   /// Get warna berdasarkan kategori jadwal
   static Color getKategoriColor(TipeJadwal kategori) {
     switch (kategori) {
-      case TipeJadwal.kajian:
-        return Colors.blue;
       case TipeJadwal.tahfidz:
         return Colors.purple;
-      case TipeJadwal.kerjaBakti:
+      case TipeJadwal.bacaan:
         return Colors.orange;
       case TipeJadwal.olahraga:
         return Colors.red;
       case TipeJadwal.pengajian:
-        return Colors.green;
-      case TipeJadwal.libur:
         return Colors.green;
       default:
         return Colors.grey;
@@ -95,22 +91,16 @@ class ScheduleHelpers {
   /// Get display name untuk kategori jadwal
   static String getKategoriDisplayName(TipeJadwal kategori) {
     switch (kategori) {
-      case TipeJadwal.kajian:
-        return 'KAJIAN';
       case TipeJadwal.tahfidz:
         return 'TAHFIDZ';
-      case TipeJadwal.kerjaBakti:
-        return 'KERJA BAKTI';
+      case TipeJadwal.bacaan:
+        return 'BACAN';
       case TipeJadwal.olahraga:
         return 'OLAHRAGA';
-      case TipeJadwal.libur:
-        return 'LIBUR';
       case TipeJadwal.pengajian:
         return 'PENGAJIAN';
       case TipeJadwal.kegiatan:
         return 'KEGIATAN';
-      case TipeJadwal.umum:
-        return 'UMUM';
     }
   }
 

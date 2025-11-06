@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 import '../providers/schedule_providers.dart';
 import '../utils/schedule_helpers.dart';
 import 'schedule_empty_state.dart';
@@ -9,10 +9,10 @@ import 'schedule_date_group.dart';
 
 /// Widget untuk menampilkan list jadwal dengan filter
 class ScheduleListView extends ConsumerWidget {
-  final List<JadwalKegiatan> jadwalList;
+  final List<JadwalModel> jadwalList;
   final VoidCallback onAddPressed;
-  final Function(JadwalKegiatan) onJadwalTap;
-  final Function(JadwalKegiatan)? onJadwalDelete;
+  final Function(JadwalModel) onJadwalTap;
+  final Function(JadwalModel)? onJadwalDelete;
 
   const ScheduleListView({
     super.key,
@@ -66,8 +66,8 @@ class ScheduleListView extends ConsumerWidget {
     );
   }
 
-  List<JadwalKegiatan> _filterJadwal(
-    List<JadwalKegiatan> jadwalList,
+  List<JadwalModel> _filterJadwal(
+    List<JadwalModel> jadwalList,
     ScheduleFilter filter,
   ) {
     final now = DateTime.now();
@@ -126,10 +126,10 @@ class ScheduleListView extends ConsumerWidget {
     }
   }
 
-  Map<String, List<JadwalKegiatan>> _groupJadwalByDate(
-    List<JadwalKegiatan> jadwalList,
+  Map<String, List<JadwalModel>> _groupJadwalByDate(
+    List<JadwalModel> jadwalList,
   ) {
-    final grouped = <String, List<JadwalKegiatan>>{};
+    final grouped = <String, List<JadwalModel>>{};
 
     for (final jadwal in jadwalList) {
       final dateKey = ScheduleHelpers.formatDateKey(jadwal.tanggal);

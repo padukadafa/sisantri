@@ -7,14 +7,13 @@ import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'package:sisantri/shared/services/attendance_service.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 
-import '../models/jadwal_kegiatan_model.dart';
 import '../widgets/form_sections/basic_info_form_section.dart';
 import '../widgets/form_sections/date_time_form_section.dart';
 import '../widgets/form_sections/kategori_form_section.dart';
+import '../widgets/form_sections/materi_form_section.dart';
 
-/// Halaman untuk menambah/edit jadwal kegiatan (Refactored)
 class AddEditJadwalPage extends ConsumerStatefulWidget {
-  final JadwalKegiatan? jadwal;
+  final JadwalModel? jadwal;
 
   const AddEditJadwalPage({super.key, this.jadwal});
 
@@ -29,20 +28,33 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
   final _deskripsiController = TextEditingController();
   final _tempatController = TextEditingController();
 
+  // Controllers untuk materi kajian
+  String? _selectedPemateriId;
+  String? _selectedPemateriNama;
+  String? _selectedMateriId;
+  String? _selectedMateriNama;
+  final _temaController = TextEditingController();
+  final _surahController = TextEditingController();
+  final _ayatMulaiController = TextEditingController();
+  final _ayatSelesaiController = TextEditingController();
+  final _halamanMulaiController = TextEditingController();
+  final _halamanSelesaiController = TextEditingController();
+  final _hadistMulaiController = TextEditingController();
+  final _hadistSelesaiController = TextEditingController();
+
   DateTime? _selectedDate;
-  TipeJadwal _selectedKategori = TipeJadwal.umum;
-  TimeOfDay _waktuMulai = const TimeOfDay(hour: 8, minute: 0);
-  TimeOfDay _waktuSelesai = const TimeOfDay(hour: 9, minute: 0);
+  TipeJadwal _selectedKategori = TipeJadwal.kegiatan;
+  String _waktuMulai = '08:00';
+  String _waktuSelesai = '09:00';
   bool _isAktif = true;
   bool _isLoading = false;
 
   final List<TipeJadwal> _kategoriOptions = [
-    TipeJadwal.kajian,
+    TipeJadwal.pengajian,
     TipeJadwal.tahfidz,
-    TipeJadwal.kerjaBakti,
+    TipeJadwal.bacaan,
     TipeJadwal.olahraga,
-    TipeJadwal.libur,
-    TipeJadwal.umum,
+    TipeJadwal.kegiatan,
   ];
 
   @override
@@ -54,13 +66,36 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
   void _initializeForm() {
     if (widget.jadwal != null) {
       _namaController.text = widget.jadwal!.nama;
-      _deskripsiController.text = widget.jadwal!.deskripsi;
-      _tempatController.text = widget.jadwal!.tempat;
+      _deskripsiController.text = widget.jadwal!.deskripsi ?? '';
+      _tempatController.text = widget.jadwal!.tempat ?? '';
       _selectedDate = widget.jadwal!.tanggal;
       _selectedKategori = widget.jadwal!.kategori;
-      _waktuMulai = widget.jadwal!.waktuMulai;
-      _waktuSelesai = widget.jadwal!.waktuSelesai;
+      _waktuMulai = widget.jadwal!.waktuMulai ?? '08:00';
+      _waktuSelesai = widget.jadwal!.waktuSelesai ?? '09:00';
       _isAktif = widget.jadwal!.isAktif;
+
+      // Initialize materi fields if available
+      _selectedPemateriId = widget.jadwal!.pemateriId;
+      _selectedPemateriNama = widget.jadwal!.pemateriNama;
+      _selectedMateriId = widget.jadwal!.materiId;
+      // materiNama tidak perlu disimpan karena akan di-fetch dari dropdown
+
+      if (widget.jadwal!.surah != null) {
+        _surahController.text = widget.jadwal!.surah!;
+      }
+      if (widget.jadwal!.ayatMulai != null) {
+        _ayatMulaiController.text = widget.jadwal!.ayatMulai.toString();
+      }
+      if (widget.jadwal!.ayatSelesai != null) {
+        _ayatSelesaiController.text = widget.jadwal!.ayatSelesai.toString();
+      }
+      if (widget.jadwal!.halamanMulai != null) {
+        _halamanMulaiController.text = widget.jadwal!.halamanMulai.toString();
+      }
+      if (widget.jadwal!.halamanSelesai != null) {
+        _halamanSelesaiController.text = widget.jadwal!.halamanSelesai
+            .toString();
+      }
     } else {
       final currentDate = DateTime.now();
       _selectedDate = DateTime(
@@ -76,6 +111,14 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     _namaController.dispose();
     _deskripsiController.dispose();
     _tempatController.dispose();
+    _temaController.dispose();
+    _surahController.dispose();
+    _ayatMulaiController.dispose();
+    _ayatSelesaiController.dispose();
+    _halamanMulaiController.dispose();
+    _halamanSelesaiController.dispose();
+    _hadistMulaiController.dispose();
+    _hadistSelesaiController.dispose();
     super.dispose();
   }
 
@@ -113,10 +156,38 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
                       selectedKategori: _selectedKategori,
                     ),
                     const SizedBox(height: 24),
+                    MateriFormSection(
+                      selectedKategori: _selectedKategori,
+                      selectedMateriId: _selectedMateriId,
+                      selectedMateriNama: _selectedMateriNama,
+                      onMateriChanged: (id, nama) {
+                        setState(() {
+                          _selectedMateriId = id;
+                          _selectedMateriNama = nama;
+                        });
+                      },
+                      selectedPemateriId: _selectedPemateriId,
+                      selectedPemateriNama: _selectedPemateriNama,
+                      onPemateriChanged: (id, nama) {
+                        setState(() {
+                          _selectedPemateriId = id;
+                          _selectedPemateriNama = nama;
+                        });
+                      },
+                      temaController: _temaController,
+                      surahController: _surahController,
+                      ayatMulaiController: _ayatMulaiController,
+                      ayatSelesaiController: _ayatSelesaiController,
+                      halamanMulaiController: _halamanMulaiController,
+                      halamanSelesaiController: _halamanSelesaiController,
+                      hadistMulaiController: _hadistMulaiController,
+                      hadistSelesaiController: _hadistSelesaiController,
+                    ),
+                    const SizedBox(height: 24),
                     DateTimeFormSection(
                       selectedDate: _selectedDate,
-                      waktuMulai: _waktuMulai,
-                      waktuSelesai: _waktuSelesai,
+                      waktuMulai: _parseTimeOfDay(_waktuMulai),
+                      waktuSelesai: _parseTimeOfDay(_waktuSelesai),
                       onDateChanged: (date) {
                         setState(() {
                           _selectedDate = date;
@@ -124,12 +195,12 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
                       },
                       onWaktuMulaiChanged: (time) {
                         setState(() {
-                          _waktuMulai = time;
+                          _waktuMulai = _formatTimeOfDay(time);
                         });
                       },
                       onWaktuSelesaiChanged: (time) {
                         setState(() {
-                          _waktuSelesai = time;
+                          _waktuSelesai = _formatTimeOfDay(time);
                         });
                       },
                     ),
@@ -153,6 +224,16 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     );
   }
 
+  // Helper methods untuk convert waktu
+  TimeOfDay _parseTimeOfDay(String timeString) {
+    final parts = timeString.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
   Future<void> _saveJadwal() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -171,19 +252,38 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     });
 
     try {
-      final jadwal = JadwalKegiatan(
+      // Helper untuk parse integer atau null
+      int? parseIntOrNull(String? text) {
+        if (text == null || text.trim().isEmpty) return null;
+        return int.tryParse(text.trim());
+      }
+
+      // Helper untuk string atau null
+      String? stringOrNull(String text) {
+        final trimmed = text.trim();
+        return trimmed.isEmpty ? null : trimmed;
+      }
+
+      final jadwal = JadwalModel(
         id: widget.jadwal?.id ?? '',
         nama: _namaController.text.trim(),
-        deskripsi: _deskripsiController.text.trim(),
         tanggal: _selectedDate!,
         waktuMulai: _waktuMulai,
         waktuSelesai: _waktuSelesai,
-        tempat: _tempatController.text.trim(),
         kategori: _selectedKategori,
-        materiId: null,
-        materiNama: null,
+        tempat: stringOrNull(_tempatController.text),
+        deskripsi: stringOrNull(_deskripsiController.text),
+        materiId: _selectedMateriId,
+        pemateriId: _selectedPemateriId,
+        pemateriNama: _selectedPemateriNama,
+        surah: stringOrNull(_surahController.text),
+        ayatMulai: parseIntOrNull(_ayatMulaiController.text),
+        ayatSelesai: parseIntOrNull(_ayatSelesaiController.text),
+        halamanMulai: parseIntOrNull(_halamanMulaiController.text),
+        halamanSelesai: parseIntOrNull(_halamanSelesaiController.text),
         isAktif: _isAktif,
         createdAt: widget.jadwal?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
       );
 
       if (widget.jadwal == null) {
@@ -210,18 +310,17 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     }
   }
 
-  Future<void> _addJadwal(JadwalKegiatan jadwal) async {
+  Future<void> _addJadwal(JadwalModel jadwal) async {
     final docRef = await FirebaseFirestore.instance
         .collection('jadwal')
         .add(jadwal.toJson());
 
-    if (jadwal.kategori != TipeJadwal.libur) {
-      await AttendanceService.generateDefaultAttendanceForJadwal(
-        jadwalId: docRef.id,
-        createdBy: 'admin',
-        createdByName: 'Admin',
-      );
-    }
+    // Generate attendance hanya untuk kategori yang bukan libur
+    await AttendanceService.generateDefaultAttendanceForJadwal(
+      jadwalId: docRef.id,
+      createdBy: 'admin',
+      createdByName: 'Admin',
+    );
 
     await MessagingHelper.sendPengumumanToSantri(
       title: 'Jadwal Baru Ditambahkan',
@@ -230,7 +329,7 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     );
   }
 
-  Future<void> _updateJadwal(JadwalKegiatan jadwal) async {
+  Future<void> _updateJadwal(JadwalModel jadwal) async {
     await FirebaseFirestore.instance
         .collection('jadwal')
         .doc(jadwal.id)

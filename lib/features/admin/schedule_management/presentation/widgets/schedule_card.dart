@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'schedule_card_menu.dart';
 import 'schedule_card_chips.dart';
 
 /// Widget untuk menampilkan card jadwal individual
 class ScheduleCard extends StatelessWidget {
-  final JadwalKegiatan jadwal;
+  final JadwalModel jadwal;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -67,7 +67,7 @@ class ScheduleCard extends StatelessWidget {
               const SizedBox(height: 8),
 
               Text(
-                jadwal.deskripsi,
+                jadwal.deskripsi ?? '',
                 style: TextStyle(color: Colors.grey[700], height: 1.4),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -78,12 +78,17 @@ class ScheduleCard extends StatelessWidget {
                 children: [
                   Icon(Icons.access_time, size: 16, color: Colors.blue),
                   const SizedBox(width: 4),
-                  Text(jadwal.waktuFormatted),
+                  Text(
+                    '${jadwal.waktuMulai ?? ''} - ${jadwal.waktuSelesai ?? ''}',
+                  ),
                   const SizedBox(width: 16),
                   Icon(Icons.location_on, size: 16, color: Colors.green),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: Text(jadwal.tempat, overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      jadwal.tempat ?? '',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

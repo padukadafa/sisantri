@@ -16,13 +16,11 @@ class ScheduleService {
     try {
       final docRef = await _firestore.collection('jadwal').add(jadwal.toJson());
 
-      if (jadwal.kategori != TipeJadwal.libur) {
-        await AttendanceService.generateDefaultAttendanceForJadwal(
-          jadwalId: docRef.id,
-          createdBy: 'admin',
-          createdByName: 'Admin',
-        );
-      }
+      await AttendanceService.generateDefaultAttendanceForJadwal(
+        jadwalId: docRef.id,
+        createdBy: 'admin',
+        createdByName: 'Admin',
+      );
 
       // Step 3: Send notification about new schedule
       await MessagingHelper.sendPengumumanToSantri(

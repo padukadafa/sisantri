@@ -410,18 +410,12 @@ class JadwalPage extends ConsumerWidget {
         return 'Kegiatan';
       case TipeJadwal.pengajian:
         return 'Pengajian';
-      case TipeJadwal.kajian:
-        return 'Kajian';
       case TipeJadwal.tahfidz:
         return 'Tahfidz';
-      case TipeJadwal.kerjaBakti:
-        return 'Kerja Bakti';
+      case TipeJadwal.bacaan:
+        return 'Bacaan';
       case TipeJadwal.olahraga:
         return 'Olahraga';
-      case TipeJadwal.libur:
-        return 'Libur';
-      case TipeJadwal.umum:
-        return 'Umum';
     }
   }
 
@@ -431,18 +425,12 @@ class JadwalPage extends ConsumerWidget {
         return Icons.event;
       case TipeJadwal.pengajian:
         return Icons.mosque;
-      case TipeJadwal.kajian:
-        return Icons.menu_book;
       case TipeJadwal.tahfidz:
         return Icons.auto_stories;
-      case TipeJadwal.kerjaBakti:
-        return Icons.cleaning_services;
+      case TipeJadwal.bacaan:
+        return Icons.book;
       case TipeJadwal.olahraga:
         return Icons.sports;
-      case TipeJadwal.libur:
-        return Icons.beach_access;
-      case TipeJadwal.umum:
-        return Icons.event_note;
     }
   }
 
@@ -452,18 +440,12 @@ class JadwalPage extends ConsumerWidget {
         return Colors.blue;
       case TipeJadwal.pengajian:
         return Colors.green;
-      case TipeJadwal.kajian:
-        return Colors.purple;
       case TipeJadwal.tahfidz:
         return Colors.teal;
-      case TipeJadwal.kerjaBakti:
+      case TipeJadwal.bacaan:
         return Colors.orange;
       case TipeJadwal.olahraga:
         return Colors.red;
-      case TipeJadwal.libur:
-        return Colors.amber;
-      case TipeJadwal.umum:
-        return Colors.blueGrey;
     }
   }
 }

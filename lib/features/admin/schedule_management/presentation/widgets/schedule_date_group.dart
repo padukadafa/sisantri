@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
-import '../models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 import '../utils/schedule_helpers.dart';
 import 'schedule_card.dart';
 
 class ScheduleDateGroup extends StatelessWidget {
   final DateTime date;
-  final List<JadwalKegiatan> jadwalList;
-  final Function(JadwalKegiatan) onJadwalTap;
-  final Function(JadwalKegiatan)? onJadwalDelete;
+  final List<JadwalModel> jadwalList;
+  final Function(JadwalModel) onJadwalTap;
+  final Function(JadwalModel)? onJadwalDelete;
   final bool isFirstGroup;
 
   const ScheduleDateGroup({
@@ -22,10 +22,12 @@ class ScheduleDateGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sortedJadwal = List<JadwalKegiatan>.from(jadwalList)
+    final sortedJadwal = List<JadwalModel>.from(jadwalList)
       ..sort((a, b) {
-        final aMinutes = a.waktuMulai.hour * 60 + a.waktuMulai.minute;
-        final bMinutes = b.waktuMulai.hour * 60 + b.waktuMulai.minute;
+        final aTime = _parseTime(a.waktuMulai ?? '00:00');
+        final bTime = _parseTime(b.waktuMulai ?? '00:00');
+        final aMinutes = aTime.hour * 60 + aTime.minute;
+        final bMinutes = bTime.hour * 60 + bTime.minute;
         return aMinutes.compareTo(bMinutes);
       });
 
@@ -105,5 +107,10 @@ class ScheduleDateGroup extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  TimeOfDay _parseTime(String time) {
+    final parts = time.split(':');
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 }

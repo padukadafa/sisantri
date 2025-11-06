@@ -3,8 +3,8 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 
-import '../models/jadwal_kegiatan_model.dart';
 import '../providers/schedule_providers.dart';
 import '../widgets/schedule_filter_menu.dart';
 import '../widgets/schedule_list_view.dart';
@@ -89,9 +89,9 @@ class ScheduleManagementPage extends ConsumerWidget {
   void _showAddEditDialog(
     BuildContext context,
     WidgetRef ref, {
-    JadwalKegiatan? jadwal,
+    JadwalModel? jadwal,
   }) async {
-    final result = await Navigator.push<JadwalKegiatan>(
+    final result = await Navigator.push<JadwalModel>(
       context,
       MaterialPageRoute(
         builder: (context) => AddEditJadwalPage(jadwal: jadwal),
@@ -108,7 +108,7 @@ class ScheduleManagementPage extends ConsumerWidget {
   void _showDeleteConfirmation(
     BuildContext context,
     WidgetRef ref,
-    JadwalKegiatan jadwal,
+    JadwalModel jadwal,
   ) {
     showDialog(
       context: context,
@@ -158,7 +158,7 @@ class ScheduleManagementPage extends ConsumerWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        jadwal.waktuFormatted,
+                        '${jadwal.waktuMulai ?? ''} - ${jadwal.waktuSelesai ?? ''}',
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
@@ -189,7 +189,7 @@ class ScheduleManagementPage extends ConsumerWidget {
   Future<void> _deleteJadwal(
     BuildContext context,
     WidgetRef ref,
-    JadwalKegiatan jadwal,
+    JadwalModel jadwal,
   ) async {
     try {
       EasyLoading.show(

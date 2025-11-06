@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 
 /// Enum untuk filter rentang waktu jadwal
 enum ScheduleFilter {
@@ -17,21 +17,23 @@ final scheduleFilterProvider = StateProvider<ScheduleFilter>(
 );
 
 /// Provider untuk daftar semua jadwal kegiatan
-final jadwalProvider = StreamProvider<List<JadwalKegiatan>>((ref) {
+final jadwalProvider = StreamProvider<List<JadwalModel>>((ref) {
   return FirebaseFirestore.instance
       .collection('jadwal')
       .orderBy('tanggal', descending: false)
       .orderBy('waktuMulai')
       .snapshots()
       .map((snapshot) {
-        return snapshot.docs
-            .map((doc) => JadwalKegiatan.fromJson(doc.id, doc.data()))
-            .toList();
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return JadwalModel.fromJson(data);
+        }).toList();
       });
 });
 
 /// Provider untuk jadwal hari ini
-final jadwalHariIniProvider = Provider<List<JadwalKegiatan>>((ref) {
+final jadwalHariIniProvider = Provider<List<JadwalModel>>((ref) {
   final jadwalList = ref.watch(jadwalProvider).value ?? [];
   final today = DateTime.now();
 
@@ -67,7 +69,7 @@ final jadwalStatsProvider = Provider<Map<String, int>>((ref) {
 });
 
 /// Provider untuk jadwal berdasarkan kategori
-final jadwalByKategoriProvider = Provider.family<List<JadwalKegiatan>, String>((
+final jadwalByKategoriProvider = Provider.family<List<JadwalModel>, String>((
   ref,
   kategori,
 ) {
@@ -78,6 +80,6 @@ final jadwalByKategoriProvider = Provider.family<List<JadwalKegiatan>, String>((
   }
 
   return jadwalList
-      .where((jadwal) => jadwal.kategori.value == kategori && jadwal.isAktif)
+      .where((jadwal) => jadwal.kategori.name == kategori && jadwal.isAktif)
       .toList();
 });
