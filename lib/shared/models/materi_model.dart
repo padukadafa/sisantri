@@ -4,8 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum JenisMateri {
   quran('quran'),
   hadist('hadist'),
-  nahwu('nahwu'),
-  shorof('shorof'),
   lainnya('lainnya');
 
   const JenisMateri(this.value);
@@ -131,10 +129,6 @@ class MateriModel {
         return 'Al-Quran';
       case JenisMateri.hadist:
         return 'Tafsir';
-      case JenisMateri.nahwu:
-        return 'Nahwu';
-      case JenisMateri.shorof:
-        return 'Shorof';
       case JenisMateri.lainnya:
         return 'Lainnya';
     }

@@ -172,10 +172,6 @@ class MateriSelector extends ConsumerWidget {
         return 'Al-Quran';
       case JenisMateri.hadist:
         return 'Hadist';
-      case JenisMateri.nahwu:
-        return 'Nahwu';
-      case JenisMateri.shorof:
-        return 'Shorof';
       case JenisMateri.lainnya:
         return 'Lainnya';
     }
@@ -187,9 +183,6 @@ class MateriSelector extends ConsumerWidget {
         return Icons.menu_book;
       case JenisMateri.hadist:
         return Icons.format_quote;
-      case JenisMateri.nahwu:
-      case JenisMateri.shorof:
-        return Icons.translate;
       case JenisMateri.lainnya:
         return Icons.library_books;
     }
@@ -201,10 +194,6 @@ class MateriSelector extends ConsumerWidget {
         return Colors.green;
       case JenisMateri.hadist:
         return Colors.blue;
-      case JenisMateri.nahwu:
-        return Colors.orange;
-      case JenisMateri.shorof:
-        return Colors.purple;
       case JenisMateri.lainnya:
         return Colors.grey;
     }

@@ -29,8 +29,6 @@ class MateriFilterDropdown extends ConsumerWidget {
             _buildDropdownItem(null, 'Semua Jenis'),
             _buildDropdownItem(JenisMateri.quran, 'Al-Quran'),
             _buildDropdownItem(JenisMateri.hadist, 'Hadist'),
-            _buildDropdownItem(JenisMateri.nahwu, 'Nahwu'),
-            _buildDropdownItem(JenisMateri.shorof, 'Shorof'),
             _buildDropdownItem(JenisMateri.lainnya, 'Lainnya'),
           ],
         ),

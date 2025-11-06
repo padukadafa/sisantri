@@ -368,10 +368,6 @@ class _MateriManagementPageState extends ConsumerState<MateriManagementPage> {
         return 'Al-Quran';
       case JenisMateri.hadist:
         return 'Hadist';
-      case JenisMateri.nahwu:
-        return 'Nahwu';
-      case JenisMateri.shorof:
-        return 'Shorof';
       case JenisMateri.lainnya:
         return 'Lainnya';
     }
@@ -383,10 +379,6 @@ class _MateriManagementPageState extends ConsumerState<MateriManagementPage> {
         return Colors.green;
       case JenisMateri.hadist:
         return Colors.blue;
-      case JenisMateri.nahwu:
-        return Colors.red;
-      case JenisMateri.shorof:
-        return Colors.pink;
       case JenisMateri.lainnya:
         return Colors.grey;
     }
@@ -594,10 +586,6 @@ class _MateriFormDialogState extends State<MateriFormDialog> {
         return 'Al-Quran';
       case JenisMateri.hadist:
         return 'Hadist';
-      case JenisMateri.nahwu:
-        return 'Nahwu';
-      case JenisMateri.shorof:
-        return 'Shorof';
       case JenisMateri.lainnya:
         return 'Lainnya';
     }
@@ -677,10 +665,6 @@ class MateriDetailDialog extends StatelessWidget {
         return 'Al-Quran';
       case JenisMateri.hadist:
         return 'Hadist';
-      case JenisMateri.nahwu:
-        return 'Nahwu';
-      case JenisMateri.shorof:
-        return 'Shorof';
       case JenisMateri.lainnya:
         return 'Lainnya';
     }

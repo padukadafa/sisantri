@@ -163,30 +163,6 @@ class MateriService {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),
-
-        // Materi Bahasa Arab
-        MateriModel(
-          id: '',
-          nama: 'Nahwu Dasar',
-          jenis: JenisMateri.nahwu,
-          deskripsi: 'Pembelajaran tata bahasa Arab tingkat dasar',
-          totalHalaman: 120,
-          tags: ['nahwu', 'bahasa arab', 'grammar'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-
-        MateriModel(
-          id: '',
-          nama: 'Shorof Praktis',
-          jenis: JenisMateri.shorof,
-          deskripsi:
-              'Ilmu shorof untuk memahami perubahan kata dalam bahasa Arab',
-          totalHalaman: 100,
-          tags: ['shorof', 'bahasa arab', 'morfologi'],
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
       ];
 
       // Batch write untuk efisiensi
