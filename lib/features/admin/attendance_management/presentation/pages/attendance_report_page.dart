@@ -228,9 +228,9 @@ class _AttendanceReportPageState extends ConsumerState<AttendanceReportPage>
       floatingActionButton: FloatingActionButton(
         heroTag: "main_export",
         onPressed: () => _exportToExcel(),
-        child: const Icon(Icons.file_download),
-        backgroundColor: Colors.blue,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         tooltip: 'Export Excel',
+        child: const Icon(Icons.file_download),
       ),
     );
   }
