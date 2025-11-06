@@ -97,11 +97,6 @@ class _UserManagementPageState extends ConsumerState<UserManagementPage>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddUserDialog,
-        icon: const Icon(Icons.person_add),
-        label: const Text('Tambah User'),
-      ),
     );
   }
 
