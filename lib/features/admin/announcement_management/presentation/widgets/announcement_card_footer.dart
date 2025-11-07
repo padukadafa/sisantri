@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 
 class AnnouncementCardFooter extends StatelessWidget {
-  final PengumumanModel pengumuman;
+  final AnnouncementModel pengumuman;
 
   const AnnouncementCardFooter({super.key, required this.pengumuman});
 

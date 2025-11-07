@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/features/shared/pengumuman/presentation/announcement_page.dart';
 
 class PengumumanHeader extends StatelessWidget {
   const PengumumanHeader({super.key});
@@ -26,7 +27,9 @@ class PengumumanHeader extends StatelessWidget {
         ),
         TextButton(
           onPressed: () {
-            // TODO: Navigate to all pengumuman
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => AnnouncementPage()));
           },
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

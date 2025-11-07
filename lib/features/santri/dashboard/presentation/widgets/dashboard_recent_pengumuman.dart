@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 
 import 'pengumuman_header.dart';
 import 'pengumuman_empty_state.dart';
 import 'pengumuman_list_item.dart';
 
 class DashboardRecentPengumuman extends StatelessWidget {
-  final List<PengumumanModel> pengumuman;
+  final List<AnnouncementModel> pengumuman;
 
   const DashboardRecentPengumuman({super.key, required this.pengumuman});
 

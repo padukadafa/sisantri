@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 
 import 'package:sisantri/shared/models/user_model.dart';
 
@@ -23,7 +23,7 @@ class DashboardContent extends StatelessWidget {
     final user = data['user'] as UserModel?;
     final todayPresensi = data['todayPresensi'];
     final recentPengumuman =
-        data['recentPengumuman'] as List<PengumumanModel>? ?? [];
+        data['recentPengumuman'] as List<AnnouncementModel>? ?? [];
 
     return RefreshIndicator(
       onRefresh: () => _refreshAllData(),

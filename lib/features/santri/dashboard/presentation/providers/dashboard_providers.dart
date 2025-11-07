@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
 import 'package:sisantri/shared/models/user_model.dart';
@@ -30,7 +30,7 @@ final upcomingKegiatanProvider = StreamProvider<List<JadwalKegiatanModel>>((
   return FirestoreService.getUpcomingKegiatan();
 });
 
-final recentPengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
+final recentPengumumanProvider = StreamProvider<List<AnnouncementModel>>((ref) {
   return FirestoreService.getRecentPengumuman();
 });
 

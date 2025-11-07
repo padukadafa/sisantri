@@ -3,26 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
-import 'package:sisantri/features/shared/pengumuman/presentation/pages/pengumuman_detail_page.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/pengumuman/presentation/pages/announcement_detail_page.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
 
-/// Provider untuk pengumuman
-final pengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
+/// Provider untuk announcement
+final announcementProvider = StreamProvider<List<AnnouncementModel>>((ref) {
   return AnnouncementService.getActivePengumuman();
 });
 
-/// Provider untuk filter pengumuman
-final pengumumanFilterProvider = StateProvider<String>((ref) => 'all');
+/// Provider untuk filter announcement
+final announcementFilterProvider = StateProvider<String>((ref) => 'all');
 
-/// Halaman Pengumuman
-class PengumumanPage extends ConsumerWidget {
-  const PengumumanPage({super.key});
+class AnnouncementPage extends ConsumerWidget {
+  const AnnouncementPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pengumumanStream = ref.watch(pengumumanProvider);
-    final currentFilter = ref.watch(pengumumanFilterProvider);
+    final announcementStream = ref.watch(announcementProvider);
+    final currentFilter = ref.watch(announcementFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -32,7 +31,7 @@ class PengumumanPage extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.filter_list),
             onSelected: (value) {
-              ref.read(pengumumanFilterProvider.notifier).state = value;
+              ref.read(announcementFilterProvider.notifier).state = value;
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'all', child: Text('Semua')),
@@ -69,7 +68,8 @@ class PengumumanPage extends ConsumerWidget {
                   const Spacer(),
                   TextButton(
                     onPressed: () {
-                      ref.read(pengumumanFilterProvider.notifier).state = 'all';
+                      ref.read(announcementFilterProvider.notifier).state =
+                          'all';
                     },
                     child: const Text('Clear'),
                   ),
@@ -79,7 +79,7 @@ class PengumumanPage extends ConsumerWidget {
 
           // Content
           Expanded(
-            child: pengumumanStream.when(
+            child: announcementStream.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(
                 child: Column(
@@ -94,16 +94,16 @@ class PengumumanPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => ref.refresh(pengumumanProvider),
+                      onPressed: () => ref.refresh(announcementProvider),
                       child: const Text('Coba Lagi'),
                     ),
                   ],
                 ),
               ),
-              data: (pengumumanList) {
-                // Filter pengumuman berdasarkan filter yang dipilih
+              data: (announcementList) {
+                // Filter announcement berdasarkan filter yang dipilih
                 final filteredPengumuman = _filterPengumuman(
-                  pengumumanList,
+                  announcementList,
                   currentFilter,
                 );
 
@@ -120,8 +120,8 @@ class PengumumanPage extends ConsumerWidget {
                         const SizedBox(height: 16),
                         Text(
                           currentFilter == 'all'
-                              ? 'Belum ada pengumuman'
-                              : 'Tidak ada pengumuman ${_getFilterLabel(currentFilter).toLowerCase()}',
+                              ? 'Belum ada announcement'
+                              : 'Tidak ada announcement ${_getFilterLabel(currentFilter).toLowerCase()}',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -134,14 +134,14 @@ class PengumumanPage extends ConsumerWidget {
 
                 return RefreshIndicator(
                   onRefresh: () async {
-                    ref.invalidate(pengumumanProvider);
+                    ref.invalidate(announcementProvider);
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: filteredPengumuman.length,
                     itemBuilder: (context, index) {
-                      final pengumuman = filteredPengumuman[index];
-                      return _buildPengumumanCard(context, pengumuman);
+                      final announcement = filteredPengumuman[index];
+                      return _buildPengumumanCard(context, announcement);
                     },
                   ),
                 );
@@ -155,7 +155,7 @@ class PengumumanPage extends ConsumerWidget {
 
   Widget _buildPengumumanCard(
     BuildContext context,
-    PengumumanModel pengumuman,
+    AnnouncementModel announcement,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -163,7 +163,7 @@ class PengumumanPage extends ConsumerWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: pengumuman.isHighPriority
+          color: announcement.isHighPriority
               ? Colors.red[200]!
               : Colors.grey[200]!,
           width: 1,
@@ -177,7 +177,7 @@ class PengumumanPage extends ConsumerWidget {
         ],
       ),
       child: InkWell(
-        onTap: () => _showPengumumanDetail(context, pengumuman),
+        onTap: () => _showPengumumanDetail(context, announcement),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -194,22 +194,22 @@ class PengumumanPage extends ConsumerWidget {
                     height: 48,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: pengumuman.isHighPriority
+                      color: announcement.isHighPriority
                           ? Colors.red[50]
                           : AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: pengumuman.isHighPriority
+                        color: announcement.isHighPriority
                             ? Colors.red[200]!
                             : AppTheme.primaryColor.withOpacity(0.3),
                         width: 1,
                       ),
                     ),
                     child: Icon(
-                      pengumuman.isHighPriority
+                      announcement.isHighPriority
                           ? Icons.priority_high
                           : Icons.campaign,
-                      color: pengumuman.isHighPriority
+                      color: announcement.isHighPriority
                           ? Colors.red[600]
                           : AppTheme.primaryColor,
                       size: 24,
@@ -228,7 +228,7 @@ class PengumumanPage extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                pengumuman.judul,
+                                announcement.judul,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -238,7 +238,7 @@ class PengumumanPage extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (pengumuman.isHighPriority)
+                            if (announcement.isHighPriority)
                               Container(
                                 margin: const EdgeInsets.only(left: 8),
                                 padding: const EdgeInsets.symmetric(
@@ -269,7 +269,7 @@ class PengumumanPage extends ConsumerWidget {
 
                         // Content preview
                         Text(
-                          pengumuman.konten,
+                          announcement.konten,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -291,7 +291,7 @@ class PengumumanPage extends ConsumerWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              pengumuman.createdByName,
+                              announcement.createdByName,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -308,7 +308,7 @@ class PengumumanPage extends ConsumerWidget {
                             Text(
                               DateFormat(
                                 'dd MMM yyyy HH:mm',
-                              ).format(pengumuman.createdAt),
+                              ).format(announcement.createdAt),
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -335,26 +335,30 @@ class PengumumanPage extends ConsumerWidget {
     );
   }
 
-  void _showPengumumanDetail(BuildContext context, PengumumanModel pengumuman) {
+  void _showPengumumanDetail(
+    BuildContext context,
+    AnnouncementModel announcement,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PengumumanDetailPage(pengumuman: pengumuman),
+        builder: (context) =>
+            AnnouncementDetailPage(announcement: announcement),
       ),
     );
   }
 
-  List<PengumumanModel> _filterPengumuman(
-    List<PengumumanModel> pengumumanList,
+  List<AnnouncementModel> _filterPengumuman(
+    List<AnnouncementModel> announcementList,
     String filter,
   ) {
     switch (filter) {
       case 'penting':
-        return pengumumanList.where((p) => p.isHighPriority).toList();
+        return announcementList.where((p) => p.isHighPriority).toList();
       case 'umum':
-        return pengumumanList.where((p) => !p.isHighPriority).toList();
+        return announcementList.where((p) => !p.isHighPriority).toList();
       default:
-        return pengumumanList;
+        return announcementList;
     }
   }
 

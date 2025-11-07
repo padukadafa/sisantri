@@ -7,7 +7,6 @@ import 'package:sisantri/features/admin/user_management/presentation/providers/u
 import 'package:sisantri/features/admin/user_management/presentation/widgets/user_stats_section.dart';
 import 'package:sisantri/features/admin/user_management/presentation/widgets/user_search_bar.dart';
 import 'package:sisantri/features/admin/user_management/presentation/widgets/user_card.dart';
-import 'package:sisantri/features/admin/user_management/presentation/widgets/add_user_dialog.dart';
 
 /// Halaman Manajemen User
 class UserManagementPage extends ConsumerStatefulWidget {
@@ -203,18 +202,5 @@ class _UserManagementPageState extends ConsumerState<UserManagementPage>
       context,
       MaterialPageRoute(builder: (context) => UserDetailPage(user: user)),
     );
-  }
-
-  Future<void> _showAddUserDialog() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => const AddUserDialog(),
-    );
-
-    if (result == true) {
-      // Refresh data after adding user
-      ref.invalidate(allUsersProvider);
-      ref.invalidate(userStatsProvider);
-    }
   }
 }

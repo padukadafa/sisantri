@@ -1,7 +1,7 @@
 import '../../domain/entities/pengumuman.dart';
 
-class PengumumanModel extends Pengumuman {
-  const PengumumanModel({
+class AnnouncementModel extends Pengumuman {
+  const AnnouncementModel({
     required super.id,
     required super.judul,
     required super.konten,
@@ -22,8 +22,8 @@ class PengumumanModel extends Pengumuman {
     required super.updatedAt,
   });
 
-  factory PengumumanModel.fromJson(Map<String, dynamic> json) {
-    return PengumumanModel(
+  factory AnnouncementModel.fromJson(Map<String, dynamic> json) {
+    return AnnouncementModel(
       id: json['id'] as String,
       judul: json['judul'] as String,
       konten: json['konten'] as String,
@@ -78,7 +78,7 @@ class PengumumanModel extends Pengumuman {
     };
   }
 
-  PengumumanModel copyWith({
+  AnnouncementModel copyWith({
     String? id,
     String? judul,
     String? konten,
@@ -98,7 +98,7 @@ class PengumumanModel extends Pengumuman {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return PengumumanModel(
+    return AnnouncementModel(
       id: id ?? this.id,
       judul: judul ?? this.judul,
       konten: konten ?? this.konten,

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/shared/helpers/messaging_helper.dart';
-import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'package:sisantri/shared/services/attendance_service.dart';
 import '../models/jadwal_kegiatan_model.dart';
 

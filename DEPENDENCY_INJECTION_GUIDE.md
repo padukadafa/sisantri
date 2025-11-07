@@ -375,7 +375,7 @@ void main() {
 
   test('should get all pengumuman from repository', () async {
     // Arrange
-    final testPengumuman = [PengumumanModel(...)];
+    final testPengumuman = [AnnouncementModel(...)];
     when(mockRepository.getAllPengumuman())
         .thenAnswer((_) async => testPengumuman);
 

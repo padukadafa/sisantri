@@ -228,7 +228,7 @@ class AdminDashboardPage extends ConsumerWidget {
       children: [
         _buildStatCard(
           'Total Santri',
-          stats['totalSantri'].toString(),
+          totalSantri.toString(),
           Icons.people,
           Colors.blue,
         ),

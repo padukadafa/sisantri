@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
-import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/shared/widgets/reusable_text_field.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_form_fields.dart';
+import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_category_dropdown.dart';
+import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_target_dropdown.dart';
+import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_date_picker.dart';
+import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_form_buttons.dart';
 
-/// Halaman form untuk membuat/edit pengumuman
 class AnnouncementFormPage extends ConsumerStatefulWidget {
-  final PengumumanModel? announcement;
+  final AnnouncementModel? announcement;
 
   const AnnouncementFormPage({super.key, this.announcement});
 
@@ -53,6 +55,28 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
     super.dispose();
   }
 
+  Future<void> _selectStartDate(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _tanggalMulai,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date != null) {
+      setState(() => _tanggalMulai = date);
+    }
+  }
+
+  Future<void> _selectEndDate(BuildContext context) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _tanggalBerakhir ?? _tanggalMulai,
+      firstDate: _tanggalMulai,
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    setState(() => _tanggalBerakhir = date);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isView = widget.announcement != null;
@@ -76,181 +100,61 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Judul
-            ReusableTextField(
-              controller: _judulController,
-              labelText: 'Judul Pengumuman *',
-              prefixIcon: Icons.title,
-              readOnly: isView,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Judul harus diisi';
-                }
-                return null;
-              },
-              maxLines: 2,
-              textCapitalization: TextCapitalization.sentences,
+            AnnouncementFormFields(
+              judulController: _judulController,
+              kontenController: _kontenController,
+              isReadOnly: isView,
             ),
             const SizedBox(height: 16),
 
-            // Konten
-            ReusableTextField(
-              controller: _kontenController,
-              labelText: 'Konten Pengumuman *',
-              prefixIcon: Icons.description,
-              readOnly: isView,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Konten harus diisi';
-                }
-                return null;
-              },
-              maxLines: 8,
-              minLines: 4,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 16),
-
-            DropdownButtonFormField<String>(
+            AnnouncementCategoryDropdown(
               value: _kategori,
-
-              decoration: const InputDecoration(
-                labelText: 'Kategori',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'umum', child: Text('Umum')),
-                DropdownMenuItem(value: 'penting', child: Text('Penting')),
-                DropdownMenuItem(value: 'mendesak', child: Text('Mendesak')),
-                DropdownMenuItem(value: 'akademik', child: Text('Akademik')),
-                DropdownMenuItem(value: 'kegiatan', child: Text('Kegiatan')),
-              ],
-              onChanged: isView
-                  ? null
-                  : (value) {
-                      if (value != null) {
-                        setState(() => _kategori = value);
-                      }
-                    },
+              isReadOnly: isView,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _kategori = value);
+                }
+              },
             ),
             const SizedBox(height: 16),
 
-            DropdownButtonFormField<String>(
+            AnnouncementTargetDropdown(
               value: _targetAudience,
-              decoration: const InputDecoration(
-                labelText: 'Target Audience',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.people),
-              ),
-
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('Semua')),
-                DropdownMenuItem(value: 'santri', child: Text('Santri')),
-                DropdownMenuItem(
-                  value: 'dewan_guru',
-                  child: Text('Dewan Guru'),
-                ),
-              ],
-              onChanged: isView
-                  ? null
-                  : (value) {
-                      if (value != null) {
-                        setState(() => _targetAudience = value);
-                      }
-                    },
+              isReadOnly: isView,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _targetAudience = value);
+                }
+              },
             ),
             const SizedBox(height: 16),
 
-            ListTile(
-              title: const Text('Tanggal Mulai'),
-              subtitle: Text(
-                '${_tanggalMulai.day}/${_tanggalMulai.month}/${_tanggalMulai.year}',
-              ),
-              leading: const Icon(Icons.calendar_today),
-              trailing: isView ? null : const Icon(Icons.edit),
-              onTap: isView
-                  ? null
-                  : () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _tanggalMulai,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null) {
-                        setState(() => _tanggalMulai = date);
-                      }
-                    },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey[300]!),
-              ),
+            AnnouncementDatePicker(
+              title: 'Tanggal Mulai',
+              selectedDate: _tanggalMulai,
+              icon: Icons.calendar_today,
+              isReadOnly: isView,
+              emptyText: '',
+              onTap: () => _selectStartDate(context),
             ),
             const SizedBox(height: 16),
 
-            ListTile(
-              title: const Text('Tanggal Berakhir (Opsional)'),
-              subtitle: Text(
-                _tanggalBerakhir != null
-                    ? '${_tanggalBerakhir!.day}/${_tanggalBerakhir!.month}/${_tanggalBerakhir!.year}'
-                    : 'Tidak ada batas waktu',
-              ),
-              leading: const Icon(Icons.event_busy),
-              trailing: isView ? null : const Icon(Icons.edit),
-              onTap: isView
-                  ? null
-                  : () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: _tanggalBerakhir ?? _tanggalMulai,
-                        firstDate: _tanggalMulai,
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      setState(() => _tanggalBerakhir = date);
-                    },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey[300]!),
-              ),
+            AnnouncementDatePicker(
+              title: 'Tanggal Berakhir (Opsional)',
+              selectedDate: _tanggalBerakhir,
+              icon: Icons.event_busy,
+              isReadOnly: isView,
+              emptyText: 'Tidak ada batas waktu',
+              onTap: () => _selectEndDate(context),
             ),
             const SizedBox(height: 24),
 
             Visibility(
               visible: !isView,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.pop(context),
-                      child: const Text('Batal'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : _saveAndPublish,
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              'Publikasi',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                    ),
-                  ),
-                ],
+              child: AnnouncementFormButtons(
+                isLoading: _isLoading,
+                onCancel: () => Navigator.pop(context),
+                onPublish: _saveAndPublish,
               ),
             ),
           ],
@@ -316,7 +220,7 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
 
     final now = DateTime.now();
 
-    final pengumumanModel = PengumumanModel(
+    final announcementModel = AnnouncementModel(
       id: widget.announcement?.id ?? '',
       judul: _judulController.text.trim(),
       konten: _kontenController.text.trim(),
@@ -338,14 +242,12 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
     );
 
     if (widget.announcement != null) {
-      // Update existing
       await AnnouncementService.updatePengumuman(
         widget.announcement!.id,
-        pengumumanModel,
+        announcementModel,
       );
     } else {
-      // Create new
-      await AnnouncementService.addPengumuman(pengumumanModel);
+      await AnnouncementService.addPengumuman(announcementModel);
     }
   }
 }

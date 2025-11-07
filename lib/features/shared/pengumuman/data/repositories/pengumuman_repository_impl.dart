@@ -1,7 +1,7 @@
 import '../../domain/entities/pengumuman.dart';
 import '../../domain/repositories/pengumuman_repository.dart';
 import '../datasources/pengumuman_remote_data_source.dart';
-import '../models/pengumuman_model.dart';
+import '../models/announcement_model.dart';
 
 class PengumumanRepositoryImpl implements PengumumanRepository {
   final PengumumanRemoteDataSource remoteDataSource;
@@ -39,7 +39,7 @@ class PengumumanRepositoryImpl implements PengumumanRepository {
 
   @override
   Future<String> createPengumuman(Pengumuman pengumuman) async {
-    final model = PengumumanModel(
+    final model = AnnouncementModel(
       id: pengumuman.id,
       judul: pengumuman.judul,
       konten: pengumuman.konten,
@@ -64,7 +64,7 @@ class PengumumanRepositoryImpl implements PengumumanRepository {
 
   @override
   Future<void> updatePengumuman(Pengumuman pengumuman) async {
-    final model = PengumumanModel(
+    final model = AnnouncementModel(
       id: pengumuman.id,
       judul: pengumuman.judul,
       konten: pengumuman.konten,

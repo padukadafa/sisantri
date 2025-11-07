@@ -5,7 +5,7 @@ import 'announcement_list_item_menu.dart';
 
 /// Widget untuk menampilkan daftar pengumuman
 class AnnouncementList extends StatelessWidget {
-  final List<PengumumanModel> pengumumanList;
+  final List<AnnouncementModel> pengumumanList;
   final Function(Pengumuman) onTap;
   final Function(Pengumuman) onEdit;
   final Function(Pengumuman) onDelete;
@@ -35,7 +35,7 @@ class AnnouncementList extends StatelessWidget {
     );
   }
 
-  Widget _buildAnnouncementCard(PengumumanModel pengumuman) {
+  Widget _buildAnnouncementCard(AnnouncementModel pengumuman) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: pengumuman.isHighPriority ? 4 : 2,

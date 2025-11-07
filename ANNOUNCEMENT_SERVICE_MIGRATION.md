@@ -36,12 +36,12 @@ Service baru yang menangani semua operasi pengumuman dengan fitur lengkap:
 
 #### **CREATE OPERATIONS**
 
-- ✅ `addPengumuman(PengumumanModel)` - Tambah pengumuman baru
+- ✅ `addPengumuman(AnnouncementModel)` - Tambah pengumuman baru
 - ✅ Returns document ID setelah create
 
 #### **UPDATE OPERATIONS**
 
-- ✅ `updatePengumuman(String id, PengumumanModel)` - Update pengumuman
+- ✅ `updatePengumuman(String id, AnnouncementModel)` - Update pengumuman
 - ✅ `updateActiveStatus(String id, bool isActive)` - Update status aktif
 - ✅ `toggleActiveStatus(String id)` - Toggle status aktif
 - ✅ `updatePriority(String id, String prioritas)` - Update prioritas
@@ -109,12 +109,12 @@ class FirestoreService {
   // ===== PENGUMUMAN OPERATIONS (Wrapper untuk AnnouncementService) =====
 
   /// Get recent pengumuman (wrapper method)
-  static Stream<List<PengumumanModel>> getRecentPengumuman({int limit = 5}) {
+  static Stream<List<AnnouncementModel>> getRecentPengumuman({int limit = 5}) {
     return AnnouncementService.getRecentPengumuman(limit: limit);
   }
 
   /// Get all pengumuman (wrapper method)
-  static Stream<List<PengumumanModel>> getAllPengumuman() {
+  static Stream<List<AnnouncementModel>> getAllPengumuman() {
     return AnnouncementService.getAllPengumuman();
   }
 }
@@ -136,7 +136,7 @@ class FirestoreService {
 ```dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-final announcementProvider = StreamProvider<List<PengumumanModel>>((ref) {
+final announcementProvider = StreamProvider<List<AnnouncementModel>>((ref) {
   return FirebaseFirestore.instance
       .collection('pengumuman')
       .orderBy('createdAt', descending: true)
@@ -150,7 +150,7 @@ final announcementProvider = StreamProvider<List<PengumumanModel>>((ref) {
 ```dart
 import 'package:sisantri/shared/services/announcement_service.dart';
 
-final announcementProvider = StreamProvider<List<PengumumanModel>>((ref) {
+final announcementProvider = StreamProvider<List<AnnouncementModel>>((ref) {
   return AnnouncementService.getAllPengumuman();
 });
 ```
@@ -188,14 +188,14 @@ Future<void> _saveAnnouncement({required bool published}) async {
 import 'package:sisantri/shared/services/announcement_service.dart';
 
 Future<void> _saveAnnouncement({required bool published}) async {
-  final pengumumanModel = PengumumanModel(
+  final AnnouncementModel = AnnouncementModel(
     // ... proper model construction
   );
 
   if (widget.announcement != null) {
-    await AnnouncementService.updatePengumuman(id, pengumumanModel);
+    await AnnouncementService.updatePengumuman(id, AnnouncementModel);
   } else {
-    await AnnouncementService.addPengumuman(pengumumanModel);
+    await AnnouncementService.addPengumuman(AnnouncementModel);
   }
 }
 ```
@@ -203,7 +203,7 @@ Future<void> _saveAnnouncement({required bool published}) async {
 **Changes**:
 
 - ✅ Removed Firestore import
-- ✅ Using PengumumanModel properly
+- ✅ Using AnnouncementModel properly
 - ✅ Using AnnouncementService methods
 - ✅ Type-safe operations
 
@@ -247,7 +247,7 @@ await AnnouncementService.deletePengumuman(announcementId);
 ```dart
 import 'package:sisantri/shared/services/firestore_service.dart';
 
-final pengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
+final pengumumanProvider = StreamProvider<List<AnnouncementModel>>((ref) {
   return FirestoreService.getPengumuman();
 });
 ```
@@ -257,7 +257,7 @@ final pengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
 ```dart
 import 'package:sisantri/shared/services/announcement_service.dart';
 
-final pengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
+final pengumumanProvider = StreamProvider<List<AnnouncementModel>>((ref) {
   return AnnouncementService.getActivePengumuman();
 });
 ```
@@ -319,7 +319,7 @@ final pengumumanProvider = StreamProvider<List<PengumumanModel>>((ref) {
 
 ### 5. **Type Safety**
 
-- Proper use of PengumumanModel
+- Proper use of AnnouncementModel
 - Compile-time error checking
 - Better IDE support
 
@@ -383,7 +383,7 @@ final stream = AnnouncementService.getActivePengumuman();
 ### Add New Pengumuman
 
 ```dart
-final newPengumuman = PengumumanModel(/* ... */);
+final newPengumuman = AnnouncementModel(/* ... */);
 final id = await AnnouncementService.addPengumuman(newPengumuman);
 print('Created with ID: $id');
 ```
@@ -467,7 +467,7 @@ final data = {'judul': '...', 'konten': '...', ...};
 await firestore.collection('pengumuman').add(data);
 
 // After
-final pengumuman = PengumumanModel(judul: '...', konten: '...', ...);
+final pengumuman = AnnouncementModel(judul: '...', konten: '...', ...);
 await AnnouncementService.addPengumuman(pengumuman);
 ```
 
@@ -486,7 +486,7 @@ await AnnouncementService.addPengumuman(pengumuman);
 
 1. **Always use AnnouncementService** untuk operasi pengumuman
 2. **Don't access Firestore directly** untuk pengumuman
-3. **Use proper models** (PengumumanModel) instead of raw maps
+3. **Use proper models** (AnnouncementModel) instead of raw maps
 4. **Handle errors** properly dengan try-catch
 5. **Use appropriate methods** (Stream vs Future)
 6. **Invalidate providers** setelah create/update/delete

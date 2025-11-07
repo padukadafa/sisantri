@@ -1,27 +1,27 @@
-import '../models/pengumuman_model.dart';
+import '../models/announcement_model.dart';
 
 abstract class PengumumanRemoteDataSource {
   /// Get all pengumuman with optional filters
-  Future<List<PengumumanModel>> getAllPengumuman({
+  Future<List<AnnouncementModel>> getAllPengumuman({
     String? kategori,
     String? targetAudience,
     bool? isPublished,
   });
 
   /// Get pengumuman by ID
-  Future<PengumumanModel> getPengumumanById(String id);
+  Future<AnnouncementModel> getPengumumanById(String id);
 
   /// Get pengumuman for specific user based on role and class
-  Future<List<PengumumanModel>> getPengumumanForUser({
+  Future<List<AnnouncementModel>> getPengumumanForUser({
     required String userRole,
     String? userClass,
   });
 
   /// Create new pengumuman
-  Future<String> createPengumuman(PengumumanModel pengumuman);
+  Future<String> createPengumuman(AnnouncementModel pengumuman);
 
   /// Update existing pengumuman
-  Future<void> updatePengumuman(PengumumanModel pengumuman);
+  Future<void> updatePengumuman(AnnouncementModel pengumuman);
 
   /// Delete pengumuman
   Future<void> deletePengumuman(String id);

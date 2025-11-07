@@ -2,7 +2,7 @@
 
 ## Overview
 
-Successfully migrated all PengumumanModel field references from legacy names to new standardized names across 3 files.
+Successfully migrated all AnnouncementModel field references from legacy names to new standardized names across 3 files.
 
 ## Changes Made
 
@@ -107,7 +107,7 @@ for (final pengumuman in recentPengumuman.take(2)) {
 }
 ```
 
-## PengumumanModel Structure
+## AnnouncementModel Structure
 
 ### Entity Properties
 

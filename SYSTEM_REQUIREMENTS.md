@@ -4264,7 +4264,7 @@ Dashboard -> Santri: Show success message
                               │              │              │
                               ▼              ▼              ▼
                ┌─────────────────────────┐ ┌─────────────────────────┐ ┌─────────────────────────┐
-               │     PresensiModel       │ │   PengumumanModel       │ │  JadwalKegiatanModel    │
+               │     PresensiModel       │ │   AnnouncementModel       │ │  JadwalKegiatanModel    │
                ├─────────────────────────┤ ├─────────────────────────┤ ├─────────────────────────┤
                │ + String id             │ │ + String id             │ │ + String id             │
                │ + String userId         │ │ + String judul          │ │ + String nama           │
@@ -4425,7 +4425,7 @@ enum ErrorSeverity {
 
 // RELATIONSHIPS
 UserModel ||--o{ PresensiModel : "has many"
-UserModel ||--o{ PengumumanModel : "creates"
+UserModel ||--o{ AnnouncementModel : "creates"
 UserModel ||--o{ JadwalKegiatanModel : "creates"
 UserModel ||--o{ NotificationModel : "receives"
 UserModel ||--o{ UserAchievementModel : "earns"
@@ -4434,7 +4434,7 @@ UserModel ||--o{ PointHistoryModel : "has history"
 
 AchievementModel ||--o{ UserAchievementModel : "unlocked by users"
 JadwalKegiatanModel }o--o{ UserModel : "participants"
-PengumumanModel }o--o{ UserModel : "viewed by"
+AnnouncementModel }o--o{ UserModel : "viewed by"
 
 // INTERFACES
 <<interface>>

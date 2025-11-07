@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/core/error/exceptions.dart';
-import '../models/pengumuman_model.dart';
+import '../models/announcement_model.dart';
 import 'pengumuman_remote_data_source.dart';
 
 class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
@@ -9,7 +9,7 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   PengumumanRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<List<PengumumanModel>> getAllPengumuman({
+  Future<List<AnnouncementModel>> getAllPengumuman({
     String? kategori,
     String? targetAudience,
     bool? isPublished,
@@ -34,7 +34,9 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
       final snapshot = await query.get();
 
       return snapshot.docs
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
+          .map(
+            (doc) => AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
+          )
           .toList();
     } catch (e) {
       throw ServerException(message: e.toString());
@@ -42,7 +44,7 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<PengumumanModel> getPengumumanById(String id) async {
+  Future<AnnouncementModel> getPengumumanById(String id) async {
     try {
       final doc = await firestore.collection('pengumuman').doc(id).get();
 
@@ -50,14 +52,14 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
         throw ServerException(message: 'Pengumuman tidak ditemukan');
       }
 
-      return PengumumanModel.fromJson({'id': doc.id, ...doc.data()!});
+      return AnnouncementModel.fromJson({'id': doc.id, ...doc.data()!});
     } catch (e) {
       throw ServerException(message: e.toString());
     }
   }
 
   @override
-  Future<List<PengumumanModel>> getPengumumanForUser({
+  Future<List<AnnouncementModel>> getPengumumanForUser({
     required String userRole,
     String? userClass,
   }) async {
@@ -99,7 +101,9 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
       }).toList();
 
       return filtered
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
+          .map(
+            (doc) => AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
+          )
           .toList();
     } catch (e) {
       throw ServerException(message: e.toString());
@@ -107,7 +111,7 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<String> createPengumuman(PengumumanModel pengumuman) async {
+  Future<String> createPengumuman(AnnouncementModel pengumuman) async {
     try {
       final docRef = await firestore
           .collection('pengumuman')
@@ -119,7 +123,7 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<void> updatePengumuman(PengumumanModel pengumuman) async {
+  Future<void> updatePengumuman(AnnouncementModel pengumuman) async {
     try {
       await firestore
           .collection('pengumuman')

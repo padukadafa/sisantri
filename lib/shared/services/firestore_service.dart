@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 import 'package:sisantri/shared/services/presensi_service.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
 import '../models/user_model.dart';
@@ -276,13 +276,13 @@ class FirestoreService {
 
   /// Get recent pengumuman (wrapper method)
   /// Gunakan AnnouncementService.getRecentPengumuman() untuk lebih banyak opsi
-  static Stream<List<PengumumanModel>> getRecentPengumuman({int limit = 5}) {
+  static Stream<List<AnnouncementModel>> getRecentPengumuman({int limit = 5}) {
     return AnnouncementService.getRecentPengumuman(limit: limit);
   }
 
   /// Get all pengumuman (wrapper method)
   /// Gunakan AnnouncementService untuk operasi pengumuman lainnya
-  static Stream<List<PengumumanModel>> getAllPengumuman() {
+  static Stream<List<AnnouncementModel>> getAllPengumuman() {
     return AnnouncementService.getAllPengumuman();
   }
 }

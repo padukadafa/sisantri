@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 
 /// Service untuk mengelola operasi pengumuman/announcement
 class AnnouncementService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _collectionName = 'pengumuman';
 
-  static Stream<List<PengumumanModel>> getAllPengumuman() {
+  static Stream<List<AnnouncementModel>> getAllPengumuman() {
     return _firestore
         .collection(_collectionName)
         .orderBy('createdAt', descending: true)
@@ -15,17 +15,17 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({...doc.data(), 'id': doc.id}),
+                    AnnouncementModel.fromJson({...doc.data(), 'id': doc.id}),
               )
               .toList();
         });
   }
 
-  static Future<PengumumanModel?> getPengumumanById(String id) async {
+  static Future<AnnouncementModel?> getPengumumanById(String id) async {
     try {
       final doc = await _firestore.collection(_collectionName).doc(id).get();
       if (doc.exists && doc.data() != null) {
-        return PengumumanModel.fromJson({'id': doc.id, ...doc.data()!});
+        return AnnouncementModel.fromJson({'id': doc.id, ...doc.data()!});
       }
       return null;
     } catch (e) {
@@ -33,7 +33,7 @@ class AnnouncementService {
     }
   }
 
-  static Stream<List<PengumumanModel>> getActivePengumuman() {
+  static Stream<List<AnnouncementModel>> getActivePengumuman() {
     return _firestore
         .collection(_collectionName)
         .where('isActive', isEqualTo: true)
@@ -43,14 +43,14 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+                    AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
               )
               .where((pengumuman) => !pengumuman.isExpired) // Filter expired
               .toList();
         });
   }
 
-  static Stream<List<PengumumanModel>> getRecentPengumuman({int limit = 5}) {
+  static Stream<List<AnnouncementModel>> getRecentPengumuman({int limit = 5}) {
     return _firestore
         .collection(_collectionName)
         .where('isPublished', isEqualTo: true)
@@ -61,14 +61,14 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+                    AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
               )
               .where((pengumuman) => !pengumuman.isExpired)
               .toList();
         });
   }
 
-  static Stream<List<PengumumanModel>> getPengumumanByCategory(
+  static Stream<List<AnnouncementModel>> getPengumumanByCategory(
     String kategori,
   ) {
     return _firestore
@@ -81,13 +81,13 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+                    AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
               )
               .toList();
         });
   }
 
-  static Stream<List<PengumumanModel>> getPengumumanByPriority(
+  static Stream<List<AnnouncementModel>> getPengumumanByPriority(
     String prioritas,
   ) {
     return _firestore
@@ -100,13 +100,13 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+                    AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
               )
               .toList();
         });
   }
 
-  static Stream<List<PengumumanModel>> getHighPriorityPengumuman() {
+  static Stream<List<AnnouncementModel>> getHighPriorityPengumuman() {
     return _firestore
         .collection(_collectionName)
         .where('prioritas', isEqualTo: 'tinggi')
@@ -117,14 +117,14 @@ class AnnouncementService {
           return snapshot.docs
               .map(
                 (doc) =>
-                    PengumumanModel.fromJson({'id': doc.id, ...doc.data()}),
+                    AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
               )
               .where((pengumuman) => !pengumuman.isExpired)
               .toList();
         });
   }
 
-  static Future<List<PengumumanModel>> getPengumumanByPeriod({
+  static Future<List<AnnouncementModel>> getPengumumanByPeriod({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
@@ -140,14 +140,16 @@ class AnnouncementService {
           .get();
 
       return snapshot.docs
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
+          .map(
+            (doc) => AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
+          )
           .toList();
     } catch (e) {
       throw Exception('Error mengambil pengumuman by period: $e');
     }
   }
 
-  static Future<String> addPengumuman(PengumumanModel pengumuman) async {
+  static Future<String> addPengumuman(AnnouncementModel pengumuman) async {
     try {
       final docRef = await _firestore
           .collection(_collectionName)
@@ -160,7 +162,7 @@ class AnnouncementService {
 
   static Future<void> updatePengumuman(
     String id,
-    PengumumanModel pengumuman,
+    AnnouncementModel pengumuman,
   ) async {
     try {
       await _firestore
@@ -258,7 +260,9 @@ class AnnouncementService {
     try {
       final snapshot = await _firestore.collection(_collectionName).get();
       final allPengumuman = snapshot.docs
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
+          .map(
+            (doc) => AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
+          )
           .toList();
 
       return {
@@ -287,7 +291,9 @@ class AnnouncementService {
           .get();
 
       final pengumumanList = snapshot.docs
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
+          .map(
+            (doc) => AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
+          )
           .toList();
 
       final Map<String, int> categoryCount = {};
@@ -303,7 +309,7 @@ class AnnouncementService {
     }
   }
 
-  static Future<List<PengumumanModel>> searchPengumuman(String query) async {
+  static Future<List<AnnouncementModel>> searchPengumuman(String query) async {
     try {
       final snapshot = await _firestore
           .collection(_collectionName)
@@ -311,7 +317,9 @@ class AnnouncementService {
           .get();
 
       final allPengumuman = snapshot.docs
-          .map((doc) => PengumumanModel.fromJson({'id': doc.id, ...doc.data()}))
+          .map(
+            (doc) => AnnouncementModel.fromJson({'id': doc.id, ...doc.data()}),
+          )
           .toList();
 
       final lowercaseQuery = query.toLowerCase();
@@ -330,7 +338,7 @@ class AnnouncementService {
     }
   }
 
-  static Future<List<PengumumanModel>> filterPengumuman({
+  static Future<List<AnnouncementModel>> filterPengumuman({
     String? kategori,
     String? prioritas,
     bool? isActive,
@@ -372,7 +380,7 @@ class AnnouncementService {
 
       return snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return PengumumanModel.fromJson({'id': doc.id, ...data});
+        return AnnouncementModel.fromJson({'id': doc.id, ...data});
       }).toList();
     } catch (e) {
       throw Exception('Error filtering pengumuman: $e');

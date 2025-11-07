@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
+import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
 
-/// Halaman Detail Pengumuman
-class PengumumanDetailPage extends ConsumerStatefulWidget {
-  final PengumumanModel pengumuman;
+class AnnouncementDetailPage extends ConsumerStatefulWidget {
+  final AnnouncementModel announcement;
 
-  const PengumumanDetailPage({super.key, required this.pengumuman});
+  const AnnouncementDetailPage({super.key, required this.announcement});
 
   @override
-  ConsumerState<PengumumanDetailPage> createState() =>
-      _PengumumanDetailPageState();
+  ConsumerState<AnnouncementDetailPage> createState() =>
+      _AnnouncementDetailPageState();
 }
 
-class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
-  bool _isLoading = false;
+class _AnnouncementDetailPageState
+    extends ConsumerState<AnnouncementDetailPage> {
+  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -25,22 +25,21 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
     _incrementViewCount();
   }
 
-  /// Increment view count
   Future<void> _incrementViewCount() async {
     try {
-      await AnnouncementService.incrementViewCount(widget.pengumuman.id);
+      await AnnouncementService.incrementViewCount(widget.announcement.id);
     } catch (e) {
-      // Silent fail - view count is not critical
       debugPrint('Error incrementing view count: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final pengumuman = widget.pengumuman;
+    final announcement = widget.announcement;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
+
       appBar: AppBar(
         title: const Text('Detail Pengumuman'),
         centerTitle: true,
@@ -48,6 +47,7 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF2E2E2E),
       ),
+
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -55,24 +55,24 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header Section
-                  _buildHeaderSection(context, pengumuman),
+                  _buildHeaderSection(context, announcement),
 
                   const SizedBox(height: 16),
 
                   // Content Section
-                  _buildContentSection(context, pengumuman),
+                  _buildContentSection(context, announcement),
 
                   const SizedBox(height: 16),
 
                   // Attachment Section
-                  if (pengumuman.lampiranUrl != null &&
-                      pengumuman.lampiranUrl!.isNotEmpty)
-                    _buildAttachmentSection(context, pengumuman),
+                  if (announcement.lampiranUrl != null &&
+                      announcement.lampiranUrl!.isNotEmpty)
+                    _buildAttachmentSection(context, announcement),
 
                   const SizedBox(height: 16),
 
                   // Info Section
-                  _buildInfoSection(context, pengumuman),
+                  _buildInfoSection(context, announcement),
 
                   const SizedBox(height: 24),
                 ],
@@ -81,8 +81,10 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
     );
   }
 
-  /// Header Section - Priority badge, title, and author info
-  Widget _buildHeaderSection(BuildContext context, PengumumanModel pengumuman) {
+  Widget _buildHeaderSection(
+    BuildContext context,
+    AnnouncementModel pengumuman,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -245,7 +247,7 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
 
   Widget _buildContentSection(
     BuildContext context,
-    PengumumanModel pengumuman,
+    AnnouncementModel pengumuman,
   ) {
     return Container(
       width: double.infinity,
@@ -290,7 +292,7 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
   /// Attachment Section - Show if there's an attachment
   Widget _buildAttachmentSection(
     BuildContext context,
-    PengumumanModel pengumuman,
+    AnnouncementModel pengumuman,
   ) {
     return Container(
       width: double.infinity,
@@ -387,7 +389,7 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
   }
 
   /// Info Section - Target audience, validity period, etc.
-  Widget _buildInfoSection(BuildContext context, PengumumanModel pengumuman) {
+  Widget _buildInfoSection(BuildContext context, AnnouncementModel pengumuman) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -514,7 +516,7 @@ class _PengumumanDetailPageState extends ConsumerState<PengumumanDetailPage> {
   }
 
   /// Get target audience label
-  String _getTargetAudienceLabel(PengumumanModel pengumuman) {
+  String _getTargetAudienceLabel(AnnouncementModel pengumuman) {
     switch (pengumuman.targetAudience.toLowerCase()) {
       case 'all':
         return 'Semua pengguna';
