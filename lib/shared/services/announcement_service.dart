@@ -6,9 +6,6 @@ class AnnouncementService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _collectionName = 'pengumuman';
 
-  // ===== READ OPERATIONS =====
-
-  /// Get semua pengumuman (stream)
   static Stream<List<PengumumanModel>> getAllPengumuman() {
     return _firestore
         .collection(_collectionName)
@@ -24,7 +21,6 @@ class AnnouncementService {
         });
   }
 
-  /// Get pengumuman by ID (one-time fetch)
   static Future<PengumumanModel?> getPengumumanById(String id) async {
     try {
       final doc = await _firestore.collection(_collectionName).doc(id).get();
@@ -37,7 +33,6 @@ class AnnouncementService {
     }
   }
 
-  /// Get pengumuman yang aktif saja (stream)
   static Stream<List<PengumumanModel>> getActivePengumuman() {
     return _firestore
         .collection(_collectionName)
@@ -73,7 +68,6 @@ class AnnouncementService {
         });
   }
 
-  /// Get pengumuman berdasarkan kategori (stream)
   static Stream<List<PengumumanModel>> getPengumumanByCategory(
     String kategori,
   ) {
@@ -93,7 +87,6 @@ class AnnouncementService {
         });
   }
 
-  /// Get pengumuman berdasarkan prioritas (stream)
   static Stream<List<PengumumanModel>> getPengumumanByPriority(
     String prioritas,
   ) {
@@ -113,7 +106,6 @@ class AnnouncementService {
         });
   }
 
-  /// Get pengumuman high priority (stream)
   static Stream<List<PengumumanModel>> getHighPriorityPengumuman() {
     return _firestore
         .collection(_collectionName)
@@ -132,7 +124,6 @@ class AnnouncementService {
         });
   }
 
-  /// Get pengumuman dalam periode tertentu
   static Future<List<PengumumanModel>> getPengumumanByPeriod({
     required DateTime startDate,
     required DateTime endDate,
@@ -156,9 +147,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== CREATE OPERATIONS =====
-
-  /// Tambah pengumuman baru
   static Future<String> addPengumuman(PengumumanModel pengumuman) async {
     try {
       final docRef = await _firestore
@@ -170,9 +158,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== UPDATE OPERATIONS =====
-
-  /// Update pengumuman
   static Future<void> updatePengumuman(
     String id,
     PengumumanModel pengumuman,
@@ -187,7 +172,6 @@ class AnnouncementService {
     }
   }
 
-  /// Update status aktif pengumuman
   static Future<void> updateActiveStatus(String id, bool isActive) async {
     try {
       await _firestore.collection(_collectionName).doc(id).update({
@@ -199,7 +183,6 @@ class AnnouncementService {
     }
   }
 
-  /// Toggle status aktif pengumuman
   static Future<void> toggleActiveStatus(String id) async {
     try {
       final pengumuman = await getPengumumanById(id);
@@ -211,7 +194,6 @@ class AnnouncementService {
     }
   }
 
-  /// Update prioritas pengumuman
   static Future<void> updatePriority(String id, String prioritas) async {
     try {
       await _firestore.collection(_collectionName).doc(id).update({
@@ -223,9 +205,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== DELETE OPERATIONS =====
-
-  /// Delete pengumuman
   static Future<void> deletePengumuman(String id) async {
     try {
       await _firestore.collection(_collectionName).doc(id).delete();
@@ -234,7 +213,6 @@ class AnnouncementService {
     }
   }
 
-  /// Soft delete pengumuman (set isActive = false)
   static Future<void> softDeletePengumuman(String id) async {
     try {
       await _firestore.collection(_collectionName).doc(id).update({
@@ -246,9 +224,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== BATCH OPERATIONS =====
-
-  /// Delete multiple pengumuman
   static Future<void> deleteBatchPengumuman(List<String> ids) async {
     try {
       final batch = _firestore.batch();
@@ -261,7 +236,6 @@ class AnnouncementService {
     }
   }
 
-  /// Update batch status aktif
   static Future<void> updateBatchActiveStatus(
     List<String> ids,
     bool isActive,
@@ -280,9 +254,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== STATISTICS =====
-
-  /// Get statistik pengumuman
   static Future<Map<String, int>> getPengumumanStats() async {
     try {
       final snapshot = await _firestore.collection(_collectionName).get();
@@ -308,7 +279,6 @@ class AnnouncementService {
     }
   }
 
-  /// Get jumlah pengumuman by kategori
   static Future<Map<String, int>> getPengumumanCountByCategory() async {
     try {
       final snapshot = await _firestore
@@ -333,9 +303,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== SEARCH & FILTER =====
-
-  /// Search pengumuman berdasarkan judul atau konten
   static Future<List<PengumumanModel>> searchPengumuman(String query) async {
     try {
       final snapshot = await _firestore
@@ -363,7 +330,6 @@ class AnnouncementService {
     }
   }
 
-  /// Filter pengumuman dengan multiple criteria
   static Future<List<PengumumanModel>> filterPengumuman({
     String? kategori,
     String? prioritas,
@@ -413,9 +379,6 @@ class AnnouncementService {
     }
   }
 
-  // ===== UTILITY =====
-
-  /// Check if pengumuman exists
   static Future<bool> isPengumumanExists(String id) async {
     try {
       final doc = await _firestore.collection(_collectionName).doc(id).get();
@@ -425,7 +388,6 @@ class AnnouncementService {
     }
   }
 
-  /// Increment view count
   static Future<void> incrementViewCount(String id) async {
     try {
       await _firestore.collection(_collectionName).doc(id).update({
@@ -436,7 +398,6 @@ class AnnouncementService {
     }
   }
 
-  /// Get total count pengumuman
   static Future<int> getTotalPengumumanCount() async {
     try {
       final snapshot = await _firestore.collection(_collectionName).get();
@@ -446,7 +407,6 @@ class AnnouncementService {
     }
   }
 
-  /// Get active count pengumuman
   static Future<int> getActivePengumumanCount() async {
     try {
       final snapshot = await _firestore

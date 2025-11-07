@@ -4,6 +4,7 @@ import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
 import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/shared/widgets/reusable_text_field.dart';
 
 /// Halaman form untuk membuat/edit pengumuman
 class AnnouncementFormPage extends ConsumerStatefulWidget {
@@ -22,11 +23,9 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
   final _kontenController = TextEditingController();
 
   String _kategori = 'umum';
-  String _prioritas = 'medium';
   String _targetAudience = 'all';
   DateTime _tanggalMulai = DateTime.now();
   DateTime? _tanggalBerakhir;
-  bool _isPinned = false;
   bool _isLoading = false;
 
   @override
@@ -42,11 +41,9 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
     _judulController.text = announcement.judul;
     _kontenController.text = announcement.konten;
     _kategori = announcement.kategori;
-    _prioritas = announcement.prioritas;
     _targetAudience = announcement.targetAudience;
     _tanggalMulai = announcement.tanggalMulai;
     _tanggalBerakhir = announcement.tanggalBerakhir;
-    _isPinned = announcement.isPinned;
   }
 
   @override
@@ -80,14 +77,10 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
           padding: const EdgeInsets.all(16),
           children: [
             // Judul
-            TextFormField(
+            ReusableTextField(
               controller: _judulController,
-              decoration: const InputDecoration(
-                labelText: 'Judul Pengumuman *',
-                hintText: 'Masukkan judul pengumuman',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title),
-              ),
+              labelText: 'Judul Pengumuman *',
+              prefixIcon: Icons.title,
               readOnly: isView,
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -96,21 +89,16 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
                 return null;
               },
               maxLines: 2,
+              textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 16),
 
             // Konten
-            TextFormField(
+            ReusableTextField(
               controller: _kontenController,
-              decoration: const InputDecoration(
-                labelText: 'Konten Pengumuman *',
-                hintText: 'Masukkan isi pengumuman',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.description),
-                alignLabelWithHint: true,
-              ),
+              labelText: 'Konten Pengumuman *',
+              prefixIcon: Icons.description,
               readOnly: isView,
-
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Konten harus diisi';
@@ -118,6 +106,8 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
                 return null;
               },
               maxLines: 8,
+              minLines: 4,
+              textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 16),
 
@@ -141,29 +131,6 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
                   : (value) {
                       if (value != null) {
                         setState(() => _kategori = value);
-                      }
-                    },
-            ),
-            const SizedBox(height: 16),
-
-            // Prioritas
-            DropdownButtonFormField<String>(
-              value: _prioritas,
-              decoration: const InputDecoration(
-                labelText: 'Prioritas',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.priority_high),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'low', child: Text('Rendah')),
-                DropdownMenuItem(value: 'medium', child: Text('Sedang')),
-                DropdownMenuItem(value: 'high', child: Text('Tinggi')),
-              ],
-              onChanged: isView
-                  ? null
-                  : (value) {
-                      if (value != null) {
-                        setState(() => _prioritas = value);
                       }
                     },
             ),
@@ -246,19 +213,6 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
                 borderRadius: BorderRadius.circular(8),
                 side: BorderSide(color: Colors.grey[300]!),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            SwitchListTile(
-              title: const Text('Sematkan Pengumuman'),
-              subtitle: const Text('Pengumuman akan muncul di bagian atas'),
-              value: _isPinned,
-              onChanged: isView
-                  ? null
-                  : (value) {
-                      setState(() => _isPinned = value);
-                    },
-              secondary: const Icon(Icons.push_pin),
             ),
             const SizedBox(height: 24),
 
@@ -367,7 +321,7 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
       judul: _judulController.text.trim(),
       konten: _kontenController.text.trim(),
       kategori: _kategori,
-      prioritas: _prioritas,
+      prioritas: 'medium',
       createdBy: currentUser.uid,
       createdByName: currentUser.displayName ?? 'Admin',
       targetAudience: _targetAudience,
@@ -377,7 +331,7 @@ class _AnnouncementFormPageState extends ConsumerState<AnnouncementFormPage> {
       tanggalMulai: _tanggalMulai,
       tanggalBerakhir: _tanggalBerakhir,
       isPublished: published,
-      isPinned: _isPinned,
+      isPinned: false,
       viewCount: widget.announcement?.viewCount ?? 0,
       createdAt: widget.announcement?.createdAt ?? now,
       updatedAt: now,

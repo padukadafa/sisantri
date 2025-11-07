@@ -2,18 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/features/shared/pengumuman/data/models/pengumuman_model.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
 
-/// Provider untuk semua pengumuman
 final announcementProvider = StreamProvider<List<PengumumanModel>>((ref) {
   return AnnouncementService.getAllPengumuman();
 });
 
-/// Provider untuk pengumuman yang aktif saja
 final activeAnnouncementProvider = Provider<List<PengumumanModel>>((ref) {
   final announcements = ref.watch(announcementProvider).asData?.value ?? [];
   return announcements.where((a) => a.isActive && !a.isExpired).toList();
 });
 
-/// Provider untuk statistik pengumuman
 final announcementStatsProvider = Provider<Map<String, int>>((ref) {
   final announcements = ref.watch(announcementProvider).asData?.value ?? [];
 
@@ -26,7 +23,6 @@ final announcementStatsProvider = Provider<Map<String, int>>((ref) {
   };
 });
 
-/// Provider untuk pengumuman berdasarkan kategori
 final announcementByCategoryProvider =
     Provider.family<List<PengumumanModel>, String>((ref, category) {
       final announcements = ref.watch(announcementProvider).asData?.value ?? [];
@@ -35,7 +31,6 @@ final announcementByCategoryProvider =
       return announcements.where((a) => a.kategori == category).toList();
     });
 
-/// Provider untuk pengumuman berdasarkan prioritas
 final announcementByPriorityProvider =
     Provider.family<List<PengumumanModel>, String>((ref, priority) {
       final announcements = ref.watch(announcementProvider).asData?.value ?? [];

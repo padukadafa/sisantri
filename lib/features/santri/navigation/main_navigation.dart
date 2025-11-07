@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/features/santri/presensi/presentation/pages/presensi_page.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/features/santri/dashboard/presentation/pages/santri_dashboard_page.dart';
-import 'package:sisantri/features/shared/jadwal/presentation/jadwal_page.dart';
 import 'package:sisantri/features/santri/leaderboard/presentation/leaderboard_page.dart';
 import 'package:sisantri/features/santri/profile/presentation/pages/profile_page.dart';
+import 'package:sisantri/features/shared/jadwal/presentation/jadwal_page.dart';
 
 /// Provider untuk current tab index
 final currentTabProvider = StateProvider<int>((ref) => 0);
