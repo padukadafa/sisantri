@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/providers/announcement_providers.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_card.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_delete_dialog.dart';

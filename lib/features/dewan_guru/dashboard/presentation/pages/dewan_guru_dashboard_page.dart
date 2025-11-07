@@ -4,7 +4,7 @@ import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/features/santri/presensi/presentation/pages/presensi_summary_page.dart';
 import 'package:sisantri/features/santri/leaderboard/presentation/leaderboard_page.dart';
-import 'package:sisantri/features/shared/pengumuman/presentation/announcement_page.dart';
+import 'package:sisantri/features/shared/announcement/presentation/announcement_page.dart';
 import 'package:sisantri/features/shared/jadwal/presentation/jadwal_page.dart';
 
 class DewanGuruDashboardPage extends ConsumerWidget {

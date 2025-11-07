@@ -1,6 +1,6 @@
-import '../../domain/entities/pengumuman.dart';
+import '../../domain/entities/announcement.dart';
 
-class AnnouncementModel extends Pengumuman {
+class AnnouncementModel extends Announcement {
   const AnnouncementModel({
     required super.id,
     required super.judul,

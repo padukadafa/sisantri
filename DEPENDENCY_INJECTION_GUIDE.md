@@ -135,8 +135,8 @@ class PresensiWidget extends ConsumerWidget {
 
 **Repository:**
 
-- `PengumumanRepository` - Interface
-- `PengumumanRepositoryImpl` - Implementation
+- `AnnouncementRepository` - Interface
+- `AnnouncementRepositoryImpl` - Implementation
 
 **Use Cases:**
 
@@ -365,11 +365,11 @@ try {
 
 ```dart
 void main() {
-  late MockPengumumanRepository mockRepository;
+  late MockAnnouncementRepository mockRepository;
   late GetAllPengumuman useCase;
 
   setUp(() {
-    mockRepository = MockPengumumanRepository();
+    mockRepository = MockAnnouncementRepository();
     useCase = GetAllPengumuman(mockRepository);
   });
 

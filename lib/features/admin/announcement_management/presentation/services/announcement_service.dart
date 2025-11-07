@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
 import 'package:sisantri/shared/helpers/messaging_helper.dart';
 
 /// Service untuk CRUD operations pengumuman

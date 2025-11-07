@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
 
 class AnnouncementDetailPage extends ConsumerStatefulWidget {

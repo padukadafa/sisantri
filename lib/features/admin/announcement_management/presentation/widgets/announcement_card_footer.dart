@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
 
 class AnnouncementCardFooter extends StatelessWidget {
   final AnnouncementModel pengumuman;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
-import 'package:sisantri/features/shared/pengumuman/presentation/pages/announcement_detail_page.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/presentation/pages/announcement_detail_page.dart';
 
 class PengumumanListItem extends StatelessWidget {
   final AnnouncementModel item;

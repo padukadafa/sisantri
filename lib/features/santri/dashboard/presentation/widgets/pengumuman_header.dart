@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
-import 'package:sisantri/features/shared/pengumuman/presentation/announcement_page.dart';
+import 'package:sisantri/features/shared/announcement/presentation/announcement_page.dart';
 
 class PengumumanHeader extends StatelessWidget {
   const PengumumanHeader({super.key});

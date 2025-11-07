@@ -1,16 +1,16 @@
-import '../repositories/pengumuman_repository.dart';
+import '../repositories/announcement_repository.dart';
 
 class MarkPengumumanAsRead {
-  final PengumumanRepository repository;
+  final AnnouncementRepository repository;
 
   MarkPengumumanAsRead(this.repository);
 
   Future<void> call({
-    required String pengumumanId,
+    required String announcementId,
     required String userId,
   }) async {
     return await repository.markAsRead(
-      pengumumanId: pengumumanId,
+      announcementId: announcementId,
       userId: userId,
     );
   }

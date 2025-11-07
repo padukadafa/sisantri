@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/announcement_service.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_form_fields.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_category_dropdown.dart';
 import 'package:sisantri/features/admin/announcement_management/presentation/widgets/announcement_target_dropdown.dart';

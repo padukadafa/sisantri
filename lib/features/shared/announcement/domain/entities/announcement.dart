@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-class Pengumuman extends Equatable {
+class Announcement extends Equatable {
   final String id;
   final String judul;
   final String konten;
@@ -20,7 +20,7 @@ class Pengumuman extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const Pengumuman({
+  const Announcement({
     required this.id,
     required this.judul,
     required this.konten,

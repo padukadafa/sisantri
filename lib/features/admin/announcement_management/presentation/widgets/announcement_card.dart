@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sisantri/features/shared/pengumuman/data/models/announcement_model.dart';
-import 'package:sisantri/features/shared/pengumuman/presentation/pages/announcement_detail_page.dart';
+import 'package:sisantri/features/shared/announcement/data/models/announcement_model.dart';
+import 'package:sisantri/features/shared/announcement/presentation/pages/announcement_detail_page.dart';
 import 'announcement_card_header.dart';
 import 'announcement_card_content.dart';
 import 'announcement_card_chips.dart';

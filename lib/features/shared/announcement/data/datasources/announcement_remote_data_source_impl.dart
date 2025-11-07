@@ -1,21 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/core/error/exceptions.dart';
 import '../models/announcement_model.dart';
-import 'pengumuman_remote_data_source.dart';
+import 'announcement_remote_data_source.dart';
 
-class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
+class AnnouncementRemoteDataSourceImpl implements AnnouncementRemoteDataSource {
   final FirebaseFirestore firestore;
 
-  PengumumanRemoteDataSourceImpl({required this.firestore});
+  AnnouncementRemoteDataSourceImpl({required this.firestore});
 
   @override
-  Future<List<AnnouncementModel>> getAllPengumuman({
+  Future<List<AnnouncementModel>> getAllAnnouncement({
     String? kategori,
     String? targetAudience,
     bool? isPublished,
   }) async {
     try {
-      Query<Map<String, dynamic>> query = firestore.collection('pengumuman');
+      Query<Map<String, dynamic>> query = firestore.collection('announcement');
 
       if (kategori != null) {
         query = query.where('kategori', isEqualTo: kategori);
@@ -44,12 +44,12 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<AnnouncementModel> getPengumumanById(String id) async {
+  Future<AnnouncementModel> getAnnouncementById(String id) async {
     try {
-      final doc = await firestore.collection('pengumuman').doc(id).get();
+      final doc = await firestore.collection('announcement').doc(id).get();
 
       if (!doc.exists) {
-        throw ServerException(message: 'Pengumuman tidak ditemukan');
+        throw ServerException(message: 'Announcement tidak ditemukan');
       }
 
       return AnnouncementModel.fromJson({'id': doc.id, ...doc.data()!});
@@ -59,13 +59,13 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<List<AnnouncementModel>> getPengumumanForUser({
+  Future<List<AnnouncementModel>> getAnnouncementForUser({
     required String userRole,
     String? userClass,
   }) async {
     try {
       Query<Map<String, dynamic>> query = firestore
-          .collection('pengumuman')
+          .collection('announcement')
           .where('isPublished', isEqualTo: true);
 
       final snapshot = await query.orderBy('createdAt', descending: true).get();
@@ -111,11 +111,11 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<String> createPengumuman(AnnouncementModel pengumuman) async {
+  Future<String> createAnnouncement(AnnouncementModel announcement) async {
     try {
       final docRef = await firestore
-          .collection('pengumuman')
-          .add(pengumuman.toJson()..remove('id'));
+          .collection('announcement')
+          .add(announcement.toJson()..remove('id'));
       return docRef.id;
     } catch (e) {
       throw ServerException(message: e.toString());
@@ -123,21 +123,21 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   }
 
   @override
-  Future<void> updatePengumuman(AnnouncementModel pengumuman) async {
+  Future<void> updateAnnouncement(AnnouncementModel announcement) async {
     try {
       await firestore
-          .collection('pengumuman')
-          .doc(pengumuman.id)
-          .update(pengumuman.toJson());
+          .collection('announcement')
+          .doc(announcement.id)
+          .update(announcement.toJson());
     } catch (e) {
       throw ServerException(message: e.toString());
     }
   }
 
   @override
-  Future<void> deletePengumuman(String id) async {
+  Future<void> deleteAnnouncement(String id) async {
     try {
-      await firestore.collection('pengumuman').doc(id).delete();
+      await firestore.collection('announcement').doc(id).delete();
     } catch (e) {
       throw ServerException(message: e.toString());
     }
@@ -145,13 +145,13 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
 
   @override
   Future<void> markAsRead({
-    required String pengumumanId,
+    required String announcementId,
     required String userId,
   }) async {
     try {
       await firestore
-          .collection('pengumuman')
-          .doc(pengumumanId)
+          .collection('announcement')
+          .doc(announcementId)
           .collection('reads')
           .doc(userId)
           .set({
@@ -166,13 +166,13 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
 
   @override
   Future<bool> hasUserRead({
-    required String pengumumanId,
+    required String announcementId,
     required String userId,
   }) async {
     try {
       final doc = await firestore
-          .collection('pengumuman')
-          .doc(pengumumanId)
+          .collection('announcement')
+          .doc(announcementId)
           .collection('reads')
           .doc(userId)
           .get();
@@ -186,7 +186,7 @@ class PengumumanRemoteDataSourceImpl implements PengumumanRemoteDataSource {
   @override
   Future<void> incrementViewCount(String id) async {
     try {
-      await firestore.collection('pengumuman').doc(id).update({
+      await firestore.collection('announcement').doc(id).update({
         'viewCount': FieldValue.increment(1),
       });
     } catch (e) {

@@ -7,16 +7,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../features/shared/auth/data/datasources/auth_data_source_interface.dart';
 import '../../features/shared/auth/data/datasources/auth_remote_data_source.dart';
 import '../../features/santri/presensi/data/datasources/presensi_remote_data_source.dart';
-import '../../features/shared/pengumuman/data/datasources/pengumuman_remote_data_source.dart';
-import '../../features/shared/pengumuman/data/datasources/pengumuman_remote_data_source_impl.dart';
+import '../../features/shared/announcement/data/datasources/announcement_remote_data_source.dart';
+import '../../features/shared/announcement/data/datasources/announcement_remote_data_source_impl.dart';
 
 // Repositories
 import '../../features/shared/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/shared/auth/domain/repositories/auth_repository.dart';
 import '../../features/santri/presensi/data/repositories/presensi_repository_impl.dart';
 import '../../features/santri/presensi/domain/repositories/presensi_repository.dart';
-import '../../features/shared/pengumuman/data/repositories/pengumuman_repository_impl.dart';
-import '../../features/shared/pengumuman/domain/repositories/pengumuman_repository.dart';
+import '../../features/shared/announcement/data/repositories/announcement_repository_impl.dart';
+import '../../features/shared/announcement/domain/repositories/announcement_repository.dart';
 
 // Use Cases
 import '../../features/shared/auth/domain/usecases/login_with_email_and_password.dart';
@@ -25,10 +25,10 @@ import '../../features/shared/auth/domain/usecases/logout.dart';
 import '../../features/santri/presensi/domain/usecases/add_presensi.dart';
 import '../../features/santri/presensi/domain/usecases/get_presensi_by_user_id.dart';
 import '../../features/santri/presensi/domain/usecases/presensi_with_rfid.dart';
-import '../../features/shared/pengumuman/domain/usecases/get_all_pengumuman.dart';
-import '../../features/shared/pengumuman/domain/usecases/get_pengumuman_for_user.dart';
-import '../../features/shared/pengumuman/domain/usecases/create_pengumuman.dart';
-import '../../features/shared/pengumuman/domain/usecases/mark_pengumuman_as_read.dart';
+import '../../features/shared/announcement/domain/usecases/get_all_announcement.dart';
+import '../../features/shared/announcement/domain/usecases/get_announcement_for_user.dart';
+import '../../features/shared/announcement/domain/usecases/create_announcement.dart';
+import '../../features/shared/announcement/domain/usecases/mark_announcement_as_read.dart';
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
   return FirebaseAuth.instance;
@@ -107,8 +107,8 @@ final pengumumanRemoteDataSourceProvider = Provider<PengumumanRemoteDataSource>(
   },
 );
 
-final pengumumanRepositoryProvider = Provider<PengumumanRepository>((ref) {
-  return PengumumanRepositoryImpl(
+final pengumumanRepositoryProvider = Provider<AnnouncementRepository>((ref) {
+  return AnnouncementRepositoryImpl(
     remoteDataSource: ref.read(pengumumanRemoteDataSourceProvider),
   );
 });
