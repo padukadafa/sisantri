@@ -223,14 +223,16 @@ class ProfilePage extends ConsumerWidget {
   Widget _buildStatsCards(UserModel user) {
     return Row(
       children: [
-        Expanded(
-          child: _buildStatCard(
-            icon: Icons.star,
-            title: 'Total Poin',
-            value: '${user.poin}',
-            color: Colors.amber,
+        if (user.isSantri) ...[
+          Expanded(
+            child: _buildStatCard(
+              icon: Icons.star,
+              title: 'Total Poin',
+              value: '${user.poin}',
+              color: Colors.amber,
+            ),
           ),
-        ),
+        ],
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
@@ -304,22 +306,6 @@ class ProfilePage extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          if (user.isDewaGuru) ...[
-            _buildMenuItem(
-              icon: Icons.dashboard,
-              title: 'Dashboard Dewan Guru',
-              subtitle: 'Akses fitur khusus dewan guru',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DewanGuruDashboardPage(user: user),
-                  ),
-                );
-              },
-            ),
-            const Divider(height: 1),
-          ],
           _buildMenuItem(
             icon: Icons.person_outline,
             title: 'Edit Profil',

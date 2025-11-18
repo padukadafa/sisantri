@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
+import 'package:sisantri/features/admin/attendance_management/presentation/pages/attendance_report_page_backup.dart';
+import 'package:sisantri/features/santri/presensi/presentation/pages/presensi_page.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
@@ -223,17 +225,13 @@ class DewaGuruNavigation extends ConsumerWidget {
     final List<Widget> pages = [
       DewanGuruDashboardPage(user: user),
       const JadwalPage(),
-      const LeaderboardPage(),
-      const PresensiSummaryPage(),
+      const AttendanceReportPage(),
       const ProfilePage(),
     ];
 
     return Scaffold(
       body: IndexedStack(index: currentTab, children: pages),
       bottomNavigationBar: _buildBottomNavigationBar(ref, currentTab, user),
-      // Floating action button untuk notifikasi (opsional)
-      floatingActionButton: currentTab == 0 ? _buildNotificationFAB(ref) : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -281,11 +279,6 @@ class DewaGuruNavigation extends ConsumerWidget {
             icon: _buildNavIcon(Icons.schedule_outlined, 2, currentTab),
             activeIcon: _buildNavIcon(Icons.schedule, 2, currentTab),
             label: 'Jadwal',
-          ),
-          BottomNavigationBarItem(
-            icon: _buildNavIcon(Icons.leaderboard_outlined, 3, currentTab),
-            activeIcon: _buildNavIcon(Icons.leaderboard, 3, currentTab),
-            label: 'Ranking',
           ),
           BottomNavigationBarItem(
             icon: _buildNavIcon(Icons.analytics_outlined, 4, currentTab),

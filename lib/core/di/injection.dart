@@ -99,13 +99,12 @@ final presensiWithRfidProvider = Provider<PresensiWithRfid>((ref) {
 // PENGUMUMAN FEATURE PROVIDERS
 // =====================================================
 
-final pengumumanRemoteDataSourceProvider = Provider<PengumumanRemoteDataSource>(
-  (ref) {
-    return PengumumanRemoteDataSourceImpl(
-      firestore: ref.read(firestoreProvider),
-    );
-  },
-);
+final pengumumanRemoteDataSourceProvider =
+    Provider<AnnouncementRemoteDataSource>((ref) {
+      return AnnouncementRemoteDataSourceImpl(
+        firestore: ref.read(firestoreProvider),
+      );
+    });
 
 final pengumumanRepositoryProvider = Provider<AnnouncementRepository>((ref) {
   return AnnouncementRepositoryImpl(
@@ -113,18 +112,18 @@ final pengumumanRepositoryProvider = Provider<AnnouncementRepository>((ref) {
   );
 });
 
-final getAllPengumumanProvider = Provider<GetAllPengumuman>((ref) {
-  return GetAllPengumuman(ref.read(pengumumanRepositoryProvider));
+final getAllAnnouncementProvider = Provider<GetAllAnnouncement>((ref) {
+  return GetAllAnnouncement(ref.read(pengumumanRepositoryProvider));
 });
 
-final getPengumumanForUserProvider = Provider<GetPengumumanForUser>((ref) {
-  return GetPengumumanForUser(ref.read(pengumumanRepositoryProvider));
+final getAnnouncementForUserProvider = Provider<GetAnnouncementForUser>((ref) {
+  return GetAnnouncementForUser(ref.read(pengumumanRepositoryProvider));
 });
 
-final createPengumumanProvider = Provider<CreatePengumuman>((ref) {
-  return CreatePengumuman(ref.read(pengumumanRepositoryProvider));
+final createAnnouncementProvider = Provider<CreateAnnouncement>((ref) {
+  return CreateAnnouncement(ref.read(pengumumanRepositoryProvider));
 });
 
-final markPengumumanAsReadProvider = Provider<MarkPengumumanAsRead>((ref) {
+final markAnnouncementAsReadProvider = Provider<MarkPengumumanAsRead>((ref) {
   return MarkPengumumanAsRead(ref.read(pengumumanRepositoryProvider));
 });

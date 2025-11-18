@@ -1,11 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'package:sisantri/features/santri/presensi/presentation/pages/presensi_summary_page.dart';
 import 'package:sisantri/features/santri/leaderboard/presentation/leaderboard_page.dart';
 import 'package:sisantri/features/shared/announcement/presentation/announcement_page.dart';
 import 'package:sisantri/features/shared/jadwal/presentation/jadwal_page.dart';
+
+/// Provider untuk jadwal terdekat (3 jadwal terdekat)
+final jadwalTerdekatProvider = StreamProvider<List<JadwalModel>>((ref) {
+  final firestore = FirebaseFirestore.instance;
+  final now = DateTime.now();
+  final startOfToday = DateTime(now.year, now.month, now.day);
+
+  return firestore
+      .collection('jadwal')
+      .where('isAktif', isEqualTo: true)
+      .where(
+        'tanggal',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(startOfToday),
+      )
+      .orderBy('tanggal')
+      .limit(3)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          return JadwalModel.fromJson({'id': doc.id, ...data});
+        }).toList();
+      });
+});
 
 class DewanGuruDashboardPage extends ConsumerWidget {
   final UserModel user;
@@ -26,11 +53,11 @@ class DewanGuruDashboardPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: 24),
             _buildQuickStats(),
             const SizedBox(height: 24),
-            _buildMenuGrid(context),
+            // _buildMenuGrid(context),
+            const SizedBox(height: 24),
+            _buildJadwalTerdekat(ref),
             const SizedBox(height: 24),
             _buildRecentUpdates(),
           ],
@@ -316,6 +343,267 @@ class DewanGuruDashboardPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildJadwalTerdekat(WidgetRef ref) {
+    final jadwalAsync = ref.watch(jadwalTerdekatProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Jadwal Terdekat',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  ref.context,
+                  MaterialPageRoute(builder: (context) => const JadwalPage()),
+                );
+              },
+              child: const Text('Lihat Semua'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        jadwalAsync.when(
+          data: (jadwalList) {
+            if (jadwalList.isEmpty) {
+              return Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Tidak ada jadwal mendatang',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: jadwalList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final jadwal = entry.value;
+                  final kategoriColor = _getKategoriColor(jadwal.kategori);
+                  final kategoriIcon = _getKategoriIcon(jadwal.kategori);
+
+                  return Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: kategoriColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            kategoriIcon,
+                            color: kategoriColor,
+                            size: 24,
+                          ),
+                        ),
+                        title: Text(
+                          jadwal.nama,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.calendar_today,
+                                  size: 14,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  DateFormat(
+                                    'EEEE, d MMM yyyy',
+                                    'id_ID',
+                                  ).format(jadwal.tanggal),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (jadwal.waktuMulai != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${jadwal.waktuMulai}${jadwal.waktuSelesai != null ? ' - ${jadwal.waktuSelesai}' : ''}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (jadwal.tempat != null) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      jadwal.tempat!,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: kategoriColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            jadwal.kategori.value.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: kategoriColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (index < jadwalList.length - 1)
+                        const Divider(height: 1),
+                    ],
+                  );
+                }).toList(),
+              ),
+            );
+          },
+          loading: () => Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+          error: (error, stack) => Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Gagal memuat jadwal',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getKategoriColor(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kegiatan:
+        return Colors.blue;
+      case TipeJadwal.pengajian:
+        return Colors.green;
+      case TipeJadwal.tahfidz:
+        return Colors.purple;
+      case TipeJadwal.bacaan:
+        return Colors.orange;
+      case TipeJadwal.olahraga:
+        return Colors.red;
+    }
+  }
+
+  IconData _getKategoriIcon(TipeJadwal kategori) {
+    switch (kategori) {
+      case TipeJadwal.kegiatan:
+        return Icons.event;
+      case TipeJadwal.pengajian:
+        return Icons.menu_book;
+      case TipeJadwal.tahfidz:
+        return Icons.auto_stories;
+      case TipeJadwal.bacaan:
+        return Icons.book;
+      case TipeJadwal.olahraga:
+        return Icons.sports_soccer;
+    }
   }
 
   Widget _buildRecentUpdates() {
