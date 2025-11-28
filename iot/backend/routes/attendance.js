@@ -43,10 +43,10 @@ router.post(
       console.log(`RFID scan received: ${rfidUid} from device: ${deviceId}`);
       // mendapatkan jadwal hari ini
       const schedule = await getTodaySchedule();
-      if (!schedule.isWithinSchedule) {
+      if (!schedule) {
         return res.status(403).json({
           success: false,
-          message: schedule.message,
+          message: "Tidak ada jadwal untuk hari ini",
         });
       }
       // mencari user berdasarkan rfid

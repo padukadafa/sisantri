@@ -1,3 +1,6 @@
+process.env.FIRESTORE_ENABLE_TELEMETRY = "false";
+process.env.GOOGLE_CLOUD_ENABLE_TELEMETRY = "false";
+
 const admin = require("firebase-admin");
 require("dotenv").config();
 
@@ -14,6 +17,8 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+db.settings({ preferRest: true });
+
 const FieldValue = admin.firestore.FieldValue;
 const Timestamp = admin.firestore.Timestamp;
 

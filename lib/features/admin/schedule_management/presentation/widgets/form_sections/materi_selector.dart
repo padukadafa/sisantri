@@ -7,7 +7,7 @@ import 'package:sisantri/shared/providers/materi_provider.dart';
 class MateriSelector extends ConsumerWidget {
   final String? selectedMateriId;
   final String? selectedMateriNama;
-  final Function(String? id, String? nama) onMateriChanged;
+  final Function(String? id, String? nama, String? jenis) onMateriChanged;
   final JenisMateri? filterJenis; // Optional filter berdasarkan jenis
 
   const MateriSelector({
@@ -90,7 +90,7 @@ class MateriSelector extends ConsumerWidget {
             suffixIcon: selectedMateriId != null
                 ? IconButton(
                     icon: const Icon(Icons.clear, size: 20),
-                    onPressed: () => onMateriChanged(null, null),
+                    onPressed: () => onMateriChanged(null, null, null),
                     tooltip: 'Hapus pilihan',
                   )
                 : null,
@@ -149,12 +149,16 @@ class MateriSelector extends ConsumerWidget {
           ],
           onChanged: (String? materiId) {
             if (materiId == null) {
-              onMateriChanged(null, null);
+              onMateriChanged(null, null, null);
             } else {
               final selectedMateri = activeMateri.firstWhere(
                 (m) => m.id == materiId,
               );
-              onMateriChanged(selectedMateri.id, selectedMateri.nama);
+              onMateriChanged(
+                selectedMateri.id,
+                selectedMateri.nama,
+                selectedMateri.jenis.value,
+              );
             }
           },
           validator: (value) {

@@ -22,6 +22,7 @@ import '../../features/shared/announcement/domain/repositories/announcement_repo
 import '../../features/shared/auth/domain/usecases/login_with_email_and_password.dart';
 import '../../features/shared/auth/domain/usecases/get_current_user.dart';
 import '../../features/shared/auth/domain/usecases/logout.dart';
+import '../../features/shared/auth/domain/usecases/reset_password.dart';
 import '../../features/santri/presensi/domain/usecases/add_presensi.dart';
 import '../../features/santri/presensi/domain/usecases/get_presensi_by_user_id.dart';
 import '../../features/santri/presensi/domain/usecases/presensi_with_rfid.dart';
@@ -78,6 +79,10 @@ final getCurrentUserProvider = Provider<GetCurrentUser>((ref) {
 
 final logoutProvider = Provider<Logout>((ref) {
   return Logout(ref.read(authRepositoryProvider));
+});
+
+final resetPasswordProvider = Provider<ResetPassword>((ref) {
+  return ResetPassword(ref.read(authRepositoryProvider));
 });
 
 final addPresensiProvider = Provider<AddPresensi>((ref) {

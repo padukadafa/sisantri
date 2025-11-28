@@ -26,7 +26,7 @@ async function getTodaySchedule() {
     const doc = snapshot.docs[0];
     const data = doc.data();
     const scheduleTime = checkScheduleTime(data.waktuMulai, data.waktuSelesai);
-
+    console.log("Today's schedule found:", { id: doc.id, ...data, ...scheduleTime });
     return {
       id: doc.id,
       ...data,
@@ -56,7 +56,7 @@ async function getTodayAttendance(jadwalId, userId) {
       .where("activity", "==", jadwalId)
       .limit(1)
       .get();
-
+    console.log("userId:", userId, "jadwalId:", jadwalId);
     if (snapshot.empty) {
       return null;
     }

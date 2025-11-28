@@ -11,15 +11,13 @@ class MateriFormSection extends StatelessWidget {
   final Function(String? id, String? nama) onPemateriChanged;
   final String? selectedMateriId;
   final String? selectedMateriNama;
-  final Function(String? id, String? nama) onMateriChanged;
+  final String? selectedMateriJenis; // quran, hadist, atau lainnya
+  final Function(String? id, String? nama, String? jenis) onMateriChanged;
   final TextEditingController? temaController;
-  final TextEditingController? surahController;
   final TextEditingController? ayatMulaiController;
   final TextEditingController? ayatSelesaiController;
   final TextEditingController? halamanMulaiController;
   final TextEditingController? halamanSelesaiController;
-  final TextEditingController? hadistMulaiController;
-  final TextEditingController? hadistSelesaiController;
 
   const MateriFormSection({
     super.key,
@@ -29,15 +27,13 @@ class MateriFormSection extends StatelessWidget {
     required this.onPemateriChanged,
     this.selectedMateriId,
     this.selectedMateriNama,
+    this.selectedMateriJenis,
     required this.onMateriChanged,
     this.temaController,
-    this.surahController,
     this.ayatMulaiController,
     this.ayatSelesaiController,
     this.halamanMulaiController,
     this.halamanSelesaiController,
-    this.hadistMulaiController,
-    this.hadistSelesaiController,
   });
 
   bool get _isPengajianOrKajian {
@@ -69,7 +65,9 @@ class MateriFormSection extends StatelessWidget {
           MateriSelector(
             selectedMateriId: selectedMateriId,
             selectedMateriNama: selectedMateriNama,
-            onMateriChanged: onMateriChanged,
+            onMateriChanged: (id, nama, jenis) {
+              onMateriChanged(id, nama, jenis);
+            },
           ),
           const SizedBox(height: 12),
         ],
@@ -84,82 +82,70 @@ class MateriFormSection extends StatelessWidget {
           const SizedBox(height: 12),
         ],
 
-        // Surah dan Ayat (untuk kajian Al-Quran / Tahfidz)
-        if ((_isPengajianOrKajian || _isTahfidz) &&
-            surahController != null) ...[
-          TextFormField(
-            controller: surahController,
-            decoration: const InputDecoration(
-              labelText: 'Nama Surah',
-              hintText: 'Contoh: Al-Baqarah',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.book),
-            ),
+        // Ayat (untuk materi jenis Al-Quran)
+        if (selectedMateriJenis == 'quran' &&
+            ayatMulaiController != null &&
+            ayatSelesaiController != null) ...[
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: ayatMulaiController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ayat Mulai',
+                    hintText: '1',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.numbers),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      final num = int.tryParse(value);
+                      if (num == null || num < 1) {
+                        return 'Harus angka > 0';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: ayatSelesaiController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ayat Selesai',
+                    hintText: '10',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.numbers),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      final num = int.tryParse(value);
+                      if (num == null || num < 1) {
+                        return 'Harus angka > 0';
+                      }
+                      // Validasi ayat selesai >= ayat mulai
+                      final mulai = int.tryParse(
+                        ayatMulaiController?.text ?? '',
+                      );
+                      if (mulai != null && num < mulai) {
+                        return 'Harus >= ayat mulai';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-
-          // Ayat Mulai dan Selesai
-          if (ayatMulaiController != null && ayatSelesaiController != null) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: ayatMulaiController,
-                    decoration: const InputDecoration(
-                      labelText: 'Ayat Mulai',
-                      hintText: '1',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.numbers),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value != null && value.isNotEmpty) {
-                        final num = int.tryParse(value);
-                        if (num == null || num < 1) {
-                          return 'Harus angka > 0';
-                        }
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: ayatSelesaiController,
-                    decoration: const InputDecoration(
-                      labelText: 'Ayat Selesai',
-                      hintText: '10',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.numbers),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value != null && value.isNotEmpty) {
-                        final num = int.tryParse(value);
-                        if (num == null || num < 1) {
-                          return 'Harus angka > 0';
-                        }
-                        // Validasi ayat selesai >= ayat mulai
-                        final mulai = int.tryParse(
-                          ayatMulaiController?.text ?? '',
-                        );
-                        if (mulai != null && num < mulai) {
-                          return 'Harus >= ayat mulai';
-                        }
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
         ],
 
-        // Halaman (untuk kajian kitab umum)
-        if (_isPengajianOrKajian &&
+        // Halaman (untuk materi jenis hadist atau lainnya)
+        if (selectedMateriJenis != null &&
+            selectedMateriJenis != 'quran' &&
             halamanMulaiController != null &&
             halamanSelesaiController != null) ...[
           Row(

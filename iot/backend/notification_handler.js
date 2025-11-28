@@ -1,7 +1,7 @@
 const { initializeApp } = require("firebase/app");
 const { getFirestore, collection, onSnapshot } = require("firebase/firestore");
 const admin = require("firebase-admin");
-const serviceAccount = require("./belajar-login-system-firebase-adminsdk-vbat2-f962c8f56c.json");
+const serviceAccount = require("./belajar-login-system-firebase-adminsdk-vbat2-5f415066e7.json");
 const firebaseConfig = {
   apiKey: "AIzaSyBHBxkWlXsFClsvrlA33OEgidInCLhyJ-A",
   authDomain: "jeka-85742.firebaseapp.com",

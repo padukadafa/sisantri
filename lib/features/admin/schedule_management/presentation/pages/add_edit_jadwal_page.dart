@@ -33,8 +33,8 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
   String? _selectedPemateriNama;
   String? _selectedMateriId;
   String? _selectedMateriNama;
+  String? _selectedMateriJenis; // quran, hadist, atau lainnya
   final _temaController = TextEditingController();
-  final _surahController = TextEditingController();
   final _ayatMulaiController = TextEditingController();
   final _ayatSelesaiController = TextEditingController();
   final _halamanMulaiController = TextEditingController();
@@ -80,9 +80,6 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
       _selectedMateriId = widget.jadwal!.materiId;
       // materiNama tidak perlu disimpan karena akan di-fetch dari dropdown
 
-      if (widget.jadwal!.surah != null) {
-        _surahController.text = widget.jadwal!.surah!;
-      }
       if (widget.jadwal!.ayatMulai != null) {
         _ayatMulaiController.text = widget.jadwal!.ayatMulai.toString();
       }
@@ -112,7 +109,6 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     _deskripsiController.dispose();
     _tempatController.dispose();
     _temaController.dispose();
-    _surahController.dispose();
     _ayatMulaiController.dispose();
     _ayatSelesaiController.dispose();
     _halamanMulaiController.dispose();
@@ -160,10 +156,21 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
                       selectedKategori: _selectedKategori,
                       selectedMateriId: _selectedMateriId,
                       selectedMateriNama: _selectedMateriNama,
-                      onMateriChanged: (id, nama) {
+                      selectedMateriJenis: _selectedMateriJenis,
+                      onMateriChanged: (id, nama, jenis) {
                         setState(() {
                           _selectedMateriId = id;
                           _selectedMateriNama = nama;
+                          _selectedMateriJenis = jenis;
+                          // Clear fields yang tidak relevan saat materi berubah
+                          if (jenis != 'quran') {
+                            _ayatMulaiController.clear();
+                            _ayatSelesaiController.clear();
+                          }
+                          if (jenis == 'quran') {
+                            _halamanMulaiController.clear();
+                            _halamanSelesaiController.clear();
+                          }
                         });
                       },
                       selectedPemateriId: _selectedPemateriId,
@@ -175,13 +182,10 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
                         });
                       },
                       temaController: _temaController,
-                      surahController: _surahController,
                       ayatMulaiController: _ayatMulaiController,
                       ayatSelesaiController: _ayatSelesaiController,
                       halamanMulaiController: _halamanMulaiController,
                       halamanSelesaiController: _halamanSelesaiController,
-                      hadistMulaiController: _hadistMulaiController,
-                      hadistSelesaiController: _hadistSelesaiController,
                     ),
                     const SizedBox(height: 24),
                     DateTimeFormSection(
@@ -276,7 +280,6 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
         materiId: _selectedMateriId,
         pemateriId: _selectedPemateriId,
         pemateriNama: _selectedPemateriNama,
-        surah: stringOrNull(_surahController.text),
         ayatMulai: parseIntOrNull(_ayatMulaiController.text),
         ayatSelesai: parseIntOrNull(_ayatSelesaiController.text),
         halamanMulai: parseIntOrNull(_halamanMulaiController.text),

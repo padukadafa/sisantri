@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/features/shared/auth/presentation/pages/register_page.dart';
+import 'package:sisantri/features/shared/auth/presentation/pages/forgot_password_page.dart';
 import 'package:sisantri/shared/widgets/reusable_text_field.dart';
 import 'package:sisantri/features/shared/auth/presentation/provider/auth_provider.dart';
 
@@ -105,7 +106,27 @@ class _LoginPageCleanState extends ConsumerState<LoginPageClean> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: authState.isLoading
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ForgotPasswordPage(),
+                                ),
+                              );
+                            },
+                      child: const Text(
+                        'Lupa Password?',
+                        style: TextStyle(color: Colors.green),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   ElevatedButton(
                     onPressed: authState.isLoading ? null : _handleLogin,

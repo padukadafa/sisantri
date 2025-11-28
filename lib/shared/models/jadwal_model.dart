@@ -29,11 +29,10 @@ class JadwalModel {
   final String? pemateriId; // ID user pemateri
   final String? pemateriNama; // Nama pemateri untuk display
   final String? materiId; // Reference ke materi kajian
-  final String? surah; // Untuk kajian Quran
-  final int? ayatMulai; // Untuk kajian Quran
-  final int? ayatSelesai; // Untuk kajian Quran
-  final int? halamanMulai; // Untuk kitab umum
-  final int? halamanSelesai; // Untuk kitab umum
+  final int? ayatMulai; // Untuk materi jenis Quran
+  final int? ayatSelesai; // Untuk materi jenis Quran
+  final int? halamanMulai; // Untuk materi jenis hadist/lainnya
+  final int? halamanSelesai; // Untuk materi jenis hadist/lainnya
 
   final bool isAktif;
   final DateTime? createdAt;
@@ -51,7 +50,6 @@ class JadwalModel {
     this.pemateriId,
     this.pemateriNama,
     this.materiId,
-    this.surah,
     this.ayatMulai,
     this.ayatSelesai,
     this.halamanMulai,
@@ -79,7 +77,6 @@ class JadwalModel {
       pemateriId: json['pemateriId'] as String?,
       pemateriNama: json['pemateriNama'] as String?,
       materiId: json['materiId'] as String?,
-      surah: json['surah'] as String?,
       ayatMulai: json['ayatMulai'] as int?,
       ayatSelesai: json['ayatSelesai'] as int?,
       halamanMulai: json['halamanMulai'] as int?,
@@ -105,7 +102,6 @@ class JadwalModel {
   /// Method untuk convert JadwalModel ke JSON
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'nama': nama,
       'tanggal': tanggal,
       'waktuMulai': waktuMulai,
@@ -116,7 +112,6 @@ class JadwalModel {
       'pemateriId': pemateriId,
       'pemateriNama': pemateriNama,
       'materiId': materiId,
-      'surah': surah,
       'ayatMulai': ayatMulai,
       'ayatSelesai': ayatSelesai,
       'halamanMulai': halamanMulai,
@@ -142,7 +137,6 @@ class JadwalModel {
     String? pemateriNama,
     String? tema,
     String? materiId,
-    String? surah,
     int? ayatMulai,
     int? ayatSelesai,
     int? halamanMulai,
@@ -166,7 +160,6 @@ class JadwalModel {
       pemateriId: pemateriId ?? this.pemateriId,
       pemateriNama: pemateriNama ?? this.pemateriNama,
       materiId: materiId ?? this.materiId,
-      surah: surah ?? this.surah,
       ayatMulai: ayatMulai ?? this.ayatMulai,
       ayatSelesai: ayatSelesai ?? this.ayatSelesai,
       halamanMulai: halamanMulai ?? this.halamanMulai,

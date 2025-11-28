@@ -46,6 +46,7 @@ class FirebaseAuthOperations {
       final errorMessage = AuthErrorMapper.mapFirebaseAuthError(e.code);
       throw Exception(errorMessage);
     } catch (e) {
+      print('e in firebase ops: $e');
       final errorMessage = AuthErrorMapper.getErrorMessage(e);
       throw Exception(errorMessage);
     }
