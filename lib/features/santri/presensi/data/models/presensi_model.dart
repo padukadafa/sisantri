@@ -5,6 +5,7 @@ class PresensiModel extends Presensi {
   const PresensiModel({
     required super.id,
     required super.userId,
+    required super.jadwalId,
     required super.tanggal,
     required super.status,
     super.keterangan,
@@ -53,6 +54,8 @@ class PresensiModel extends Presensi {
     return PresensiModel(
       id: json['id'] as String,
       userId: json['userId'] as String,
+      jadwalId:
+          json['jadwalId'] as String? ?? json['jadwalId'] as String? ?? '',
       tanggal: tanggalParsed,
       status: StatusPresensi.fromString(json['status'] as String? ?? 'hadir'),
       keterangan: json['keterangan'] as String?,
@@ -66,6 +69,7 @@ class PresensiModel extends Presensi {
     return PresensiModel(
       id: presensi.id,
       userId: presensi.userId,
+      jadwalId: presensi.jadwalId,
       tanggal: presensi.tanggal,
       status: presensi.status,
       keterangan: presensi.keterangan,
@@ -79,6 +83,7 @@ class PresensiModel extends Presensi {
     return {
       'id': id,
       'userId': userId,
+      'jadwalId': jadwalId,
       'tanggal': Timestamp.fromDate(tanggal),
       'status': status.label,
       'keterangan': keterangan,
@@ -91,6 +96,7 @@ class PresensiModel extends Presensi {
   PresensiModel copyWith({
     String? id,
     String? userId,
+    String? jadwalId,
     DateTime? tanggal,
     StatusPresensi? status,
     String? keterangan,
@@ -100,6 +106,7 @@ class PresensiModel extends Presensi {
     return PresensiModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
+      jadwalId: jadwalId ?? this.jadwalId,
       tanggal: tanggal ?? this.tanggal,
       status: status ?? this.status,
       keterangan: keterangan ?? this.keterangan,

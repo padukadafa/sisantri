@@ -203,7 +203,7 @@ class ScheduleManagementPage extends ConsumerWidget {
           .delete();
       final presensis = await FirebaseFirestore.instance
           .collection('presensi')
-          .where("activity", isEqualTo: jadwal.id)
+          .where("jadwalId", isEqualTo: jadwal.id)
           .get();
       WriteBatch batch = FirebaseFirestore.instance.batch();
       for (var doc in presensis.docs) {

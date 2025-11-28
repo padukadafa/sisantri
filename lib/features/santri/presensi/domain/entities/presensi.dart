@@ -32,6 +32,7 @@ enum StatusPresensi {
 class Presensi extends Equatable {
   final String id;
   final String userId;
+  final String jadwalId;
   final DateTime tanggal;
   final StatusPresensi status;
   final String? keterangan;
@@ -41,6 +42,7 @@ class Presensi extends Equatable {
   const Presensi({
     required this.id,
     required this.userId,
+    required this.jadwalId,
     required this.tanggal,
     required this.status,
     this.keterangan,

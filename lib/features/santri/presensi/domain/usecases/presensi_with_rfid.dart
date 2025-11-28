@@ -16,6 +16,7 @@ class PresensiWithRfid {
 
   Future<Result<Presensi>> call({
     required String rfidCardId,
+    required String jadwalId,
     required DateTime tanggal,
     String? keterangan,
   }) async {
@@ -24,6 +25,10 @@ class PresensiWithRfid {
       return Error(
         ValidationFailure(message: 'RFID Card ID tidak boleh kosong'),
       );
+    }
+
+    if (jadwalId.isEmpty) {
+      return Error(ValidationFailure(message: 'Jadwal ID tidak boleh kosong'));
     }
 
     // Cari user berdasarkan RFID
@@ -38,6 +43,7 @@ class PresensiWithRfid {
         // Lakukan presensi
         return presensiRepository.presensiWithRfid(
           rfidCardId: rfidCardId,
+          jadwalId: jadwalId,
           tanggal: tanggal,
           keterangan: keterangan,
         );

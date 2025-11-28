@@ -108,12 +108,14 @@ class PresensiRepositoryImpl implements PresensiRepository {
   @override
   Future<Result<Presensi>> presensiWithRfid({
     required String rfidCardId,
+    required String jadwalId,
     required DateTime tanggal,
     String? keterangan,
   }) async {
     try {
       final result = await remoteDataSource.presensiWithRfid(
         rfidCardId: rfidCardId,
+        jadwalId: jadwalId,
         tanggal: tanggal,
         keterangan: keterangan,
       );

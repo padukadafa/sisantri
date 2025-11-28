@@ -13,6 +13,12 @@ abstract class PresensiRemoteDataSource {
     required DateTime date,
   });
 
+  /// Get presensi berdasarkan user ID dan jadwal ID
+  Future<PresensiModel?> getPresensiByUserAndJadwal({
+    required String userId,
+    required String jadwalId,
+  });
+
   /// Get list presensi berdasarkan user ID
   Future<List<PresensiModel>> getPresensiByUserId(String userId);
 
@@ -37,6 +43,7 @@ abstract class PresensiRemoteDataSource {
   /// Presensi dengan RFID
   Future<PresensiModel> presensiWithRfid({
     required String rfidCardId,
+    required String jadwalId,
     required DateTime tanggal,
     String? keterangan,
   });
@@ -52,6 +59,23 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
   @override
   Future<PresensiModel> addPresensi(PresensiModel presensi) async {
     try {
+      // Cek apakah sudah ada presensi untuk user dan jadwal tersebut
+      final existingPresensi = await getPresensiByUserAndJadwal(
+        userId: presensi.userId,
+        jadwalId: presensi.jadwalId,
+      );
+
+      if (existingPresensi != null) {
+        // Jika sudah ada, update presensi yang ada
+        final updatedPresensi = existingPresensi.copyWith(
+          status: presensi.status,
+          keterangan: presensi.keterangan,
+          poinDiperoleh: presensi.poinDiperoleh,
+        );
+        return await updatePresensi(updatedPresensi);
+      }
+
+      // Jika belum ada, tambahkan presensi baru
       final docRef = await _firestore
           .collection('presensi')
           .add(presensi.toJson());
@@ -92,6 +116,28 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
       return PresensiModel.fromJson({'id': doc.id, ...doc.data()});
     } catch (e) {
       throw Exception('Get presensi by user and date error: $e');
+    }
+  }
+
+  @override
+  Future<PresensiModel?> getPresensiByUserAndJadwal({
+    required String userId,
+    required String jadwalId,
+  }) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('presensi')
+          .where('userId', isEqualTo: userId)
+          .where('jadwalId', isEqualTo: jadwalId)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return null;
+
+      final doc = querySnapshot.docs.first;
+      return PresensiModel.fromJson({'id': doc.id, ...doc.data()});
+    } catch (e) {
+      throw Exception('Get presensi by user and jadwal error: $e');
     }
   }
 
@@ -219,6 +265,7 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
   @override
   Future<PresensiModel> presensiWithRfid({
     required String rfidCardId,
+    required String jadwalId,
     required DateTime tanggal,
     String? keterangan,
   }) async {
@@ -236,19 +283,11 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
 
       final userId = userQuerySnapshot.docs.first.id;
 
-      // Cek apakah sudah presensi hari ini
-      final existingPresensi = await getPresensiByUserAndDate(
-        userId: userId,
-        date: tanggal,
-      );
-
-      if (existingPresensi != null) {
-        throw Exception('Sudah melakukan presensi pada tanggal ini');
-      }
-
+      // Buat atau update presensi
       final presensi = PresensiModel(
         id: '',
         userId: userId,
+        jadwalId: jadwalId,
         tanggal: tanggal,
         status: StatusPresensi.hadir,
         keterangan: keterangan,
@@ -256,6 +295,7 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
         createdAt: DateTime.now(),
       );
 
+      // addPresensi akan otomatis melakukan update jika sudah ada
       return await addPresensi(presensi);
     } catch (e) {
       throw Exception('Presensi with RFID error: $e');

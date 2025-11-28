@@ -39,7 +39,7 @@ class AttendanceService {
 
       final existingRecords = await _firestore
           .collection('presensi')
-          .where('activity', isEqualTo: jadwalId)
+          .where('jadwalId', isEqualTo: jadwalId)
           .get();
 
       final existingSantriIds = existingRecords.docs
@@ -60,7 +60,7 @@ class AttendanceService {
         final attendanceData = {
           'userId': santri.id,
           'userName': santri.nama,
-          'activity': jadwalId,
+          'jadwalId': jadwalId,
           'status': 'alpha',
           'timestamp': timestamp,
           'createdAt': FieldValue.serverTimestamp(),
@@ -105,7 +105,7 @@ class AttendanceService {
     try {
       final snapshot = await _firestore
           .collection('presensi')
-          .where('activity', isEqualTo: jadwalId)
+          .where('jadwalId', isEqualTo: jadwalId)
           .get();
 
       return snapshot.docs.map((doc) {

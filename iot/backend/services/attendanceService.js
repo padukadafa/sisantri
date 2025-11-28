@@ -53,7 +53,7 @@ async function getTodayAttendance(jadwalId, userId) {
     const presensiRef = db.collection("presensi");
     const snapshot = await presensiRef
       .where("userId", "==", userId)
-      .where("activity", "==", jadwalId)
+      .where("jadwalId", "==", jadwalId)
       .limit(1)
       .get();
     console.log("userId:", userId, "jadwalId:", jadwalId);

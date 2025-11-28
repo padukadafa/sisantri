@@ -58,7 +58,7 @@ enum StatusPresensi {
 
 class PresensiModel {
   final String id;
-  final String activity;
+  final String jadwalId;
   final String userId;
   final String userName;
   final DateTime? timestamp;
@@ -79,24 +79,32 @@ class PresensiModel {
     required this.isManual,
     required this.recordedBy,
     required this.recordedByName,
-    required this.activity,
+    required this.jadwalId,
     this.keterangan = '',
   });
 
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseTimestamp(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is Timestamp) return value.toDate();
+      if (value is DateTime) return value;
+      return DateTime.now();
+    }
+
     return PresensiModel(
-      id: json['id'] as String,
-      userId: json['userId'] as String,
-      userName: json['userName'] as String,
+      id: json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      userName: json['userName'] as String? ?? '',
       status: StatusPresensi.fromString(json['status'] as String? ?? 'hadir'),
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: parseTimestamp(json['createdAt']),
       timestamp: json['timestamp'] != null
-          ? (json['timestamp'] as Timestamp).toDate()
+          ? parseTimestamp(json['timestamp'])
           : null,
       isManual: json['isManual'] as bool? ?? false,
       recordedBy: json['recordedBy'] as String? ?? '',
       recordedByName: json['recordedByName'] as String? ?? '',
-      activity: json['activity'] as String? ?? '',
+      jadwalId:
+          json['jadwalId'] as String? ?? json['activity'] as String? ?? '',
       keterangan: json['keterangan'] as String? ?? '',
     );
   }
@@ -111,7 +119,7 @@ class PresensiModel {
       'isManual': isManual,
       'recordedBy': recordedBy,
       'recordedByName': recordedByName,
-      'activity': activity,
+      'jadwalId': jadwalId,
       'keterangan': keterangan,
     };
   }

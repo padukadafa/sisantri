@@ -45,7 +45,7 @@ class PresensiService {
       final jadwalIds = jadwalSnapshot.docs.map((doc) => doc.id).toList();
       Query presensiQuery = _firestore
           .collection('presensi')
-          .where('activity', whereIn: jadwalIds.isNotEmpty ? jadwalIds : ['']);
+          .where('jadwalId', whereIn: jadwalIds.isNotEmpty ? jadwalIds : ['']);
       if (userId != null) {
         presensiQuery = presensiQuery.where('userId', isEqualTo: userId);
       }
@@ -168,7 +168,7 @@ class PresensiService {
 
     final presensiSnapshot = await _firestore
         .collection('presensi')
-        .where('activity', isEqualTo: jadwalId)
+        .where('jadwalId', isEqualTo: jadwalId)
         .where('userId', isEqualTo: userId)
         .limit(1)
         .get();
@@ -292,13 +292,13 @@ class PresensiService {
   static String _getActivityMessage(PresensiModel presensi) {
     switch (presensi.status) {
       case StatusPresensi.hadir:
-        return '${presensi.userName} melakukan presensi ${presensi.activity}';
+        return '${presensi.userName} melakukan presensi ${presensi.jadwalId}';
       case StatusPresensi.izin:
-        return '${presensi.userName} izin ${presensi.activity}';
+        return '${presensi.userName} izin ${presensi.jadwalId}';
       case StatusPresensi.alpha:
-        return '${presensi.userName} tidak hadir ${presensi.activity}';
+        return '${presensi.userName} tidak hadir ${presensi.jadwalId}';
       case StatusPresensi.sakit:
-        return '${presensi.userName} sakit ${presensi.activity}';
+        return '${presensi.userName} sakit ${presensi.jadwalId}';
     }
   }
 

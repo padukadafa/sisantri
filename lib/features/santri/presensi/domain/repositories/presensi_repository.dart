@@ -36,6 +36,7 @@ abstract class PresensiRepository {
   /// Presensi dengan RFID
   Future<Result<Presensi>> presensiWithRfid({
     required String rfidCardId,
+    required String jadwalId,
     required DateTime tanggal,
     String? keterangan,
   });

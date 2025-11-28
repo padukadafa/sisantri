@@ -45,6 +45,7 @@ final attendanceReportProvider =
 
         // Get users data
         final usersSnapshot = await firestore.collection('users').get();
+
         final users = usersSnapshot.docs
             .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
             .where((user) => user.isSantri)
@@ -120,7 +121,6 @@ final attendanceReportProvider =
           final userExcused = userRecords
               .where((a) => a.status == StatusPresensi.izin)
               .length;
-
           final userExpectedTotal = userRecords.length;
           final rawUserAttendanceRate = userExpectedTotal > 0
               ? (userPresent / userExpectedTotal * 100)

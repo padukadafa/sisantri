@@ -15,35 +15,15 @@ final santriListProvider = FutureProvider<List<UserModel>>((ref) async {
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
 final attendanceStatusProvider =
-    FutureProvider.family<Map<String, String>, String?>((
-      ref,
-      activityId,
-    ) async {
-      if (activityId == null) return {};
+    FutureProvider.family<Map<String, String>, String?>((ref, jadwalId) async {
+      if (jadwalId == null) return {};
 
       try {
-        final today = DateTime.now();
-        final startOfDay = DateTime(today.year, today.month, today.day);
-        final endOfDay = DateTime(
-          today.year,
-          today.month,
-          today.day,
-          23,
-          59,
-          59,
-        );
-
+        // Query presensi berdasarkan jadwalId (activity) saja
+        // Tidak perlu filter timestamp karena satu jadwal = satu presensi per user
         final snapshot = await FirebaseFirestore.instance
             .collection('presensi')
-            .where('activity', isEqualTo: activityId)
-            .where(
-              'timestamp',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-            )
-            .where(
-              'timestamp',
-              isLessThanOrEqualTo: Timestamp.fromDate(endOfDay),
-            )
+            .where('jadwalId', isEqualTo: jadwalId)
             .get();
 
         final statusMap = <String, String>{};
@@ -744,6 +724,20 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                             ],
                           ),
                         ),
+                        DropdownMenuItem(
+                          value: 'sakit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.medical_information,
+                                color: Colors.blue,
+                                size: 16,
+                              ),
+                              SizedBox(width: 4),
+                              Text('Sakit', style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
+                        ),
                       ],
                       onChanged: _selectedActivity == null
                           ? null
@@ -817,20 +811,39 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
     try {
       final firestore = FirebaseFirestore.instance;
-      final now = DateTime.now();
 
-      // Create attendance record
-      await firestore.collection('presensi').add({
-        'userId': santri.id,
-        'userName': santri.nama,
-        'activity': _selectedActivity,
-        'status': attendanceStatus,
-        'timestamp': Timestamp.fromDate(now),
-        'recordedBy': AuthService.currentUserId,
-        'recordedByName': 'Admin',
-        'isManual': true,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Cek apakah sudah ada presensi untuk user dan jadwal ini
+      final existingSnapshot = await firestore
+          .collection('presensi')
+          .where('userId', isEqualTo: santri.id)
+          .where('jadwalId', isEqualTo: _selectedActivity)
+          .limit(1)
+          .get();
+
+      if (existingSnapshot.docs.isNotEmpty) {
+        // Update presensi yang sudah ada
+        final docId = existingSnapshot.docs.first.id;
+        await firestore.collection('presensi').doc(docId).update({
+          'status': attendanceStatus,
+          'recordedBy': AuthService.currentUserId,
+          'recordedByName': 'Admin',
+          'isManual': true,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Create attendance record baru
+        await firestore.collection('presensi').doc().set({
+          'userId': santri.id,
+          'userName': santri.nama,
+          'activity': _selectedActivity,
+          'status': attendanceStatus,
+          'timestamp': FieldValue.serverTimestamp(),
+          'recordedBy': AuthService.currentUserId,
+          'recordedByName': 'Admin',
+          'isManual': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
 
       // Log activity
       await firestore.collection('activities').add({
@@ -1009,20 +1022,43 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           .where((santri) => _selectedSantri.contains(santri.id))
           .toList();
 
-      // Create attendance records
+      // Create or update attendance records
       for (final santri in selectedSantriData) {
-        final presensiRef = firestore.collection('presensi').doc();
-        batch.set(presensiRef, {
-          'userId': santri.id,
-          'userName': santri.nama,
-          'activity': _selectedActivity,
-          'status': bulkStatus,
-          'timestamp': Timestamp.fromDate(now),
-          'recordedBy': AuthService.currentUserId,
-          'recordedByName': 'Admin',
-          'isManual': true,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        // Cek apakah sudah ada presensi untuk user dan jadwal ini
+        final existingSnapshot = await firestore
+            .collection('presensi')
+            .where('userId', isEqualTo: santri.id)
+            .where('jadwalId', isEqualTo: _selectedActivity)
+            .limit(1)
+            .get();
+
+        if (existingSnapshot.docs.isNotEmpty) {
+          // Update existing record
+          final docRef = firestore
+              .collection('presensi')
+              .doc(existingSnapshot.docs.first.id);
+          batch.update(docRef, {
+            'status': bulkStatus,
+            'recordedBy': AuthService.currentUserId,
+            'recordedByName': 'Admin',
+            'isManual': true,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Create new record
+          final presensiRef = firestore.collection('presensi').doc();
+          batch.set(presensiRef, {
+            'userId': santri.id,
+            'userName': santri.nama,
+            'jadwalId': _selectedActivity,
+            'status': bulkStatus,
+            'timestamp': Timestamp.fromDate(now),
+            'recordedBy': AuthService.currentUserId,
+            'recordedByName': 'Admin',
+            'isManual': true,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        }
 
         // Log activity
         final activityRef = firestore.collection('activities').doc();

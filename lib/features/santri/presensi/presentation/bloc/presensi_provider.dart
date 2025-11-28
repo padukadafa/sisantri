@@ -90,6 +90,7 @@ class PresensiNotifier extends StateNotifier<PresensiState> {
   /// Presensi dengan RFID
   Future<void> presensiWithRfid({
     required String rfidCardId,
+    required String jadwalId,
     required DateTime tanggal,
     String? keterangan,
   }) async {
@@ -97,6 +98,7 @@ class PresensiNotifier extends StateNotifier<PresensiState> {
 
     final result = await _presensiWithRfidUseCase(
       rfidCardId: rfidCardId,
+      jadwalId: jadwalId,
       tanggal: tanggal,
       keterangan: keterangan,
     );
