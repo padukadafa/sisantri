@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/models/presensi_model.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
 
 class DashboardStatsCards extends StatelessWidget {
   final UserModel? user;
@@ -57,11 +58,21 @@ class DashboardStatsCards extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard(
-            icon: Icons.star,
-            title: 'Total Poin',
-            value: '${user?.poin ?? 0}',
-            color: Colors.blue,
+          child: FutureBuilder<int>(
+            future: user != null
+                ? FirestoreService.calculateUserPoints(user!.id)
+                : Future.value(0),
+            builder: (context, snapshot) {
+              final poin = snapshot.data ?? 0;
+              return _buildStatCard(
+                icon: Icons.star,
+                title: 'Total Poin',
+                value: snapshot.connectionState == ConnectionState.waiting
+                    ? '...'
+                    : '$poin',
+                color: Colors.blue,
+              );
+            },
           ),
         ),
       ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/features/admin/user_management/presentation/widgets/rfid_management_dialog.dart';
 import 'package:sisantri/features/admin/user_management/presentation/widgets/edit_user_dialog.dart';
@@ -342,7 +343,17 @@ class _UserDetailPageState extends ConsumerState<UserDetailPage>
                 user.statusAktif ? 'Aktif' : 'Non-Aktif',
                 valueColor: user.statusAktif ? Colors.green : Colors.red,
               ),
-              _buildInfoItem('Poin', user.poin.toString()),
+              FutureBuilder<int>(
+                future: FirestoreService.calculateUserPoints(user.id),
+                builder: (context, snapshot) {
+                  return _buildInfoItem(
+                    'Poin',
+                    snapshot.connectionState == ConnectionState.waiting
+                        ? '...'
+                        : (snapshot.data ?? 0).toString(),
+                  );
+                },
+              ),
             ],
           ),
 
@@ -483,11 +494,18 @@ class _UserDetailPageState extends ConsumerState<UserDetailPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Statistik Poin
-          _buildStatCard(
-            title: 'Total Poin',
-            value: user.poin.toString(),
-            icon: Icons.stars,
-            color: Colors.amber,
+          FutureBuilder<int>(
+            future: FirestoreService.calculateUserPoints(user.id),
+            builder: (context, snapshot) {
+              return _buildStatCard(
+                title: 'Total Poin',
+                value: snapshot.connectionState == ConnectionState.waiting
+                    ? '...'
+                    : (snapshot.data ?? 0).toString(),
+                icon: Icons.stars,
+                color: Colors.amber,
+              );
+            },
           ),
 
           const SizedBox(height: 16),

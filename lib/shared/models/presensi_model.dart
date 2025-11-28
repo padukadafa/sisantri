@@ -65,6 +65,7 @@ class PresensiModel {
   final StatusPresensi status;
   final String keterangan;
   final bool isManual;
+  final int poin;
   final DateTime createdAt;
   final String recordedBy;
   final String recordedByName;
@@ -81,6 +82,7 @@ class PresensiModel {
     required this.recordedByName,
     required this.jadwalId,
     this.keterangan = '',
+    this.poin = 1,
   });
 
   factory PresensiModel.fromJson(Map<String, dynamic> json) {
@@ -106,6 +108,7 @@ class PresensiModel {
       jadwalId:
           json['jadwalId'] as String? ?? json['activity'] as String? ?? '',
       keterangan: json['keterangan'] as String? ?? '',
+      poin: json['poin'] as int? ?? 1,
     );
   }
 
@@ -121,21 +124,8 @@ class PresensiModel {
       'recordedByName': recordedByName,
       'jadwalId': jadwalId,
       'keterangan': keterangan,
+      'poin': poin,
     };
-  }
-
-  /// Get poin berdasarkan status
-  static int getPoinByStatus(StatusPresensi status) {
-    switch (status) {
-      case StatusPresensi.hadir:
-        return 1;
-      case StatusPresensi.izin:
-        return 0;
-      case StatusPresensi.sakit:
-        return 0;
-      case StatusPresensi.alpha:
-        return 0;
-    }
   }
 
   @override

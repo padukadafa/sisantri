@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
 
 class DashboardWelcomeCard extends StatelessWidget {
   final UserModel? user;
@@ -85,24 +86,34 @@ class DashboardWelcomeCard extends StatelessWidget {
                 width: 1,
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.star_rounded,
-                  color: AppTheme.primaryColor,
-                  size: 18,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${user?.poin ?? 0} Poin',
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+            child: FutureBuilder<int>(
+              future: user != null
+                  ? FirestoreService.calculateUserPoints(user!.id)
+                  : Future.value(0),
+              builder: (context, snapshot) {
+                final poin = snapshot.data ?? 0;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.star_rounded,
+                      color: AppTheme.primaryColor,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      snapshot.connectionState == ConnectionState.waiting
+                          ? '... Poin'
+                          : '$poin Poin',
+                      style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],

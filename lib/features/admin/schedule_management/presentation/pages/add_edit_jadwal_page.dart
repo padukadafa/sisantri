@@ -27,6 +27,7 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
   final _namaController = TextEditingController();
   final _deskripsiController = TextEditingController();
   final _tempatController = TextEditingController();
+  final _poinController = TextEditingController(text: '1');
 
   // Controllers untuk materi kajian
   String? _selectedPemateriId;
@@ -68,6 +69,7 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
       _namaController.text = widget.jadwal!.nama;
       _deskripsiController.text = widget.jadwal!.deskripsi ?? '';
       _tempatController.text = widget.jadwal!.tempat ?? '';
+      _poinController.text = widget.jadwal!.poin.toString();
       _selectedDate = widget.jadwal!.tanggal;
       _selectedKategori = widget.jadwal!.kategori;
       _waktuMulai = widget.jadwal!.waktuMulai ?? '08:00';
@@ -108,6 +110,7 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
     _namaController.dispose();
     _deskripsiController.dispose();
     _tempatController.dispose();
+    _poinController.dispose();
     _temaController.dispose();
     _ayatMulaiController.dispose();
     _ayatSelesaiController.dispose();
@@ -150,6 +153,59 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
                       deskripsiController: _deskripsiController,
                       tempatController: _tempatController,
                       selectedKategori: _selectedKategori,
+                    ),
+                    const SizedBox(height: 24),
+                    // Poin Section
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.stars,
+                                  color: AppTheme.primaryColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Poin Kehadiran',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _poinController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Poin yang Didapatkan',
+                                hintText: 'Masukkan jumlah poin',
+                                helperText:
+                                    'Poin yang didapat santri jika hadir',
+                                prefixIcon: Icon(Icons.star),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Poin tidak boleh kosong';
+                                }
+                                final poin = int.tryParse(value);
+                                if (poin == null || poin < 0) {
+                                  return 'Poin harus berupa angka positif';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                     MateriFormSection(
@@ -284,6 +340,7 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
         ayatSelesai: parseIntOrNull(_ayatSelesaiController.text),
         halamanMulai: parseIntOrNull(_halamanMulaiController.text),
         halamanSelesai: parseIntOrNull(_halamanSelesaiController.text),
+        poin: int.tryParse(_poinController.text.trim()) ?? 1,
         isAktif: _isAktif,
         createdAt: widget.jadwal?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
@@ -318,11 +375,11 @@ class _AddEditJadwalPageNewState extends ConsumerState<AddEditJadwalPage> {
         .collection('jadwal')
         .add(jadwal.toJson());
 
-    // Generate attendance hanya untuk kategori yang bukan libur
     await AttendanceService.generateDefaultAttendanceForJadwal(
       jadwalId: docRef.id,
       createdBy: 'admin',
       createdByName: 'Admin',
+      poin: jadwal.poin,
     );
 
     await MessagingHelper.sendPengumumanToSantri(

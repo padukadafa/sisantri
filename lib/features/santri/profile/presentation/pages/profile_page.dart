@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
+import 'package:sisantri/shared/services/firestore_service.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
 import 'package:sisantri/features/dewan_guru/dashboard/presentation/pages/dewan_guru_dashboard_page.dart';
@@ -13,6 +14,13 @@ final userProfileProvider = FutureProvider<UserModel?>((ref) async {
   if (currentUser == null) return null;
 
   return await AuthService.getUserData(currentUser.uid);
+});
+
+final userTotalPointsProvider = FutureProvider.family<int, String>((
+  ref,
+  userId,
+) async {
+  return await FirestoreService.calculateUserPoints(userId);
 });
 
 class ProfilePage extends ConsumerWidget {
@@ -61,7 +69,7 @@ class ProfilePage extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // Stats Cards
-                  _buildStatsCards(user),
+                  _buildStatsCards(user, ref),
 
                   const SizedBox(height: 24),
 
@@ -220,16 +228,37 @@ class ProfilePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsCards(UserModel user) {
+  Widget _buildStatsCards(UserModel user, WidgetRef ref) {
     return Row(
       children: [
         if (user.isSantri) ...[
           Expanded(
-            child: _buildStatCard(
-              icon: Icons.star,
-              title: 'Total Poin',
-              value: '${user.poin}',
-              color: Colors.amber,
+            child: Consumer(
+              builder: (context, ref, child) {
+                final totalPointsAsync = ref.watch(
+                  userTotalPointsProvider(user.id),
+                );
+                return totalPointsAsync.when(
+                  loading: () => _buildStatCard(
+                    icon: Icons.star,
+                    title: 'Total Poin',
+                    value: '...',
+                    color: Colors.amber,
+                  ),
+                  error: (_, __) => _buildStatCard(
+                    icon: Icons.star,
+                    title: 'Total Poin',
+                    value: '0',
+                    color: Colors.amber,
+                  ),
+                  data: (totalPoints) => _buildStatCard(
+                    icon: Icons.star,
+                    title: 'Total Poin',
+                    value: '$totalPoints',
+                    color: Colors.amber,
+                  ),
+                );
+              },
             ),
           ),
         ],

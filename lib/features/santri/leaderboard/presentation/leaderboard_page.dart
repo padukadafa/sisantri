@@ -176,66 +176,69 @@ class LeaderboardPage extends ConsumerWidget {
         podiumColor = Colors.grey;
     }
 
-    return Column(
-      children: [
-        // User Info
-        CircleAvatar(
-          radius: 30,
-          backgroundColor: podiumColor.withOpacity(0.2),
-          backgroundImage: user.fotoProfil != null
-              ? NetworkImage(user.fotoProfil!)
-              : null,
-          child: user.fotoProfil == null
-              ? Icon(Icons.person, size: 30, color: podiumColor)
-              : null,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          user.nama,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${user.poin} poin',
-          style: TextStyle(
-            color: podiumColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
+    return SizedBox(
+      width: 90,
+      child: Column(
+        children: [
+          // User Info
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: podiumColor.withOpacity(0.2),
+            backgroundImage: user.fotoProfil != null
+                ? NetworkImage(user.fotoProfil!)
+                : null,
+            child: user.fotoProfil == null
+                ? Icon(Icons.person, size: 30, color: podiumColor)
+                : null,
           ),
-        ),
-        const SizedBox(height: 8),
-
-        // Podium
-        Container(
-          width: 60,
-          height: height,
-          decoration: BoxDecoration(
-            color: podiumColor,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
+          const SizedBox(height: 8),
+          Text(
+            user.nama,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${user.poin} poin',
+            style: TextStyle(
+              color: podiumColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(user.medalEmoji, style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 4),
-              Text(
-                '#$position',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+          const SizedBox(height: 8),
+
+          // Podium
+          Container(
+            width: 60,
+            height: height,
+            decoration: BoxDecoration(
+              color: podiumColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
               ),
-            ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(user.medalEmoji, style: const TextStyle(fontSize: 24)),
+                const SizedBox(height: 4),
+                Text(
+                  '#$position',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

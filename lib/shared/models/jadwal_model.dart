@@ -33,6 +33,7 @@ class JadwalModel {
   final int? ayatSelesai; // Untuk materi jenis Quran
   final int? halamanMulai; // Untuk materi jenis hadist/lainnya
   final int? halamanSelesai; // Untuk materi jenis hadist/lainnya
+  final int poin; // Poin yang didapatkan jika hadir
 
   final bool isAktif;
   final DateTime? createdAt;
@@ -54,6 +55,7 @@ class JadwalModel {
     this.ayatSelesai,
     this.halamanMulai,
     this.halamanSelesai,
+    this.poin = 1,
     this.isAktif = true,
     this.createdAt,
     this.updatedAt,
@@ -81,6 +83,7 @@ class JadwalModel {
       ayatSelesai: json['ayatSelesai'] as int?,
       halamanMulai: json['halamanMulai'] as int?,
       halamanSelesai: json['halamanSelesai'] as int?,
+      poin: json['poin'] as int? ?? 1,
       isAktif: json['isAktif'] as bool? ?? true,
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] is DateTime
@@ -116,6 +119,7 @@ class JadwalModel {
       'ayatSelesai': ayatSelesai,
       'halamanMulai': halamanMulai,
       'halamanSelesai': halamanSelesai,
+      'poin': poin,
       'isAktif': isAktif,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
@@ -144,6 +148,7 @@ class JadwalModel {
     int? hadistMulai,
     int? hadistSelesai,
     String? topikBahasan,
+    int? poin,
     bool? isAktif,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -164,6 +169,7 @@ class JadwalModel {
       ayatSelesai: ayatSelesai ?? this.ayatSelesai,
       halamanMulai: halamanMulai ?? this.halamanMulai,
       halamanSelesai: halamanSelesai ?? this.halamanSelesai,
+      poin: poin ?? this.poin,
       isAktif: isAktif ?? this.isAktif,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

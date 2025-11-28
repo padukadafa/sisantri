@@ -3,7 +3,6 @@ class UserModel {
   final String nama;
   final String email;
   final String role;
-  final int poin;
   final String? fotoProfil;
   final bool statusAktif;
   final String? rfidCardId;
@@ -20,7 +19,6 @@ class UserModel {
     required this.nama,
     required this.email,
     required this.role,
-    this.poin = 0,
     this.fotoProfil,
     this.statusAktif = true,
     this.rfidCardId,
@@ -39,7 +37,6 @@ class UserModel {
       nama: json['nama'] as String,
       email: json['email'] as String,
       role: json['role'] as String,
-      poin: json['poin'] as int? ?? 0,
       fotoProfil: json['fotoProfil'] as String?,
       statusAktif: json['statusAktif'] as bool? ?? true,
       rfidCardId: json['rfidCardId'] as String?,
@@ -69,7 +66,6 @@ class UserModel {
       'nama': nama,
       'email': email,
       'role': role,
-      'poin': poin,
       'fotoProfil': fotoProfil,
       'statusAktif': statusAktif,
       'rfidCardId': rfidCardId,
@@ -105,7 +101,6 @@ class UserModel {
       nama: nama ?? this.nama,
       email: email ?? this.email,
       role: role ?? this.role,
-      poin: poin ?? this.poin,
       fotoProfil: fotoProfil ?? this.fotoProfil,
       statusAktif: statusAktif ?? this.statusAktif,
       rfidCardId: rfidCardId ?? this.rfidCardId,
@@ -209,7 +204,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(id: $id, nama: $nama, email: $email, role: $role, poin: $poin)';
+    return 'UserModel(id: $id, nama: $nama, email: $email, role: $role';
   }
 
   @override

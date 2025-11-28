@@ -178,7 +178,7 @@ class FirestoreService {
       await _firestore.collection('presensi').add(presensi.toJson());
 
       // Update poin user
-      final poin = PresensiModel.getPoinByStatus(presensi.status);
+      final poin = presensi.poin;
       await updateUserPoin(presensi.userId, poin);
     } catch (e) {
       throw Exception('Error menambah presensi: $e');
@@ -187,28 +187,83 @@ class FirestoreService {
 
   // ===== LEADERBOARD OPERATIONS =====
 
+  /// Hitung total poin user berdasarkan presensi hadir
+  static Future<int> calculateUserPoints(String userId) async {
+    try {
+      // Ambil semua presensi hadir user
+      final presensiSnapshot = await _firestore
+          .collection('presensi')
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: 'hadir')
+          .get();
+
+      int totalPoin = 0;
+
+      // Hitung poin dari setiap presensi
+      for (final presensiDoc in presensiSnapshot.docs) {
+        final presensiData = presensiDoc.data();
+        final jadwalId =
+            presensiData['jadwalId'] as String? ??
+            presensiData['activity'] as String? ??
+            '';
+
+        if (jadwalId.isNotEmpty) {
+          // Ambil data jadwal untuk mendapatkan poin
+          final jadwalDoc = await _firestore
+              .collection('jadwal')
+              .doc(jadwalId)
+              .get();
+
+          if (jadwalDoc.exists) {
+            final jadwalData = jadwalDoc.data();
+            final poin = jadwalData?['poin'] as int? ?? 1;
+            totalPoin += poin;
+          }
+        }
+      }
+
+      return totalPoin;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   /// Get leaderboard santri
   static Stream<List<LeaderboardModel>> getLeaderboard() {
     return _firestore
         .collection('users')
         .where('role', isEqualTo: 'santri')
-        .orderBy('poin', descending: true)
-        .limit(50)
         .snapshots()
-        .map((snapshot) {
+        .asyncMap((snapshot) async {
           final users = snapshot.docs
               .map((doc) => UserModel.fromJson({'id': doc.id, ...doc.data()}))
               .toList();
 
+          // Hitung poin untuk setiap user
+          final List<Map<String, dynamic>> userWithPoints = [];
+
+          for (final user in users) {
+            final totalPoin = await calculateUserPoints(user.id);
+            userWithPoints.add({'user': user, 'poin': totalPoin});
+          }
+
+          // Sort berdasarkan poin descending
+          userWithPoints.sort(
+            (a, b) => (b['poin'] as int).compareTo(a['poin'] as int),
+          );
+
           // Convert ke LeaderboardModel dengan ranking
-          return users.asMap().entries.map((entry) {
+          return userWithPoints.take(50).toList().asMap().entries.map((entry) {
             final index = entry.key;
-            final user = entry.value;
+            final data = entry.value;
+            final user = data['user'] as UserModel;
+            final poin = data['poin'] as int;
+
             return LeaderboardModel(
               id: user.id,
               userId: user.id,
               nama: user.nama,
-              poin: user.poin,
+              poin: poin,
               fotoProfil: user.fotoProfil,
               ranking: index + 1,
               lastUpdated: user.updatedAt,

@@ -10,6 +10,7 @@ class AttendanceService {
     required String jadwalId,
     required String createdBy,
     required String createdByName,
+    int poin = 1,
     List<String>? specificSantriIds,
   }) async {
     try {
@@ -68,6 +69,7 @@ class AttendanceService {
           'recordedByName': createdByName,
           'isManual': true,
           'keterangan': 'Auto-generated default record',
+          'poin': poin,
         };
 
         batch.set(newRecordRef, attendanceData);
