@@ -3,7 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/models/leaderboard_model.dart';
+import 'package:sisantri/shared/models/user_model.dart';
+
+/// Provider untuk current user
+final currentUserProvider = FutureProvider<UserModel?>((ref) async {
+  final currentUser = AuthService.currentUser;
+  if (currentUser == null) return null;
+  return await AuthService.getUserData(currentUser.uid);
+});
 
 /// Provider untuk leaderboard
 final leaderboardProvider = StreamProvider<List<LeaderboardModel>>((ref) {
@@ -21,6 +30,7 @@ class LeaderboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final leaderboardStream = ref.watch(leaderboardProvider);
     final currentFilter = ref.watch(leaderboardFilterProvider);
+    final currentUserAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -101,6 +111,18 @@ class LeaderboardPage extends ConsumerWidget {
                   );
                 }
 
+                // Filter leaderboard: hanya 10 besar untuk santri
+                final filteredList = currentUserAsync.when(
+                  data: (user) {
+                    if (user != null && user.isSantri) {
+                      return leaderboardList.take(10).toList();
+                    }
+                    return leaderboardList;
+                  },
+                  loading: () => leaderboardList,
+                  error: (_, __) => leaderboardList,
+                );
+
                 return RefreshIndicator(
                   onRefresh: () async {
                     ref.invalidate(leaderboardProvider);
@@ -110,13 +132,13 @@ class LeaderboardPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         // Top 3 Podium
-                        if (leaderboardList.length >= 3)
-                          _buildPodium(leaderboardList.take(3).toList()),
+                        if (filteredList.length >= 3)
+                          _buildPodium(filteredList.take(3).toList()),
 
                         const SizedBox(height: 20),
 
                         // Rest of the leaderboard
-                        _buildLeaderboardList(leaderboardList),
+                        _buildLeaderboardList(filteredList),
                       ],
                     ),
                   ),
