@@ -34,7 +34,6 @@ final attendanceStatusProvider =
 
         return statusMap;
       } catch (e) {
-        // Error loading attendance status
         return {};
       }
     });
@@ -812,7 +811,6 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
     try {
       final firestore = FirebaseFirestore.instance;
 
-      // Cek apakah sudah ada presensi untuk user dan jadwal ini
       final existingSnapshot = await firestore
           .collection('presensi')
           .where('userId', isEqualTo: santri.id)
@@ -820,8 +818,12 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           .limit(1)
           .get();
 
+      String? oldStatus;
       if (existingSnapshot.docs.isNotEmpty) {
-        // Update presensi yang sudah ada
+        // Get old status untuk decrement counter lama
+        final docData = existingSnapshot.docs.first.data();
+        oldStatus = docData['status'] as String?;
+
         final docId = existingSnapshot.docs.first.id;
         await firestore.collection('presensi').doc(docId).update({
           'status': attendanceStatus,
@@ -832,10 +834,10 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         });
       } else {
         // Create attendance record baru
-        await firestore.collection('presensi').doc().set({
+        await firestore.collection('presensi').add({
           'userId': santri.id,
           'userName': santri.nama,
-          'activity': _selectedActivity,
+          'jadwalId': _selectedActivity,
           'status': attendanceStatus,
           'timestamp': FieldValue.serverTimestamp(),
           'recordedBy': AuthService.currentUserId,
@@ -845,17 +847,57 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         });
       }
 
-      // Log activity
-      await firestore.collection('activities').add({
-        'type': 'manual_attendance',
-        'title': 'Absensi Manual',
-        'description':
-            '${santri.nama} - $_selectedActivity: ${_getStatusLabel(attendanceStatus)}',
-        'userId': santri.id,
-        'recordedBy': AuthService.currentUserId,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+      // Update counter di jadwal
+      final jadwalUpdate = <String, dynamic>{
+        "updatedAt": FieldValue.serverTimestamp(),
+      };
 
+      // Decrement counter lama jika ada perubahan status
+      if (oldStatus != null && oldStatus != attendanceStatus) {
+        switch (oldStatus) {
+          case 'hadir':
+            jadwalUpdate['presensiHadir'] = FieldValue.increment(-1);
+            break;
+          case 'izin':
+            jadwalUpdate['presensiIzin'] = FieldValue.increment(-1);
+            break;
+          case 'sakit':
+            jadwalUpdate['presensiSakit'] = FieldValue.increment(-1);
+            break;
+          case 'alpha':
+            jadwalUpdate['presensiAlpha'] = FieldValue.increment(-1);
+            break;
+        }
+      }
+
+      // Increment counter baru
+      switch (attendanceStatus) {
+        case 'hadir':
+          jadwalUpdate['presensiHadir'] = oldStatus == null
+              ? FieldValue.increment(1)
+              : (jadwalUpdate['presensiHadir'] ?? FieldValue.increment(1));
+          break;
+        case 'izin':
+          jadwalUpdate['presensiIzin'] = oldStatus == null
+              ? FieldValue.increment(1)
+              : (jadwalUpdate['presensiIzin'] ?? FieldValue.increment(1));
+          break;
+        case 'sakit':
+          jadwalUpdate['presensiSakit'] = oldStatus == null
+              ? FieldValue.increment(1)
+              : (jadwalUpdate['presensiSakit'] ?? FieldValue.increment(1));
+          break;
+        case 'alpha':
+          jadwalUpdate['presensiAlpha'] = oldStatus == null
+              ? FieldValue.increment(1)
+              : (jadwalUpdate['presensiAlpha'] ?? FieldValue.increment(1));
+          break;
+      }
+
+      await firestore
+          .collection("jadwal")
+          .doc(_selectedActivity)
+          .update(jadwalUpdate);
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -875,21 +917,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           ),
         );
 
-        // Refresh attendance status provider to reflect changes
         ref.invalidate(attendanceStatusProvider(_selectedActivity));
-      }
-
-      // Send notification to dewan guru if alpha
-      if (attendanceStatus == 'alpha') {
-        try {
-          await MessagingHelper.sendPresensiNotificationToGuru(
-            santriName: santri.nama,
-            activity: _selectedActivity!,
-            status: 'Alpha',
-          );
-        } catch (e) {
-          // Error sending notification
-        }
       }
     } catch (e) {
       if (mounted) {
@@ -922,7 +950,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
     if (_selectedSantri.isEmpty) return;
 
-    // Show dialog to select bulk status
+    // Show dialog to select bulk statXPus
     final bulkStatus = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1022,6 +1050,14 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           .where((santri) => _selectedSantri.contains(santri.id))
           .toList();
 
+      // Track counter changes untuk jadwal
+      final Map<String, int> counterChanges = {
+        'presensiHadir': 0,
+        'presensiIzin': 0,
+        'presensiSakit': 0,
+        'presensiAlpha': 0,
+      };
+
       // Create or update attendance records
       for (final santri in selectedSantriData) {
         // Cek apakah sudah ada presensi untuk user dan jadwal ini
@@ -1033,6 +1069,52 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             .get();
 
         if (existingSnapshot.docs.isNotEmpty) {
+          // Get old status untuk adjust counter
+          final docData = existingSnapshot.docs.first.data();
+          final oldStatus = docData['status'] as String?;
+
+          // Decrement old status counter
+          if (oldStatus != null && oldStatus != bulkStatus) {
+            switch (oldStatus) {
+              case 'hadir':
+                counterChanges['presensiHadir'] =
+                    (counterChanges['presensiHadir'] ?? 0) - 1;
+                break;
+              case 'izin':
+                counterChanges['presensiIzin'] =
+                    (counterChanges['presensiIzin'] ?? 0) - 1;
+                break;
+              case 'sakit':
+                counterChanges['presensiSakit'] =
+                    (counterChanges['presensiSakit'] ?? 0) - 1;
+                break;
+              case 'alpha':
+                counterChanges['presensiAlpha'] =
+                    (counterChanges['presensiAlpha'] ?? 0) - 1;
+                break;
+            }
+
+            // Increment new status counter
+            switch (bulkStatus) {
+              case 'hadir':
+                counterChanges['presensiHadir'] =
+                    (counterChanges['presensiHadir'] ?? 0) + 1;
+                break;
+              case 'izin':
+                counterChanges['presensiIzin'] =
+                    (counterChanges['presensiIzin'] ?? 0) + 1;
+                break;
+              case 'sakit':
+                counterChanges['presensiSakit'] =
+                    (counterChanges['presensiSakit'] ?? 0) + 1;
+                break;
+              case 'alpha':
+                counterChanges['presensiAlpha'] =
+                    (counterChanges['presensiAlpha'] ?? 0) + 1;
+                break;
+            }
+          }
+
           // Update existing record
           final docRef = firestore
               .collection('presensi')
@@ -1045,6 +1127,26 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             'timestamp': FieldValue.serverTimestamp(),
           });
         } else {
+          // Increment counter untuk create baru
+          switch (bulkStatus) {
+            case 'hadir':
+              counterChanges['presensiHadir'] =
+                  (counterChanges['presensiHadir'] ?? 0) + 1;
+              break;
+            case 'izin':
+              counterChanges['presensiIzin'] =
+                  (counterChanges['presensiIzin'] ?? 0) + 1;
+              break;
+            case 'sakit':
+              counterChanges['presensiSakit'] =
+                  (counterChanges['presensiSakit'] ?? 0) + 1;
+              break;
+            case 'alpha':
+              counterChanges['presensiAlpha'] =
+                  (counterChanges['presensiAlpha'] ?? 0) + 1;
+              break;
+          }
+
           // Create new record
           final presensiRef = firestore.collection('presensi').doc();
           batch.set(presensiRef, {
@@ -1074,6 +1176,38 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
         // Update local status
         _santriAttendanceStatus[santri.id] = bulkStatus;
+      }
+
+      // Update jadwal counters
+      if (_selectedActivity != null) {
+        final jadwalRef = firestore.collection('jadwal').doc(_selectedActivity);
+        final jadwalUpdate = <String, dynamic>{
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        // Apply counter changes
+        if (counterChanges['presensiHadir'] != 0) {
+          jadwalUpdate['presensiHadir'] = FieldValue.increment(
+            counterChanges['presensiHadir']!,
+          );
+        }
+        if (counterChanges['presensiIzin'] != 0) {
+          jadwalUpdate['presensiIzin'] = FieldValue.increment(
+            counterChanges['presensiIzin']!,
+          );
+        }
+        if (counterChanges['presensiSakit'] != 0) {
+          jadwalUpdate['presensiSakit'] = FieldValue.increment(
+            counterChanges['presensiSakit']!,
+          );
+        }
+        if (counterChanges['presensiAlpha'] != 0) {
+          jadwalUpdate['presensiAlpha'] = FieldValue.increment(
+            counterChanges['presensiAlpha']!,
+          );
+        }
+
+        batch.update(jadwalRef, jadwalUpdate);
       }
 
       await batch.commit();

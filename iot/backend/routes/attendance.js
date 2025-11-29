@@ -43,12 +43,38 @@ router.post(
       console.log(`RFID scan received: ${rfidUid} from device: ${deviceId}`);
       // mendapatkan jadwal hari ini
       const schedule = await getTodaySchedule();
+      
       if (!schedule) {
         return res.status(403).json({
           success: false,
           message: "Tidak ada jadwal untuk hari ini",
         });
       }
+      if (schedule.status === "too_early") {
+        return res.status(403).json({
+          success: false,
+          message: schedule.message,
+        });
+      }
+      if (schedule.status === "too_late") {
+        return res.status(403).json({
+          success: false,
+          message: schedule.message,
+        });
+      }
+      if (schedule.status === "unknown") {
+        return res.status(403).json({
+          success: false,
+          message: schedule.message,
+        });
+      }
+      if (!schedule.isAktif) {
+        return res.status(403).json({
+          success: false,
+          message: schedule.message,
+        });
+      }
+
       // mencari user berdasarkan rfid
       const user = await findUserByRFID(rfidUid);
       if (!user) {

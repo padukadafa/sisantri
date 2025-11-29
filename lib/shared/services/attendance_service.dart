@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 import '../models/user_model.dart';
 import '../models/presensi_model.dart';
 
@@ -10,7 +11,7 @@ class AttendanceService {
     required String jadwalId,
     required String createdBy,
     required String createdByName,
-    int poin = 1,
+    required JadwalModel jadwal,
     List<String>? specificSantriIds,
   }) async {
     try {
@@ -31,6 +32,7 @@ class AttendanceService {
         final usersSnapshot = await _firestore
             .collection('users')
             .where('role', isEqualTo: 'santri')
+            .where("statusAktif", isEqualTo: true)
             .get();
 
         activeSantri = usersSnapshot.docs
@@ -69,13 +71,17 @@ class AttendanceService {
           'recordedByName': createdByName,
           'isManual': true,
           'keterangan': 'Auto-generated default record',
-          'poin': poin,
+          'poin': jadwal.poin,
         };
 
         batch.set(newRecordRef, attendanceData);
       }
 
       await batch.commit();
+      await _firestore.collection('jadwal').doc(jadwalId).update({
+        'totalPresensi': santriNeedingRecords.length,
+        'presensiAlpha': santriNeedingRecords.length,
+      });
     } catch (e) {
       throw Exception('Failed to generate default attendance: $e');
     }

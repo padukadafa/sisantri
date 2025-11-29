@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/shared/helpers/messaging_helper.dart';
+import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 import 'package:sisantri/shared/services/attendance_service.dart';
 import '../models/jadwal_kegiatan_model.dart';
 
@@ -11,7 +12,7 @@ class ScheduleService {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   /// Tambah jadwal baru dengan attendance generation
-  Future<String> addJadwalWithAttendance(JadwalKegiatan jadwal) async {
+  Future<String> addJadwalWithAttendance(JadwalModel jadwal) async {
     try {
       final docRef = await _firestore.collection('jadwal').add(jadwal.toJson());
 
@@ -19,6 +20,7 @@ class ScheduleService {
         jadwalId: docRef.id,
         createdBy: 'admin',
         createdByName: 'Admin',
+        jadwal: jadwal,
       );
 
       // Step 3: Send notification about new schedule

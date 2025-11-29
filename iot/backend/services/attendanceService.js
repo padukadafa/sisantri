@@ -1,4 +1,7 @@
 const { db, Timestamp } = require("../config/firebase");
+const {
+  getWIBDate
+} = require("../helper/helper");
 
 /**
  * Get active schedule for today
@@ -6,18 +9,25 @@ const { db, Timestamp } = require("../config/firebase");
  */
 async function getTodaySchedule() {
   try {
-    const today = new Date();
+    const today =  getWIBDate();
+    
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
+    const tomorrow = getWIBDate();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
     const jadwalRef = db.collection("jadwal");
+    console.log(jadwalRef)
+    console.log("Today:", today)
+    console.log("Tomorrow:", tomorrow)
     const snapshot = await jadwalRef
       .where("isAktif", "==", true)
       .where("tanggal", ">=", Timestamp.fromDate(today))
       .where("tanggal", "<", Timestamp.fromDate(tomorrow))
       .limit(1)
       .get();
+      console.log("Snapshot:")
+    console.log(snapshot)
 
     if (snapshot.empty) {
       return null;
@@ -45,10 +55,11 @@ async function getTodaySchedule() {
  */
 async function getTodayAttendance(jadwalId, userId) {
   try {
-    const today = new Date();
+    const today =getWIBDate();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
+    const tomorrow = getWIBDate();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
 
     const presensiRef = db.collection("presensi");
     const snapshot = await presensiRef
@@ -79,7 +90,7 @@ async function getTodayAttendance(jadwalId, userId) {
  */
 function checkScheduleTime(waktuMulai, waktuSelesai) {
   try {
-    const now = new Date();
+    const now = getWIBDate();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentTime = currentHour * 60 + currentMinute;
@@ -169,7 +180,7 @@ async function logDeviceActivity(logData) {
  */
 async function getAttendanceStats(userId) {
   try {
-    const now = new Date();
+    const now = getWIBDate();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const presensiRef = db.collection("presensi");

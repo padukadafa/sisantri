@@ -32,7 +32,10 @@ abstract class PresensiRemoteDataSource {
   });
 
   /// Update presensi
-  Future<PresensiModel> updatePresensi(PresensiModel presensi);
+  Future<PresensiModel> updatePresensi(
+    PresensiModel presensi, {
+    StatusPresensi? oldStatus,
+  });
 
   /// Delete presensi
   Future<void> deletePresensi(String presensiId);
@@ -72,7 +75,10 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
           keterangan: presensi.keterangan,
           poinDiperoleh: presensi.poinDiperoleh,
         );
-        return await updatePresensi(updatedPresensi);
+        return await updatePresensi(
+          updatedPresensi,
+          oldStatus: existingPresensi.status,
+        );
       }
 
       // Jika belum ada, tambahkan presensi baru
@@ -82,6 +88,13 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
 
       final newPresensi = presensi.copyWith(id: docRef.id);
       await docRef.update({'id': docRef.id});
+
+      // Update counter jadwal untuk create baru
+      await _updateJadwalCounter(
+        jadwalId: presensi.jadwalId,
+        newStatus: presensi.status,
+        oldStatus: null,
+      );
 
       return newPresensi;
     } catch (e) {
@@ -206,7 +219,10 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
   }
 
   @override
-  Future<PresensiModel> updatePresensi(PresensiModel presensi) async {
+  Future<PresensiModel> updatePresensi(
+    PresensiModel presensi, {
+    StatusPresensi? oldStatus,
+  }) async {
     try {
       final updatedPresensi = presensi.copyWith(
         // Bisa tambah updatedAt field jika diperlukan
@@ -216,6 +232,15 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
           .collection('presensi')
           .doc(presensi.id)
           .update(updatedPresensi.toJson());
+
+      // Update counter jadwal jika status berubah
+      if (oldStatus != null && oldStatus != presensi.status) {
+        await _updateJadwalCounter(
+          jadwalId: presensi.jadwalId,
+          newStatus: presensi.status,
+          oldStatus: oldStatus,
+        );
+      }
 
       return updatedPresensi;
     } catch (e) {
@@ -229,6 +254,80 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
       await _firestore.collection('presensi').doc(presensiId).delete();
     } catch (e) {
       throw Exception('Delete presensi error: $e');
+    }
+  }
+
+  /// Helper method untuk update counter di jadwal
+  Future<void> _updateJadwalCounter({
+    required String jadwalId,
+    required StatusPresensi newStatus,
+    StatusPresensi? oldStatus,
+  }) async {
+    try {
+      final jadwalUpdate = <String, dynamic>{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      // Decrement old status counter
+      if (oldStatus != null) {
+        final oldStatusStr = oldStatus.toString().split('.').last;
+        switch (oldStatusStr) {
+          case 'hadir':
+            jadwalUpdate['presensiHadir'] = FieldValue.increment(-1);
+            break;
+          case 'izin':
+            jadwalUpdate['presensiIzin'] = FieldValue.increment(-1);
+            break;
+          case 'sakit':
+            jadwalUpdate['presensiSakit'] = FieldValue.increment(-1);
+            break;
+          case 'alpha':
+            jadwalUpdate['presensiAlpha'] = FieldValue.increment(-1);
+            break;
+        }
+      }
+
+      // Increment new status counter
+      final newStatusStr = newStatus.toString().split('.').last;
+      switch (newStatusStr) {
+        case 'hadir':
+          if (oldStatus == null) {
+            jadwalUpdate['presensiHadir'] = FieldValue.increment(1);
+          } else {
+            jadwalUpdate['presensiHadir'] =
+                jadwalUpdate['presensiHadir'] ?? FieldValue.increment(1);
+          }
+          break;
+        case 'izin':
+          if (oldStatus == null) {
+            jadwalUpdate['presensiIzin'] = FieldValue.increment(1);
+          } else {
+            jadwalUpdate['presensiIzin'] =
+                jadwalUpdate['presensiIzin'] ?? FieldValue.increment(1);
+          }
+          break;
+        case 'sakit':
+          if (oldStatus == null) {
+            jadwalUpdate['presensiSakit'] = FieldValue.increment(1);
+          } else {
+            jadwalUpdate['presensiSakit'] =
+                jadwalUpdate['presensiSakit'] ?? FieldValue.increment(1);
+          }
+          break;
+        case 'alpha':
+          if (oldStatus == null) {
+            jadwalUpdate['presensiAlpha'] = FieldValue.increment(1);
+          } else {
+            jadwalUpdate['presensiAlpha'] =
+                jadwalUpdate['presensiAlpha'] ?? FieldValue.increment(1);
+          }
+          break;
+      }
+
+      await _firestore.collection('jadwal').doc(jadwalId).update(jadwalUpdate);
+    } catch (e) {
+      // Log error tapi jangan throw agar tidak mengganggu flow presensi
+      print('Error updating jadwal counter: $e');
     }
   }
 
