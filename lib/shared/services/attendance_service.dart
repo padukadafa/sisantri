@@ -130,7 +130,6 @@ class AttendanceService {
 
       // Update aggregates jika status berubah
       if (oldStatus != null && timestamp != null) {
-        // Hitung poin baru berdasarkan status
         int newPoin = 0;
         if (newStatus == StatusPresensi.hadir) {
           // Ambil poin dari jadwal jika ada
@@ -150,7 +149,6 @@ class AttendanceService {
           status: newStatus.label.toLowerCase(),
           poin: newPoin,
           oldStatus: oldStatus,
-          oldPoin: oldPoin,
         );
       }
     } catch (e) {

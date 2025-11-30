@@ -233,28 +233,13 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
     StatusPresensi? oldStatus,
   }) async {
     try {
-      // Get old presensi untuk dapat oldPoin
-      PresensiModel? oldPresensi;
-      if (oldStatus != null) {
-        final doc = await _firestore
-            .collection('presensi')
-            .doc(presensi.id)
-            .get();
-        if (doc.exists) {
-          oldPresensi = PresensiModel.fromJson({'id': doc.id, ...doc.data()!});
-        }
-      }
-
-      final updatedPresensi = presensi.copyWith(
-        // Bisa tambah updatedAt field jika diperlukan
-      );
+      final updatedPresensi = presensi.copyWith();
 
       await _firestore
           .collection('presensi')
           .doc(presensi.id)
-          .update(updatedPresensi.toJson());
+          .update(presensi.toJson());
 
-      // Update counter jadwal jika status berubah
       if (oldStatus != null && oldStatus != presensi.status) {
         await _updateJadwalCounter(
           jadwalId: presensi.jadwalId,
@@ -270,7 +255,6 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
         status: presensi.status.name,
         poin: presensi.poinDiperoleh,
         oldStatus: oldStatus?.name,
-        oldPoin: oldPresensi?.poinDiperoleh,
       );
 
       return updatedPresensi;

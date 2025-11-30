@@ -15,7 +15,6 @@ class PresensiAggregateService {
     required String status,
     required int poin,
     String? oldStatus,
-    int? oldPoin,
   }) async {
     try {
       final batch = _firestore.batch();
@@ -36,35 +35,35 @@ class PresensiAggregateService {
           'lastUpdated': Timestamp.fromDate(now),
         };
 
-        // Decrement old status if exists
         if (oldStatus != null) {
           updateData['total${_capitalize(oldStatus)}'] = FieldValue.increment(
             -1,
           );
-          if (oldPoin != null) {
-            updateData['totalPoin'] = FieldValue.increment(-oldPoin);
-          }
         }
 
-        // Increment new status
         updateData['total${_capitalize(status)}'] = FieldValue.increment(1);
         updateData['totalPoin'] = FieldValue.increment(poin);
 
-        // Use set with merge untuk create or update
-        // Ini lebih efisien karena tidak perlu get() terlebih dahulu
-        batch.set(docRef, {
-          'userId': userId,
-          'periode': periode,
-          'periodeKey': periodeKey,
-          'startDate': Timestamp.fromDate(startDate),
-          'endDate': Timestamp.fromDate(endDate),
-          'totalHadir': 0,
-          'totalIzin': 0,
-          'totalSakit': 0,
-          'totalAlpha': 0,
-          'totalPoin': 0,
-          ...updateData,
-        }, SetOptions(merge: true));
+        // Check if document exists
+        final docSnapshot = await docRef.get();
+
+        if (docSnapshot.exists) {
+          batch.update(docRef, updateData);
+        } else {
+          batch.set(docRef, {
+            'userId': userId,
+            'periode': periode,
+            'periodeKey': periodeKey,
+            'startDate': Timestamp.fromDate(startDate),
+            'endDate': Timestamp.fromDate(endDate),
+            'totalHadir': 0,
+            'totalIzin': 0,
+            'totalSakit': 0,
+            'totalAlpha': 0,
+            'totalPoin': 0,
+            ...updateData,
+          });
+        }
       }
 
       await batch.commit();

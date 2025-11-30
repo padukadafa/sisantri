@@ -867,6 +867,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
               tanggal: tanggalJadwal,
               status: attendanceStatus,
               poin: newPoin,
+              oldStatus: oldStatus,
             );
           }
         } catch (e) {
@@ -922,7 +923,6 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           break;
       }
 
-      // Update jadwal counter only if document exists
       if (_selectedActivity != null) {
         final jadwalRef = firestore.collection("jadwal").doc(_selectedActivity);
         final jadwalSnapshot = await jadwalRef.get();
@@ -1091,6 +1091,9 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         'presensiAlpha': 0,
       };
 
+      // Track aggregate updates
+      final List<Map<String, dynamic>> aggregateUpdates = [];
+
       // Create or update attendance records
       for (final santri in selectedSantriData) {
         // Cek apakah sudah ada presensi untuk user dan jadwal ini
@@ -1105,6 +1108,15 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           // Get old status untuk adjust counter
           final docData = existingSnapshot.docs.first.data();
           final oldStatus = docData['status'] as String?;
+          final oldPoinDiperoleh = docData['poinDiperoleh'] as int? ?? 0;
+
+          // Track untuk aggregate update (perlu oldStatus dan oldPoin)
+          aggregateUpdates.add({
+            'userId': santri.id,
+            'oldStatus': oldStatus,
+            'oldPoin': oldPoinDiperoleh,
+            'isUpdate': true,
+          });
 
           // Decrement old status counter
           if (oldStatus != null && oldStatus != bulkStatus) {
@@ -1160,6 +1172,14 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             'timestamp': FieldValue.serverTimestamp(),
           });
         } else {
+          // Track untuk aggregate create (no oldStatus)
+          aggregateUpdates.add({
+            'userId': santri.id,
+            'oldStatus': null,
+            'oldPoin': null,
+            'isUpdate': false,
+          });
+
           // Increment counter untuk create baru
           switch (bulkStatus) {
             case 'hadir':
@@ -1260,12 +1280,13 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                 (jadwalData?['tanggal'] as Timestamp?)?.toDate() ?? now;
             final poin = jadwalData?['poin'] as int? ?? 1;
 
-            for (final santri in selectedSantriData) {
+            for (final updateInfo in aggregateUpdates) {
               await PresensiAggregateService.updateAggregates(
-                userId: santri.id,
+                userId: updateInfo['userId'],
                 tanggal: tanggalJadwal,
                 status: bulkStatus,
                 poin: bulkStatus == 'hadir' ? poin : 0,
+                oldStatus: updateInfo['oldStatus'],
               );
             }
           }
