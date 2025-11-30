@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
+import 'package:sisantri/shared/models/presensi_aggregate_model.dart';
 import '../models/user_model.dart';
 import '../models/presensi_model.dart';
 import 'presensi_aggregate_service.dart';
@@ -116,40 +117,122 @@ class AttendanceService {
           .get();
       final oldData = oldDoc.data();
       final oldStatus = oldData?['status'] as String?;
-      final oldPoin = oldData?['poin'] as int? ?? 0;
+      final oldPoin = oldData?['poinDiperoleh'] as int? ?? 0;
       final userId = oldData?['userId'] as String;
       final timestamp = oldData?['timestamp'] as Timestamp?;
 
+      // Get poin dari jadwal untuk status baru
+      int newPoin = 0;
+      if (newStatus == StatusPresensi.hadir) {
+        final jadwalId = oldData?['jadwalId'] as String?;
+        if (jadwalId != null) {
+          final jadwalDoc = await _firestore
+              .collection('jadwal')
+              .doc(jadwalId)
+              .get();
+          newPoin = jadwalDoc.data()?['poin'] as int? ?? 1;
+        }
+      }
+
+      // Update presensi record
       await _firestore.collection('presensi').doc(attendanceId).update({
         'status': newStatus.label.toLowerCase(),
+        'poinDiperoleh': newPoin,
         'keterangan': keterangan ?? '',
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedBy': updatedBy,
         'updatedByName': updatedByName,
       });
 
-      // Update aggregates jika status berubah
+      // Update aggregates menggunakan batch untuk semua periode
       if (oldStatus != null && timestamp != null) {
-        int newPoin = 0;
-        if (newStatus == StatusPresensi.hadir) {
-          // Ambil poin dari jadwal jika ada
-          final jadwalId = oldData?['jadwalId'] as String?;
-          if (jadwalId != null) {
-            final jadwalDoc = await _firestore
-                .collection('jadwal')
-                .doc(jadwalId)
-                .get();
-            newPoin = jadwalDoc.data()?['poin'] as int? ?? 1;
+        final batch = _firestore.batch();
+        final tanggal = timestamp.toDate();
+        final periodes = ['daily', 'weekly', 'monthly', 'semester', 'yearly'];
+        final now = DateTime.now();
+
+        for (final periode in periodes) {
+          final periodeKey = PresensiAggregateService.getPeriodeKey(
+            periode,
+            tanggal,
+          );
+          final docId = '${userId}_${periode}_$periodeKey';
+          final docRef = _firestore
+              .collection('presensi_aggregates')
+              .doc(docId);
+
+          final updateData = <String, dynamic>{
+            'lastUpdated': Timestamp.fromDate(now),
+          };
+
+          // Decrement old status counter
+          if (oldStatus.isNotEmpty) {
+            switch (oldStatus) {
+              case 'hadir':
+                updateData['totalHadir'] = FieldValue.increment(-1);
+                break;
+              case 'izin':
+                updateData['totalIzin'] = FieldValue.increment(-1);
+                break;
+              case 'sakit':
+                updateData['totalSakit'] = FieldValue.increment(-1);
+                break;
+              case 'alpha':
+                updateData['totalAlpha'] = FieldValue.increment(-1);
+                break;
+            }
+            // Decrement old poin
+            if (oldPoin > 0) {
+              updateData['totalPoin'] = FieldValue.increment(-oldPoin);
+            }
+          }
+
+          // Increment new status counter
+          final newStatusLabel = newStatus.label.toLowerCase();
+          switch (newStatusLabel) {
+            case 'hadir':
+              updateData['totalHadir'] = FieldValue.increment(1);
+              break;
+            case 'izin':
+              updateData['totalIzin'] = FieldValue.increment(1);
+              break;
+            case 'sakit':
+              updateData['totalSakit'] = FieldValue.increment(1);
+              break;
+            case 'alpha':
+              updateData['totalAlpha'] = FieldValue.increment(1);
+              break;
+          }
+          // Increment new poin
+          if (newPoin > 0) {
+            updateData['totalPoin'] = FieldValue.increment(newPoin);
+          }
+
+          // Check if document exists first
+          final docSnapshot = await docRef.get();
+          if (docSnapshot.exists) {
+            batch.update(docRef, updateData);
+          } else {
+            // Create with initial values if doesn't exist
+            final startDate = PeriodeKeyHelper.getStartDate(periode, tanggal);
+            final endDate = PeriodeKeyHelper.getEndDate(periode, tanggal);
+            batch.set(docRef, {
+              'userId': userId,
+              'periode': periode,
+              'periodeKey': periodeKey,
+              'startDate': Timestamp.fromDate(startDate),
+              'endDate': Timestamp.fromDate(endDate),
+              'totalHadir': 0,
+              'totalIzin': 0,
+              'totalSakit': 0,
+              'totalAlpha': 0,
+              'totalPoin': 0,
+              ...updateData,
+            });
           }
         }
 
-        await PresensiAggregateService.updateAggregates(
-          userId: userId,
-          tanggal: timestamp.toDate(),
-          status: newStatus.label.toLowerCase(),
-          poin: newPoin,
-          oldStatus: oldStatus,
-        );
+        await batch.commit();
       }
     } catch (e) {
       throw Exception('Failed to update attendance status: $e');

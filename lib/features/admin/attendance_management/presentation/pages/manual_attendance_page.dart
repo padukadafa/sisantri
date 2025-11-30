@@ -220,6 +220,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           IconButton(
             icon: Icon(_isSelectMode ? Icons.close : Icons.checklist),
             onPressed: () {
+              if (_selectedActivity == null) return;
               setState(() {
                 _isSelectMode = !_isSelectMode;
                 if (!_isSelectMode) {
@@ -622,6 +623,10 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
       itemBuilder: (context, index) {
         final santri = filteredSantri[index];
         final isSelected = _selectedSantri.contains(santri.id);
+        final currentStatus =
+            _santriAttendanceStatus[santri.id] ??
+            existingStatusMap[santri.id] ??
+            'alpha';
 
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
@@ -637,15 +642,17 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
             leading: _isSelectMode
                 ? Checkbox(
                     value: isSelected,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedSantri.add(santri.id);
-                        } else {
-                          _selectedSantri.remove(santri.id);
-                        }
-                      });
-                    },
+                    onChanged: currentStatus == 'hadir'
+                        ? null // Disable checkbox jika sudah hadir
+                        : (value) {
+                            setState(() {
+                              if (value == true) {
+                                _selectedSantri.add(santri.id);
+                              } else {
+                                _selectedSantri.remove(santri.id);
+                              }
+                            });
+                          },
                   )
                 : CircleAvatar(
                     backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
@@ -678,64 +685,96 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                           _santriAttendanceStatus[santri.id] ??
                           existingStatusMap[santri.id] ??
                           'alpha',
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         isDense: true,
+                        filled: _selectedActivity == null,
+                        fillColor: _selectedActivity == null
+                            ? Colors.grey.shade200
+                            : null,
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'alpha',
-                          child: Row(
-                            children: [
-                              Icon(Icons.cancel, color: Colors.red, size: 16),
-                              SizedBox(width: 4),
-                              Text('Alpha', style: TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'hadir',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 16,
+                      disabledHint: const Row(
+                        children: [
+                          Icon(Icons.block, color: Colors.grey, size: 16),
+                          SizedBox(width: 4),
+                        ],
+                      ),
+                      items: _selectedActivity == null
+                          ? null
+                          : const [
+                              DropdownMenuItem(
+                                value: 'alpha',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.cancel,
+                                      color: Colors.red,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Alpha',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              SizedBox(width: 4),
-                              Text('Hadir', style: TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'izin',
-                          child: Row(
-                            children: [
-                              Icon(Icons.info, color: Colors.orange, size: 16),
-                              SizedBox(width: 4),
-                              Text('Izin', style: TextStyle(fontSize: 12)),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'sakit',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.medical_information,
-                                color: Colors.blue,
-                                size: 16,
+                              DropdownMenuItem(
+                                value: 'hadir',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Hadir',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              SizedBox(width: 4),
-                              Text('Sakit', style: TextStyle(fontSize: 12)),
+                              DropdownMenuItem(
+                                value: 'izin',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info,
+                                      color: Colors.orange,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Izin',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'sakit',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.medical_information,
+                                      color: Colors.blue,
+                                      size: 16,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Sakit',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
-                          ),
-                        ),
-                      ],
                       onChanged: _selectedActivity == null
                           ? null
                           : (value) {
@@ -749,7 +788,7 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
                             },
                     ),
                   ),
-            onTap: _isSelectMode
+            onTap: _isSelectMode && currentStatus != 'hadir'
                 ? () {
                     setState(() {
                       if (isSelected) {
@@ -764,19 +803,6 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         );
       },
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'hadir':
-        return Colors.green;
-      case 'izin':
-        return Colors.orange;
-      case 'alpha':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
   }
 
   String _getStatusLabel(String status) {
@@ -983,77 +1009,14 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
 
     if (_selectedSantri.isEmpty) return;
 
-    // Show dialog to select bulk statXPus
-    final bulkStatus = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Pilih Status untuk Semua'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Pilih status kehadiran untuk ${_selectedSantri.length} santri yang dipilih:',
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Status Kehadiran',
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: 'alpha',
-                  child: Row(
-                    children: [
-                      Icon(Icons.cancel, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
-                      Text('Alpha'),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'hadir',
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.green, size: 20),
-                      SizedBox(width: 8),
-                      Text('Hadir'),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'izin',
-                  child: Row(
-                    children: [
-                      Icon(Icons.info, color: Colors.orange, size: 20),
-                      SizedBox(width: 8),
-                      Text('Izin'),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (value) => Navigator.pop(context, value),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-        ],
-      ),
-    );
-
-    if (bulkStatus == null) return;
+    // Batch absensi hanya untuk status HADIR
+    const bulkStatus = 'hadir';
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Konfirmasi Absensi Massal'),
-        content: Text(
-          'Apakah Anda yakin ingin mencatat absensi untuk ${_selectedSantri.length} santri dengan status "${_getStatusLabel(bulkStatus)}"?',
-        ),
+        content: Text('Tandai ${_selectedSantri.length} santri sebagai hadir?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1061,16 +1024,38 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _getStatusColor(bulkStatus),
-            ),
-            child: const Text('Ya, Catat'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            child: const Text('Ya, Tandai Hadir'),
           ),
         ],
       ),
     );
 
     if (confirmed != true) return;
+
+    // Show loading dialog
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Memproses absensi ${_selectedSantri.length} santri...',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     try {
       final firestore = FirebaseFirestore.instance;
@@ -1295,6 +1280,11 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         }
       }
 
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1321,6 +1311,11 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
         ref.invalidate(attendanceStatusProvider(_selectedActivity));
       }
     } catch (e) {
+      // Close loading dialog on error
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

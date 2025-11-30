@@ -288,6 +288,11 @@ class PresensiAggregateService {
     }
   }
 
+  // Public getter untuk digunakan di service lain
+  static String getPeriodeKey(String periode, DateTime date) {
+    return _getPeriodeKey(periode, date);
+  }
+
   static String _capitalize(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1);
