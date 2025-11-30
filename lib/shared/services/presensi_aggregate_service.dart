@@ -139,7 +139,6 @@ class PresensiAggregateService {
 
     try {
       final results = await Future.wait([
-        getAggregate(userId: userId, periode: 'daily', date: targetDate),
         getAggregate(userId: userId, periode: 'weekly', date: targetDate),
         getAggregate(userId: userId, periode: 'monthly', date: targetDate),
         getAggregate(userId: userId, periode: 'semester', date: targetDate),
@@ -147,11 +146,10 @@ class PresensiAggregateService {
       ]);
 
       return {
-        'daily': results[0],
-        'weekly': results[1],
-        'monthly': results[2],
-        'semester': results[3],
-        'yearly': results[4],
+        'weekly': results[0],
+        'monthly': results[1],
+        'semester': results[2],
+        'yearly': results[3],
       };
     } catch (e) {
       throw Exception('Failed to get aggregate summary: $e');

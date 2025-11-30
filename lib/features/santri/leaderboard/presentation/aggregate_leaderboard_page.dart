@@ -15,8 +15,6 @@ final leaderboardParamsProvider = Provider<Map<String, String>>((ref) {
   final now = DateTime.now();
 
   final periodeKey = switch (periode) {
-    'daily' => PeriodeKeyHelper.daily(now),
-    'weekly' => PeriodeKeyHelper.weekly(now),
     'monthly' => PeriodeKeyHelper.monthly(now),
     'semester' => PeriodeKeyHelper.semester(now),
     'yearly' => PeriodeKeyHelper.yearly(now),
@@ -44,7 +42,7 @@ final aggregateLeaderboardProvider =
             await PresensiAggregateService.getLeaderboard(
               periode: periode,
               periodeKey: periodeKey,
-              limit: 100,
+              limit: 10,
             ).timeout(
               const Duration(seconds: 10),
               onTimeout: () {
@@ -111,7 +109,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final params = ref.watch(leaderboardParamsProvider);
     final periode = params['periode']!;
-    final periodeKey = params['periodeKey']!;
 
     // Use cached params to prevent unnecessary provider rebuilds
     final leaderboardAsync = ref.watch(aggregateLeaderboardProvider(params));
@@ -455,54 +452,9 @@ class AggregateLeaderboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatChip(String label, int value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        '$label:$value',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
   Color _getRankColor(int rank) {
     if (rank <= 3) return Colors.amber;
     if (rank <= 10) return AppTheme.primaryColor;
     return Colors.grey;
-  }
-
-  String _getPeriodeLabel(String periode) {
-    switch (periode) {
-      case 'monthly':
-        return 'Ranking Bulan Ini';
-      case 'semester':
-        return 'Ranking Semester Ini';
-      case 'yearly':
-        return 'Ranking Tahun Ini';
-      default:
-        return 'Ranking';
-    }
-  }
-
-  String _getPeriodeKey(String periode) {
-    final now = DateTime.now();
-    switch (periode) {
-      case 'monthly':
-        return PeriodeKeyHelper.monthly(now);
-      case 'semester':
-        return PeriodeKeyHelper.semester(now);
-      case 'yearly':
-        return PeriodeKeyHelper.yearly(now);
-      default:
-        return PeriodeKeyHelper.monthly(now);
-    }
   }
 }

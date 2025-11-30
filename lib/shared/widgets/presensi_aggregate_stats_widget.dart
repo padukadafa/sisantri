@@ -246,8 +246,6 @@ class PeriodeComparisonWidget extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              _buildPeriodeCard('Hari Ini', summary['daily'], Colors.purple),
-              const SizedBox(width: 12),
               _buildPeriodeCard('Minggu', summary['weekly'], Colors.blue),
               const SizedBox(width: 12),
               _buildPeriodeCard('Bulan', summary['monthly'], Colors.green),
