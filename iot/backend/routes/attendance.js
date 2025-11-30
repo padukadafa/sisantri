@@ -41,7 +41,6 @@ router.post(
       const deviceId = req.device.id;
 
       console.log(`RFID scan received: ${rfidUid} from device: ${deviceId}`);
-      // mendapatkan jadwal hari ini
       const schedule = await getTodaySchedule();
       
       if (!schedule) {
@@ -98,11 +97,20 @@ router.post(
           message: "Presensi sudah dicatat",
         });
       }
-      // mencatat presensi
-      await createAttendance(todayAttendance);
-      const attendancePoin = process.env.PRESENSI_POIN_REWARD;
-      // menambahkan poin dan log aktivitas
-      await addUserPoint(user, attendancePoin);
+      
+      // Get poin from schedule, default to 1 if not set
+      const poin = schedule.poin || 1;
+      
+      // Add tanggal to attendance data
+      const attendanceData = {
+        ...todayAttendance,
+        tanggal: schedule.tanggal.toDate(),
+      };
+      
+      await createAttendance(attendanceData, poin);
+      
+      const attendancePoin = poin;
+      // await addUserPoint(user, attendancePoin);
       await createLogActivity({
         description: `${user.nama} - ${user.id}: Hadir, point added ${attendancePoin}`,
         title: "Absensi RFID",
@@ -118,128 +126,3 @@ router.post(
     }
   }
 );
-
-router.get("/status/:rfidUid", verifyDevice, async (req, res, next) => {
-  try {
-    const { rfidUid } = req.params;
-
-    // Find user by RFID
-    const user = await findUserByRFID(rfidUid);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: "RFID not registered",
-      });
-    }
-
-    const todayAttendance = await getTodayAttendance(user.id);
-    const todaySchedule = await getTodaySchedule();
-    const stats = await getAttendanceStats(user.id);
-
-    // Check schedule time if schedule exists
-    let scheduleInfo = null;
-    if (
-      todaySchedule &&
-      todaySchedule.waktuMulai &&
-      todaySchedule.waktuSelesai
-    ) {
-      const timeCheck = checkScheduleTime(
-        todaySchedule.waktuMulai,
-        todaySchedule.waktuSelesai
-      );
-
-      scheduleInfo = {
-        jadwalId: todaySchedule.id,
-        jadwalNama: todaySchedule.nama,
-        waktuMulai: todaySchedule.waktuMulai,
-        waktuSelesai: todaySchedule.waktuSelesai,
-        timeStatus: timeCheck.status,
-        isWithinSchedule: timeCheck.isWithinSchedule,
-        message: timeCheck.message,
-      };
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        user: {
-          id: user.id,
-          nama: user.nama,
-          nim: user.nim,
-        },
-        todayAttendance: todayAttendance
-          ? {
-              id: todayAttendance.id,
-              status: todayAttendance.status,
-              timestamp: todayAttendance.timestamp,
-            }
-          : null,
-        schedule: scheduleInfo,
-        stats: stats,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * GET /api/attendance/schedule
- * Get today's schedule information
- */
-router.get("/schedule", verifyDevice, async (req, res, next) => {
-  try {
-    const todaySchedule = await getTodaySchedule();
-
-    if (!todaySchedule) {
-      return res.status(404).json({
-        success: false,
-        error: "No schedule found",
-        message: "Tidak ada jadwal untuk hari ini",
-      });
-    }
-
-    // Check schedule time if waktuMulai and waktuSelesai exist
-    let timeCheck = null;
-    if (todaySchedule.waktuMulai && todaySchedule.waktuSelesai) {
-      timeCheck = checkScheduleTime(
-        todaySchedule.waktuMulai,
-        todaySchedule.waktuSelesai
-      );
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        schedule: {
-          id: todaySchedule.id,
-          nama: todaySchedule.nama,
-          tanggal: todaySchedule.tanggal,
-          waktuMulai: todaySchedule.waktuMulai,
-          waktuSelesai: todaySchedule.waktuSelesai,
-          tempat: todaySchedule.tempat,
-          kategori: todaySchedule.kategori,
-          isAktif: todaySchedule.isAktif,
-        },
-        timeStatus: timeCheck,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * GET /api/attendance/health
- * Health check endpoint
- */
-router.get("/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Service is running",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-module.exports = router;

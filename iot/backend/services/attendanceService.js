@@ -1,6 +1,7 @@
-const { db, Timestamp } = require("../config/firebase");
+const { db, Timestamp, FieldValue } = require("../config/firebase");
 const {
-  getWIBDate
+  getWIBDate,
+  getAllPeriodeKeys
 } = require("../helper/helper");
 
 /**
@@ -133,30 +134,135 @@ function checkScheduleTime(waktuMulai, waktuSelesai) {
 }
 
 /**
- * Create attendance record
- * @param {Object} attendanceData - Attendance data
- * @returns {Promise<Object>} Created attendance record
+ * Update aggregate for all periods
+ * @param {string} userId - User ID
+ * @param {Date} tanggal - Date of attendance
+ * @param {string} status - Attendance status (hadir, izin, sakit, alpha)
+ * @param {number} poin - Points earned
+ * @param {string|null} oldStatus - Previous status if updating
+ * @returns {Promise<void>}
  */
-async function createAttendance(attendanceData) {
+async function updateAggregates(userId, tanggal, status, poin, oldStatus = null) {
   try {
-    const presensiRef = db.collection("presensi");
-    const docRef = await presensiRef.add({
-      ...attendanceData,
-      timestamp: Timestamp.now(),
-      status: "hadir",
-    });
+    const periodeKeys = getAllPeriodeKeys(tanggal);
+    const periods = ['daily', 'weekly', 'monthly', 'semester', 'yearly'];
+    const batch = db.batch();
 
-    const doc = await docRef.get();
-    return {
-      id: doc.id,
-      ...doc.data(),
-    };
+    for (const periode of periods) {
+      const periodeKey = periodeKeys[periode];
+      const docId = `${userId}_${periode}_${periodeKey}`;
+      const aggregateRef = db.collection('presensi_aggregates').doc(docId);
+      
+      // Check if document exists
+      const doc = await aggregateRef.get();
+      
+      const updateData = {};
+      
+      // Decrement old status if exists
+      if (oldStatus) {
+        switch (oldStatus) {
+          case 'hadir':
+            updateData.totalHadir = FieldValue.increment(-1);
+            break;
+          case 'izin':
+            updateData.totalIzin = FieldValue.increment(-1);
+            break;
+          case 'sakit':
+            updateData.totalSakit = FieldValue.increment(-1);
+            break;
+          case 'alpha':
+            updateData.totalAlpha = FieldValue.increment(-1);
+            break;
+        }
+      }
+      
+      // Increment new status
+      switch (status) {
+        case 'hadir':
+          updateData.totalHadir = FieldValue.increment(1);
+          break;
+        case 'izin':
+          updateData.totalIzin = FieldValue.increment(1);
+          break;
+        case 'sakit':
+          updateData.totalSakit = FieldValue.increment(1);
+          break;
+        case 'alpha':
+          updateData.totalAlpha = FieldValue.increment(1);
+          break;
+      }
+      
+      // Update points
+      updateData.totalPoin = FieldValue.increment(poin);
+      updateData.updatedAt = Timestamp.fromDate(getWIBDate());
+      
+      if (doc.exists) {
+        // Update existing document
+        batch.update(aggregateRef, updateData);
+      } else {
+        // Create new document with initial values
+        const initialData = {
+          userId,
+          periode,
+          periodeKey,
+          totalHadir: 0,
+          totalIzin: 0,
+          totalSakit: 0,
+          totalAlpha: 0,
+          totalPoin: 0,
+          createdAt: Timestamp.now(),
+          ...updateData
+        };
+        batch.set(aggregateRef, initialData);
+      }
+    }
+    
+    await batch.commit();
+    console.log('Aggregates updated successfully for user:', userId);
   } catch (error) {
-    throw new Error(`Error creating attendance: ${error.message}`);
+    console.error('Error updating aggregates:', error);
+    throw error;
   }
 }
 
 /**
+ * Create attendance record
+ * @param {Object} attendanceData - Attendance data
+ * @param {number} poin - Points for this attendance
+ * @returns {Promise<Object>} Created attendance record
+ */
+async function createAttendance(attendanceData, poin = 1) {
+  try {
+    const presensiRef = db.collection("presensi");
+    const now = Timestamp.now();
+    const docRef = await presensiRef.add({
+      ...attendanceData,
+      timestamp: now,
+      status: "hadir",
+      poinDiperoleh: poin,
+    });
+
+    const doc = await docRef.get();
+    
+    // Update aggregates
+    const tanggal = attendanceData.tanggal || now.toDate();
+    await updateAggregates(
+      attendanceData.userId,
+      tanggal,
+      "hadir",
+      poin,
+      null // no old status for new record
+    );
+    
+    return {
+      id: doc.id,
+      ...doc.data(),
+    };
+    
+  } catch (error) {
+    throw new Error(`Error creating attendance: ${error.message}`);
+  }
+}/**
  * Log device activity
  * @param {Object} logData - Log data
  * @returns {Promise<void>}
@@ -230,4 +336,5 @@ module.exports = {
   logDeviceActivity,
   getAttendanceStats,
   createLogActivity,
+  updateAggregates,
 };
