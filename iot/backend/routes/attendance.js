@@ -8,6 +8,7 @@ const {
   getAttendanceStats,
   createLogActivity,
 } = require("../services/attendanceService");
+const { checkRegisterStatus,updateRFID } = require("../services/rfid");
 const { verifyDevice } = require("../middleware/auth");
 const { findUserByRFID } = require("../services/userService");
 const { addUserPoint } = require("../services/gamifikasiService");
@@ -25,7 +26,7 @@ router.post(
     body("rfidUid").isString().withMessage("RFID UID must be a string"),
   ],
   async (req, res, next) => {
-    // validasi input
+
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -36,11 +37,19 @@ router.post(
         });
       }
 
-      // mendapatkan rfid
       const { rfidUid } = req.body;
       const deviceId = req.device.id;
 
       console.log(`RFID scan received: ${rfidUid} from device: ${deviceId}`);
+      const result = await checkRegisterStatus();
+      if (result && result.isActive) {
+        const response = await updateRFID(result.id,rfidUid,result.userId);
+        res.status(200).json({
+          success: true,
+          message: response ?? "RFID berhasil didaftarkan",
+        });
+        return;
+      }
       const schedule = await getTodaySchedule();
       
       if (!schedule) {
@@ -126,3 +135,7 @@ router.post(
     }
   }
 );
+router.get("/test", async (req, res, next) => {
+  
+});
+module.exports = router;

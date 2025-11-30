@@ -18,17 +18,12 @@ async function getTodaySchedule() {
     tomorrow.setHours(0, 0, 0, 0);
 
     const jadwalRef = db.collection("jadwal");
-    console.log(jadwalRef)
-    console.log("Today:", today)
-    console.log("Tomorrow:", tomorrow)
     const snapshot = await jadwalRef
       .where("isAktif", "==", true)
       .where("tanggal", ">=", Timestamp.fromDate(today))
       .where("tanggal", "<", Timestamp.fromDate(tomorrow))
       .limit(1)
       .get();
-      console.log("Snapshot:")
-    console.log(snapshot)
 
     if (snapshot.empty) {
       return null;
@@ -37,7 +32,6 @@ async function getTodaySchedule() {
     const doc = snapshot.docs[0];
     const data = doc.data();
     const scheduleTime = checkScheduleTime(data.waktuMulai, data.waktuSelesai);
-    console.log("Today's schedule found:", { id: doc.id, ...data, ...scheduleTime });
     return {
       id: doc.id,
       ...data,
@@ -68,7 +62,6 @@ async function getTodayAttendance(jadwalId, userId) {
       .where("jadwalId", "==", jadwalId)
       .limit(1)
       .get();
-    console.log("userId:", userId, "jadwalId:", jadwalId);
     if (snapshot.empty) {
       return null;
     }
