@@ -9,41 +9,98 @@ import 'package:sisantri/shared/services/auth_service.dart';
 /// Provider untuk periode filter leaderboard
 final leaderboardPeriodeProvider = StateProvider<String>((ref) => 'monthly');
 
+/// Provider untuk leaderboard params (cached to prevent unnecessary rebuilds)
+final leaderboardParamsProvider = Provider<Map<String, String>>((ref) {
+  final periode = ref.watch(leaderboardPeriodeProvider);
+  final now = DateTime.now();
+
+  final periodeKey = switch (periode) {
+    'daily' => PeriodeKeyHelper.daily(now),
+    'weekly' => PeriodeKeyHelper.weekly(now),
+    'monthly' => PeriodeKeyHelper.monthly(now),
+    'semester' => PeriodeKeyHelper.semester(now),
+    'yearly' => PeriodeKeyHelper.yearly(now),
+    _ => PeriodeKeyHelper.monthly(now),
+  };
+
+  // Return the same Map instance as long as values don't change
+  return {'periode': periode, 'periodeKey': periodeKey};
+});
+
 /// Provider untuk leaderboard data dari aggregates
 final aggregateLeaderboardProvider =
     FutureProvider.family<List<Map<String, dynamic>>, Map<String, String>>((
       ref,
       params,
     ) async {
-      final periode = params['periode'] ?? 'monthly';
-      final periodeKey =
-          params['periodeKey'] ?? PeriodeKeyHelper.monthly(DateTime.now());
+      try {
+        final periode = params['periode'] ?? 'monthly';
+        final periodeKey =
+            params['periodeKey'] ?? PeriodeKeyHelper.monthly(DateTime.now());
 
-      final leaderboard = await PresensiAggregateService.getLeaderboard(
-        periode: periode,
-        periodeKey: periodeKey,
-        limit: 100,
-      );
+        debugPrint('🔍 Loading leaderboard: periode=$periode, key=$periodeKey');
 
-      // Get user details untuk setiap entry
-      final result = <Map<String, dynamic>>[];
-      for (final entry in leaderboard) {
-        final userId = entry['userId'] as String;
-        final userData = await AuthService.getUserData(userId);
+        final leaderboard =
+            await PresensiAggregateService.getLeaderboard(
+              periode: periode,
+              periodeKey: periodeKey,
+              limit: 100,
+            ).timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                debugPrint('⏱️ Leaderboard query timeout!');
+                return [];
+              },
+            );
 
-        if (userData != null) {
-          result.add({
-            'user': userData,
-            'totalPoin': entry['totalPoin'],
-            'totalHadir': entry['totalHadir'],
-            'totalIzin': entry['totalIzin'],
-            'totalSakit': entry['totalSakit'],
-            'totalAlpha': entry['totalAlpha'],
-          });
+        debugPrint('📊 Got ${leaderboard.length} aggregate entries');
+
+        if (leaderboard.isEmpty) {
+          debugPrint('⚠️ No aggregate data found');
+          return [];
         }
-      }
 
-      return result;
+        // Get user details dengan parallel queries untuk performa lebih baik
+        final result = <Map<String, dynamic>>[];
+        final userFutures = leaderboard.map((entry) async {
+          final userId = entry['userId'] as String;
+          final userData = await AuthService.getUserData(userId);
+          return {'userData': userData, 'entry': entry};
+        }).toList();
+
+        final userResults = await Future.wait(userFutures).timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            debugPrint('⏱️ User data fetch timeout!');
+            return [];
+          },
+        );
+
+        debugPrint('👥 Got ${userResults.length} user data');
+
+        for (final item in userResults) {
+          final userData = item['userData'] as UserModel?;
+          final entry = item['entry'] as Map<String, dynamic>;
+
+          if (userData != null) {
+            result.add({
+              'user': userData,
+              'totalPoin': entry['totalPoin'],
+              'totalHadir': entry['totalHadir'],
+              'totalIzin': entry['totalIzin'],
+              'totalSakit': entry['totalSakit'],
+              'totalAlpha': entry['totalAlpha'],
+            });
+          }
+        }
+
+        debugPrint('✅ Leaderboard loaded: ${result.length} entries');
+        return result;
+      } catch (e) {
+        debugPrint('❌ Leaderboard error: $e');
+        // Return empty list on error or timeout
+        return [];
+      }
     });
 
 /// Halaman Leaderboard menggunakan agregasi
@@ -52,15 +109,12 @@ class AggregateLeaderboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final periode = ref.watch(leaderboardPeriodeProvider);
-    final periodeKey = _getPeriodeKey(periode);
+    final params = ref.watch(leaderboardParamsProvider);
+    final periode = params['periode']!;
+    final periodeKey = params['periodeKey']!;
 
-    final leaderboardAsync = ref.watch(
-      aggregateLeaderboardProvider({
-        'periode': periode,
-        'periodeKey': periodeKey,
-      }),
-    );
+    // Use cached params to prevent unnecessary provider rebuilds
+    final leaderboardAsync = ref.watch(aggregateLeaderboardProvider(params));
 
     final currentUserAsync = ref.watch(
       FutureProvider<UserModel?>((ref) async {
@@ -81,8 +135,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
               ref.read(leaderboardPeriodeProvider.notifier).state = value;
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'daily', child: Text('Hari Ini')),
-              const PopupMenuItem(value: 'weekly', child: Text('Minggu Ini')),
               const PopupMenuItem(value: 'monthly', child: Text('Bulan Ini')),
               const PopupMenuItem(
                 value: 'semester',
@@ -102,44 +154,24 @@ class AggregateLeaderboardPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Header dengan periode info
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.primaryColor.withOpacity(0.8),
-                ],
-              ),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  _getPeriodeLabel(periode),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  periodeKey,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           // Leaderboard content
           Expanded(
             child: leaderboardAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Memuat data ranking...'),
+                    SizedBox(height: 8),
+                    Text(
+                      'Jika loading terlalu lama, coba refresh',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
               error: (error, stack) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -211,22 +243,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
   Widget _buildPodium(List<Map<String, dynamic>> top3) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.amber.shade50, Colors.white],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -385,10 +401,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
   ) {
     final user = data['user'] as UserModel;
     final poin = data['totalPoin'] as int;
-    final hadir = data['totalHadir'] as int;
-    final izin = data['totalIzin'] as int;
-    final sakit = data['totalSakit'] as int;
-    final alpha = data['totalAlpha'] as int;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -439,20 +451,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
             ),
           ],
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Row(
-            children: [
-              _buildStatChip('H', hadir, Colors.green),
-              const SizedBox(width: 4),
-              _buildStatChip('I', izin, Colors.orange),
-              const SizedBox(width: 4),
-              _buildStatChip('S', sakit, Colors.blue),
-              const SizedBox(width: 4),
-              _buildStatChip('A', alpha, Colors.red),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -483,10 +481,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
 
   String _getPeriodeLabel(String periode) {
     switch (periode) {
-      case 'daily':
-        return 'Ranking Hari Ini';
-      case 'weekly':
-        return 'Ranking Minggu Ini';
       case 'monthly':
         return 'Ranking Bulan Ini';
       case 'semester':
@@ -501,10 +495,6 @@ class AggregateLeaderboardPage extends ConsumerWidget {
   String _getPeriodeKey(String periode) {
     final now = DateTime.now();
     switch (periode) {
-      case 'daily':
-        return PeriodeKeyHelper.daily(now);
-      case 'weekly':
-        return PeriodeKeyHelper.weekly(now);
       case 'monthly':
         return PeriodeKeyHelper.monthly(now);
       case 'semester':

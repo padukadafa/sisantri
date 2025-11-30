@@ -817,12 +817,10 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           .get();
 
       String? oldStatus;
-      int? oldPoin;
       if (existingSnapshot.docs.isNotEmpty) {
         // Get old status untuk decrement counter lama
         final docData = existingSnapshot.docs.first.data();
         oldStatus = docData['status'] as String?;
-        oldPoin = docData['poin'] as int? ?? 0;
 
         final docId = existingSnapshot.docs.first.id;
         await firestore.collection('presensi').doc(docId).update({

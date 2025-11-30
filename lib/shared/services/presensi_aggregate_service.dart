@@ -231,21 +231,23 @@ class PresensiAggregateService {
           .where('periodeKey', isEqualTo: periodeKey)
           .orderBy('totalPoin', descending: true)
           .limit(limit)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 10));
 
       return querySnapshot.docs.map((doc) {
         final data = doc.data();
         return {
-          'userId': data['userId'],
-          'totalPoin': data['totalPoin'],
-          'totalHadir': data['totalHadir'],
-          'totalIzin': data['totalIzin'],
-          'totalSakit': data['totalSakit'],
-          'totalAlpha': data['totalAlpha'],
+          'userId': data['userId'] ?? '',
+          'totalPoin': data['totalPoin'] ?? 0,
+          'totalHadir': data['totalHadir'] ?? 0,
+          'totalIzin': data['totalIzin'] ?? 0,
+          'totalSakit': data['totalSakit'] ?? 0,
+          'totalAlpha': data['totalAlpha'] ?? 0,
         };
       }).toList();
     } catch (e) {
-      throw Exception('Failed to get leaderboard: $e');
+      // Return empty list instead of throwing
+      return [];
     }
   }
 
