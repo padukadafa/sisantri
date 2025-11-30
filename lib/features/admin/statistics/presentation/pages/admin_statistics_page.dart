@@ -15,10 +15,39 @@ final statisticsProvider =
       final periodeKey =
           params['periodeKey'] ?? PeriodeKeyHelper.monthly(DateTime.now());
 
-      return await PresensiAggregateService.getStatistics(
-        periode: periode,
-        periodeKey: periodeKey,
-      );
+      try {
+        return await PresensiAggregateService.getStatistics(
+          periode: periode,
+          periodeKey: periodeKey,
+        ).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            // Return empty data on timeout
+            return {
+              'totalUsers': 0,
+              'totalHadir': 0,
+              'totalIzin': 0,
+              'totalSakit': 0,
+              'totalAlpha': 0,
+              'totalPoin': 0,
+              'totalPresensi': 0,
+              'persentaseKehadiran': 0.0,
+            };
+          },
+        );
+      } catch (e) {
+        // Return empty data on error
+        return {
+          'totalUsers': 0,
+          'totalHadir': 0,
+          'totalIzin': 0,
+          'totalSakit': 0,
+          'totalAlpha': 0,
+          'totalPoin': 0,
+          'totalPresensi': 0,
+          'persentaseKehadiran': 0.0,
+        };
+      }
     });
 
 /// Halaman Admin Statistics Dashboard

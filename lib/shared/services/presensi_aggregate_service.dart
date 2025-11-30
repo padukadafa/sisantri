@@ -341,7 +341,7 @@ class PresensiAggregateService {
       final totalPresensi = totalHadir + totalIzin + totalSakit + totalAlpha;
       final persentaseKehadiran = totalPresensi > 0
           ? (totalHadir / totalPresensi) * 100
-          : 0;
+          : 0.0;
 
       return {
         'totalUsers': totalUsers,
@@ -354,7 +354,17 @@ class PresensiAggregateService {
         'persentaseKehadiran': persentaseKehadiran,
       };
     } catch (e) {
-      throw Exception('Failed to get statistics: $e');
+      // Return empty statistics instead of throwing
+      return {
+        'totalUsers': 0,
+        'totalHadir': 0,
+        'totalIzin': 0,
+        'totalSakit': 0,
+        'totalAlpha': 0,
+        'totalPoin': 0,
+        'totalPresensi': 0,
+        'persentaseKehadiran': 0.0,
+      };
     }
   }
 }
