@@ -239,7 +239,7 @@ class ScheduleManagementPage extends ConsumerWidget {
       for (var doc in presensis.docs) {
         final userId = doc.data()['userId'] as String;
         final status = doc.data()['status'] as String? ?? 'alpha';
-        final poinDiperoleh = doc.data()['poinDiperoleh'] as int? ?? 0;
+        final poinDiperoleh = doc.data()['totalPoin'] as int? ?? 0;
         final tanggalJadwal = jadwal.tanggal;
 
         for (final periode in periodes) {
