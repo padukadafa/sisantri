@@ -340,21 +340,6 @@ class AdminDashboardPage extends ConsumerWidget {
             ),
             const Divider(),
             _buildManagementTile(
-              'Statistik Presensi',
-              'Lihat statistik dan grafik kehadiran',
-              Icons.bar_chart,
-              Colors.purple,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminStatisticsPage(),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            _buildManagementTile(
               'Laporan Presensi',
               'Lihat dan export laporan kehadiran',
               Icons.analytics,
