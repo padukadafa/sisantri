@@ -5,7 +5,6 @@ import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
-import 'package:sisantri/shared/widgets/presensi_aggregate_stats_widget.dart';
 import 'package:sisantri/features/santri/profile/presentation/pages/edit_profile_page.dart';
 import 'package:sisantri/features/santri/profile/presentation/pages/security_settings_page.dart';
 
@@ -72,16 +71,6 @@ class ProfilePage extends ConsumerWidget {
                   _buildStatsCards(user, ref),
 
                   const SizedBox(height: 24),
-
-                  // Aggregate Stats Section (for Santri only)
-                  if (user.isSantri) ...[
-                    _buildSectionHeader('Statistik Presensi'),
-                    PresensiAggregateStatsWidget(
-                      userId: user.id,
-                      periode: 'monthly',
-                    ),
-                    const SizedBox(height: 16),
-                  ],
 
                   // Menu Items
                   _buildMenuItems(context, ref, user),
