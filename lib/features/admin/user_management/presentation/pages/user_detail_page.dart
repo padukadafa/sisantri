@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/services/presensi_aggregate_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/features/admin/user_management/presentation/widgets/rfid_management_dialog.dart';
 import 'package:sisantri/features/admin/user_management/presentation/widgets/edit_user_dialog.dart';
@@ -154,7 +155,11 @@ class _UserDetailPageState extends ConsumerState<UserDetailPage>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [_buildInformationTab(user), _buildActivityTab(user)],
+              children: [
+                _buildInformationTab(user),
+                _buildActivityTab(user),
+                _buildStatisticsTab(user),
+              ],
             ),
           ),
         ],
@@ -340,7 +345,11 @@ class _UserDetailPageState extends ConsumerState<UserDetailPage>
                 valueColor: user.statusAktif ? Colors.green : Colors.red,
               ),
               FutureBuilder<int>(
-                future: FirestoreService.calculateUserPoints(user.id),
+                future: PresensiAggregateService.getAggregate(
+                  userId: user.id,
+                  periode: 'yearly',
+                  date: DateTime.now(),
+                ).then((agg) => agg?.totalPoin ?? 0),
                 builder: (context, snapshot) {
                   return _buildInfoItem(
                     'Poin',
@@ -479,6 +488,207 @@ class _UserDetailPageState extends ConsumerState<UserDetailPage>
           },
         );
       },
+    );
+  }
+
+  /// Tab Statistik menggunakan Aggregate
+  Widget _buildStatisticsTab(UserModel user) {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: PresensiAggregateService.getAggregateSummary(userId: user.id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: ${snapshot.error}'),
+              ],
+            ),
+          );
+        }
+
+        final aggregates = snapshot.data ?? {};
+        final weekly = aggregates['weekly'];
+        final monthly = aggregates['monthly'];
+        final semester = aggregates['semester'];
+        final yearly = aggregates['yearly'];
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildStatCard(
+              title: 'Statistik Mingguan',
+              icon: Icons.calendar_view_week,
+              color: Colors.blue,
+              hadir: weekly?.totalHadir ?? 0,
+              izin: weekly?.totalIzin ?? 0,
+              sakit: weekly?.totalSakit ?? 0,
+              alpha: weekly?.totalAlpha ?? 0,
+              poin: weekly?.totalPoin ?? 0,
+            ),
+            const SizedBox(height: 16),
+            _buildStatCard(
+              title: 'Statistik Bulanan',
+              icon: Icons.calendar_month,
+              color: Colors.green,
+              hadir: monthly?.totalHadir ?? 0,
+              izin: monthly?.totalIzin ?? 0,
+              sakit: monthly?.totalSakit ?? 0,
+              alpha: monthly?.totalAlpha ?? 0,
+              poin: monthly?.totalPoin ?? 0,
+            ),
+            const SizedBox(height: 16),
+            _buildStatCard(
+              title: 'Statistik Semester',
+              icon: Icons.school,
+              color: Colors.orange,
+              hadir: semester?.totalHadir ?? 0,
+              izin: semester?.totalIzin ?? 0,
+              sakit: semester?.totalSakit ?? 0,
+              alpha: semester?.totalAlpha ?? 0,
+              poin: semester?.totalPoin ?? 0,
+            ),
+            const SizedBox(height: 16),
+            _buildStatCard(
+              title: 'Statistik Tahunan',
+              icon: Icons.calendar_today,
+              color: Colors.purple,
+              hadir: yearly?.totalHadir ?? 0,
+              izin: yearly?.totalIzin ?? 0,
+              sakit: yearly?.totalSakit ?? 0,
+              alpha: yearly?.totalAlpha ?? 0,
+              poin: yearly?.totalPoin ?? 0,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required int hadir,
+    required int izin,
+    required int sakit,
+    required int alpha,
+    required int poin,
+  }) {
+    final total = hadir + izin + sakit + alpha;
+    final percentage = total > 0
+        ? (hadir / total * 100).toStringAsFixed(1)
+        : '0.0';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2E2E2E),
+                      ),
+                    ),
+                    Text(
+                      'Total: $total presensi',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '$percentage%',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildStatItem('Hadir', hadir, Colors.green)),
+              Expanded(child: _buildStatItem('Izin', izin, Colors.blue)),
+              Expanded(child: _buildStatItem('Sakit', sakit, Colors.orange)),
+              Expanded(child: _buildStatItem('Alpha', alpha, Colors.red)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.star, color: Colors.amber, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Total Poin: $poin',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.amber,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, int value, Color color) {
+    return Column(
+      children: [
+        Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      ],
     );
   }
 
@@ -633,100 +843,6 @@ class _UserDetailPageState extends ConsumerState<UserDetailPage>
                     ),
                   ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Widget Stat Card
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 32),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Widget Small Stat Card
-  Widget _buildSmallStatCard(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
             ),
           ),
         ],

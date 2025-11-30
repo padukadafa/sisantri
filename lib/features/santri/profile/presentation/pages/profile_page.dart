@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
+import 'package:sisantri/shared/services/presensi_aggregate_service.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
 import 'package:sisantri/features/santri/profile/presentation/pages/edit_profile_page.dart';
@@ -19,7 +20,14 @@ final userTotalPointsProvider = FutureProvider.family<int, String>((
   ref,
   userId,
 ) async {
-  return await FirestoreService.calculateUserPoints(userId);
+  // Gunakan aggregate yearly untuk total poin
+  final yearlyAggregate = await PresensiAggregateService.getAggregate(
+    userId: userId,
+    periode: 'yearly',
+    date: DateTime.now(),
+  );
+
+  return yearlyAggregate?.totalPoin ?? 0;
 });
 
 class ProfilePage extends ConsumerWidget {
