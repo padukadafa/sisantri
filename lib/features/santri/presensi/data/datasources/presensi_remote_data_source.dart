@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/presensi_model.dart';
 import '../../domain/entities/presensi.dart';
+import 'package:sisantri/shared/services/presensi_aggregate_service.dart';
 
 /// Abstract DataSource untuk Presensi remote operations
 abstract class PresensiRemoteDataSource {
@@ -94,6 +95,14 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
         jadwalId: presensi.jadwalId,
         newStatus: presensi.status,
         oldStatus: null,
+      );
+
+      // Update aggregates
+      await PresensiAggregateService.updateAggregates(
+        userId: presensi.userId,
+        tanggal: presensi.tanggal,
+        status: presensi.status.name,
+        poin: presensi.poinDiperoleh,
       );
 
       return newPresensi;
@@ -224,6 +233,18 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
     StatusPresensi? oldStatus,
   }) async {
     try {
+      // Get old presensi untuk dapat oldPoin
+      PresensiModel? oldPresensi;
+      if (oldStatus != null) {
+        final doc = await _firestore
+            .collection('presensi')
+            .doc(presensi.id)
+            .get();
+        if (doc.exists) {
+          oldPresensi = PresensiModel.fromJson({'id': doc.id, ...doc.data()!});
+        }
+      }
+
       final updatedPresensi = presensi.copyWith(
         // Bisa tambah updatedAt field jika diperlukan
       );
@@ -241,6 +262,16 @@ class PresensiRemoteDataSourceImpl implements PresensiRemoteDataSource {
           oldStatus: oldStatus,
         );
       }
+
+      // Update aggregates
+      await PresensiAggregateService.updateAggregates(
+        userId: presensi.userId,
+        tanggal: presensi.tanggal,
+        status: presensi.status.name,
+        poin: presensi.poinDiperoleh,
+        oldStatus: oldStatus?.name,
+        oldPoin: oldPresensi?.poinDiperoleh,
+      );
 
       return updatedPresensi;
     } catch (e) {

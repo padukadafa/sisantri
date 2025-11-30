@@ -5,7 +5,7 @@ import 'package:sisantri/shared/services/auth_service.dart';
 import 'package:sisantri/shared/services/firestore_service.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/widgets/logout_button.dart';
-import 'package:sisantri/features/dewan_guru/dashboard/presentation/pages/dewan_guru_dashboard_page.dart';
+import 'package:sisantri/shared/widgets/presensi_aggregate_stats_widget.dart';
 import 'package:sisantri/features/santri/profile/presentation/pages/edit_profile_page.dart';
 import 'package:sisantri/features/santri/profile/presentation/pages/security_settings_page.dart';
 
@@ -72,6 +72,16 @@ class ProfilePage extends ConsumerWidget {
                   _buildStatsCards(user, ref),
 
                   const SizedBox(height: 24),
+
+                  // Aggregate Stats Section (for Santri only)
+                  if (user.isSantri) ...[
+                    _buildSectionHeader('Statistik Presensi'),
+                    PresensiAggregateStatsWidget(
+                      userId: user.id,
+                      periode: 'monthly',
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Menu Items
                   _buildMenuItems(context, ref, user),
@@ -388,6 +398,22 @@ class ProfilePage extends ConsumerWidget {
             onTap: () {
               _showAboutDialog(context);
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Row(
+        children: [
+          Icon(Icons.bar_chart, color: Colors.blue.shade700, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),

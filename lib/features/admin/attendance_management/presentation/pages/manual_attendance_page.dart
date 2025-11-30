@@ -6,7 +6,7 @@ import 'package:sisantri/core/theme/app_theme.dart';
 import 'package:sisantri/shared/models/user_model.dart';
 import 'package:sisantri/shared/models/jadwal_model.dart';
 import 'package:sisantri/shared/services/auth_service.dart';
-import 'package:sisantri/shared/helpers/messaging_helper.dart';
+import 'package:sisantri/shared/services/presensi_aggregate_service.dart';
 
 final santriListProvider = FutureProvider<List<UserModel>>((ref) async {
   return await AuthService.getSantriList();
@@ -19,8 +19,6 @@ final attendanceStatusProvider =
       if (jadwalId == null) return {};
 
       try {
-        // Query presensi berdasarkan jadwalId (activity) saja
-        // Tidak perlu filter timestamp karena satu jadwal = satu presensi per user
         final snapshot = await FirebaseFirestore.instance
             .collection('presensi')
             .where('jadwalId', isEqualTo: jadwalId)
@@ -819,10 +817,12 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           .get();
 
       String? oldStatus;
+      int? oldPoin;
       if (existingSnapshot.docs.isNotEmpty) {
         // Get old status untuk decrement counter lama
         final docData = existingSnapshot.docs.first.data();
         oldStatus = docData['status'] as String?;
+        oldPoin = docData['poin'] as int? ?? 0;
 
         final docId = existingSnapshot.docs.first.id;
         await firestore.collection('presensi').doc(docId).update({
@@ -845,6 +845,36 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           'isManual': true,
           'createdAt': FieldValue.serverTimestamp(),
         });
+      }
+
+      // Update aggregates
+      if (_selectedActivity != null) {
+        try {
+          final jadwalDoc = await firestore
+              .collection('jadwal')
+              .doc(_selectedActivity)
+              .get();
+
+          if (jadwalDoc.exists) {
+            final jadwalData = jadwalDoc.data();
+            final tanggalJadwal =
+                (jadwalData?['tanggal'] as Timestamp?)?.toDate() ??
+                DateTime.now();
+            final poin = jadwalData?['poin'] as int? ?? 1;
+
+            final newPoin = attendanceStatus == 'hadir' ? poin : -poin;
+
+            await PresensiAggregateService.updateAggregates(
+              userId: santri.id,
+              tanggal: tanggalJadwal,
+              status: attendanceStatus,
+              poin: newPoin,
+            );
+          }
+        } catch (e) {
+          // Log error tapi jangan block proses utama
+          debugPrint('Error updating aggregates: $e');
+        }
       }
 
       // Update counter di jadwal
@@ -894,10 +924,15 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
           break;
       }
 
-      await firestore
-          .collection("jadwal")
-          .doc(_selectedActivity)
-          .update(jadwalUpdate);
+      // Update jadwal counter only if document exists
+      if (_selectedActivity != null) {
+        final jadwalRef = firestore.collection("jadwal").doc(_selectedActivity);
+        final jadwalSnapshot = await jadwalRef.get();
+        if (jadwalSnapshot.exists) {
+          await jadwalRef.update(jadwalUpdate);
+        }
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1211,6 +1246,35 @@ class _ManualAttendancePageState extends ConsumerState<ManualAttendancePage> {
       }
 
       await batch.commit();
+
+      // Update aggregates untuk semua santri yang diupdate
+      // Get jadwal data untuk tanggal
+      if (_selectedActivity != null) {
+        try {
+          final jadwalDoc = await firestore
+              .collection('jadwal')
+              .doc(_selectedActivity)
+              .get();
+
+          if (jadwalDoc.exists) {
+            final jadwalData = jadwalDoc.data();
+            final tanggalJadwal =
+                (jadwalData?['tanggal'] as Timestamp?)?.toDate() ?? now;
+            final poin = jadwalData?['poin'] as int? ?? 1;
+
+            for (final santri in selectedSantriData) {
+              await PresensiAggregateService.updateAggregates(
+                userId: santri.id,
+                tanggal: tanggalJadwal,
+                status: bulkStatus,
+                poin: bulkStatus == 'hadir' ? poin : 0,
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('Error updating aggregates: $e');
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

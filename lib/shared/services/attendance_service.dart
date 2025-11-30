@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sisantri/shared/models/jadwal_kegiatan_model.dart';
 import '../models/user_model.dart';
 import '../models/presensi_model.dart';
+import 'presensi_aggregate_service.dart';
 
 /// Service untuk mengelola attendance/presensi
 class AttendanceService {
@@ -78,6 +79,19 @@ class AttendanceService {
       }
 
       await batch.commit();
+
+      // Update aggregates untuk semua santri yang dibuat record alpha-nya
+      // Menggunakan versi optimized tanpa read operations
+      final tanggalJadwal = jadwal.tanggal;
+      for (final santri in santriNeedingRecords) {
+        await PresensiAggregateService.updateAggregates(
+          userId: santri.id,
+          tanggal: tanggalJadwal,
+          status: 'alpha',
+          poin: 0, // Alpha tidak dapat poin
+        );
+      }
+
       await _firestore.collection('jadwal').doc(jadwalId).update({
         'totalPresensi': santriNeedingRecords.length,
         'presensiAlpha': santriNeedingRecords.length,
@@ -95,6 +109,17 @@ class AttendanceService {
     String? keterangan,
   }) async {
     try {
+      // Get old data untuk update aggregate
+      final oldDoc = await _firestore
+          .collection('presensi')
+          .doc(attendanceId)
+          .get();
+      final oldData = oldDoc.data();
+      final oldStatus = oldData?['status'] as String?;
+      final oldPoin = oldData?['poin'] as int? ?? 0;
+      final userId = oldData?['userId'] as String;
+      final timestamp = oldData?['timestamp'] as Timestamp?;
+
       await _firestore.collection('presensi').doc(attendanceId).update({
         'status': newStatus.label.toLowerCase(),
         'keterangan': keterangan ?? '',
@@ -102,6 +127,32 @@ class AttendanceService {
         'updatedBy': updatedBy,
         'updatedByName': updatedByName,
       });
+
+      // Update aggregates jika status berubah
+      if (oldStatus != null && timestamp != null) {
+        // Hitung poin baru berdasarkan status
+        int newPoin = 0;
+        if (newStatus == StatusPresensi.hadir) {
+          // Ambil poin dari jadwal jika ada
+          final jadwalId = oldData?['jadwalId'] as String?;
+          if (jadwalId != null) {
+            final jadwalDoc = await _firestore
+                .collection('jadwal')
+                .doc(jadwalId)
+                .get();
+            newPoin = jadwalDoc.data()?['poin'] as int? ?? 1;
+          }
+        }
+
+        await PresensiAggregateService.updateAggregates(
+          userId: userId,
+          tanggal: timestamp.toDate(),
+          status: newStatus.label.toLowerCase(),
+          poin: newPoin,
+          oldStatus: oldStatus,
+          oldPoin: oldPoin,
+        );
+      }
     } catch (e) {
       throw Exception('Failed to update attendance status: $e');
     }
